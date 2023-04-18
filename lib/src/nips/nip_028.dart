@@ -1,91 +1,146 @@
+import 'dart:convert';
 import 'package:nostr/nostr.dart';
 
-/// Contact List and Petnames
-///
-/// A special event with kind 3, meaning "contact list" is defined as having a list of p tags, one for each of the followed/known profiles one is following.
-///
-/// Each tag entry should contain the key for the profile, a relay URL where events from that key can be found
-/// (can be set to an empty string if not needed), and a local name (or "petname") for that profile (can also be set to an empty string or not provided),
-/// i.e., ["p", "32-bytes hex key", "main relay URL", "petname"].
-/// The content can be anything and should be ignored.
-class Nip2 {
-  /// Returns the profils from a contact list event (kind=3)
-  ///
-  /// ```dart
-  ///  var event = Event.from(
-  ///    kind: 3,
-  ///    tags: [
-  ///      ["p", "91cf9..4e5ca", "wss://alicerelay.com/", "alice"],
-  ///      ["p", "14aeb..8dad4", "wss://bobrelay.com/nostr", "bob"],
-  ///      ["p", "612ae..e610f", "ws://carolrelay.com/ws", "carol"],
-  ///    ],
-  ///    content: "",
-  ///    privkey: "5ee1c8000ab28edd64d74a7d951ac2dd559814887b1b9e1ac7c5f89e96125c12",
-  ///  );
-  ///
-  ///  List<Profile> profiles = Nip2.decode(event);
-  ///```
-  static List<Profile> decode(Event event) {
-    if (event.kind == 3) {
-      return toProfiles(event.tags);
-    }
-    throw Exception("${event.kind} is not nip2 compatible");
-  }
-
-  /// Returns profiles from event.tags
-  ///
-  /// ```dart
-  /// List<List<String>> tags = [
-  ///   ["p", "91cf9..4e5ca", "wss://alicerelay.com/", "alice"],
-  ///   ["p", "14aeb..8dad4", "wss://bobrelay.com/nostr", "bob"],
-  ///   ["p", "612ae..e610f", "ws://carolrelay.com/ws", "carol"]
-  /// ];
-  /// List<Profile> profiles = Nip2.toProfiles(tags);
-  /// ```
-  static List<Profile> toProfiles(List<List<String>> tags) {
-    List<Profile> result = [];
+/// Public Chat & Channel
+class Nip28 {
+  static List<String> tagsToBadges(List<List<String>> tags) {
+    List<String> result = [];
     for (var tag in tags) {
-      if (tag[0] == "p") result.add(Profile(tag[1], tag[2], tag[3]));
+      if (tag[0] == "b") result.add(tag[1]);
     }
     return result;
   }
 
-  /// Returns tags from profiles list
-  ///
-  /// ```dart
-  /// List<Profile> profiles = [Profile("21df6d143fb96c2ec9d63726bf9edc71", "ws://erinrelay.com/ws", "erin")];
-  /// List<List<String>> tags = Nip2.toTags(profiles);
-  /// ```
-  static List<List<String>> toTags(List<Profile> profiles) {
+  static List<List<String>> badgesToTags(List<String> badges) {
     List<List<String>> result = [];
-    for (var profile in profiles) {
-      result.add(["p", profile.key, profile.relay, profile.petname]);
+    for (var badge in badges) {
+      result.add(["b", badge]);
     }
     return result;
+  }
+
+  static Channel getChannel(Event event) {
+    if (event.kind == 40) {
+      var content = jsonDecode(event.content);
+      List<String> badges = tagsToBadges(event.tags);
+      return Channel(event.id, content["name"], content["about"],
+          content["picture"], event.pubkey, badges);
+    }
+    throw Exception("${event.kind} is not nip40 compatible");
+  }
+
+  static ChannelMessage getChannelMessage(Event event) {
+    if (event.kind == 42) {
+      var content = event.content;
+      String channelId = "";
+      String replyId = "";
+      String replyUser = "";
+      for (var tag in event.tags) {
+        if (tag[0] == "e" && tag[3] == "root") channelId = tag[1];
+        if (tag[0] == "e" && tag[3] == "reply") replyId = tag[1];
+        if (tag[0] == "p") replyUser = tag[1];
+      }
+      return ChannelMessage(event.id, channelId, replyId, replyUser, content);
+    }
+    throw Exception("${event.kind} is not nip42 compatible");
+  }
+
+  static Event createChannel(String name, String about, String picture,
+      List<String> badges, String privkey) {
+    Map<String, dynamic> map = {
+      'name': name,
+      'about': about,
+      'picture': picture,
+    };
+    String content = jsonEncode(map);
+    List<List<String>> tags = badgesToTags(badges);
+    Event event =
+        Event.from(kind: 40, tags: tags, content: content, privkey: privkey);
+    return event;
+  }
+
+  static Event setChannelMetaData(String name, String about, String picture,
+      List<String> badges, String channelId, String relayURL, String privkey) {
+    Map<String, dynamic> map = {
+      'name': name,
+      'about': about,
+      'picture': picture,
+    };
+    String content = jsonEncode(map);
+    List<List<String>> tags = badgesToTags(badges);
+    tags.add(["e", channelId, relayURL]);
+    Event event =
+        Event.from(kind: 41, tags: tags, content: content, privkey: privkey);
+    return event;
+  }
+
+  static Event sendChannelMessage(String content, String channelId,
+      String replyId, String relayURL, String replayPubkey, String privkey) {
+    List<List<String>> tags = [];
+    tags.add(["e", channelId, relayURL, "root"]);
+    if (replyId.isNotEmpty) tags.add(["e", replyId, relayURL, "reply"]);
+    if (replayPubkey.isNotEmpty) tags.add(["p", relayURL, replayPubkey]);
+    Event event =
+        Event.from(kind: 42, tags: tags, content: content, privkey: privkey);
+    return event;
+  }
+
+  static Event hideChannelMessage(
+      String messageId, String reason, String privkey) {
+    Map<String, dynamic> map = {
+      'reason': reason,
+    };
+    String content = jsonEncode(map);
+    List<List<String>> tags = [];
+    tags.add(["e", messageId]);
+    Event event =
+        Event.from(kind: 43, tags: tags, content: content, privkey: privkey);
+    return event;
+  }
+
+  static Event muteUser(String pubkey, String reason, String privkey) {
+    Map<String, dynamic> map = {
+      'reason': reason,
+    };
+    String content = jsonEncode(map);
+    List<List<String>> tags = [];
+    tags.add(["p", pubkey]);
+    Event event =
+        Event.from(kind: 44, tags: tags, content: content, privkey: privkey);
+    return event;
   }
 }
 
-/// Each tag entry should contain the key for the profile, a relay URL where events from that key can be found
-/// (can be set to an empty string if not needed), and a local name (or "petname") for that profile (can also be set to an empty string or not provided),
-/// i.e., ["p", "32-bytes hex key", "main relay URL", "petname"].
-/// The content can be anything and should be ignored.
-///
-/// ```dart
-/// String key = "91cf9..4e5ca";
-/// String relay = "wss://alicerelay.com/";
-/// String petname = "alice";
-/// var profile = Profile(key, relay, petname);
-/// ```
-class Profile {
-  /// Each tag entry should contain the key for the profile,
-  String key;
+/// channel info
+class Channel {
+  /// channel create event id
+  String channelId;
 
-  /// A relay URL where events from that key can be found (can be set to an empty string if not needed)
-  String relay;
+  String name;
 
-  /// A local name (or "petname") for that profile (can also be set to an empty string or not provided)
-  String petname;
+  String about;
+
+  String picture;
+
+  /// kind40 pubkey
+  String owner;
+
+  /// only users with badges can send messages, avoid spam
+  List<String> badges;
 
   /// Default constructor
-  Profile(this.key, this.relay, this.petname);
+  Channel(this.channelId, this.name, this.about, this.picture, this.owner,
+      this.badges);
+}
+
+/// messages in channel
+class ChannelMessage {
+  String channelId;
+  String sender;
+  String replyId;
+  String replyUser;
+  String content;
+
+  ChannelMessage(
+      this.sender, this.channelId, this.replyId, this.replyUser, this.content);
 }

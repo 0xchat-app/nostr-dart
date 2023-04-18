@@ -62,7 +62,7 @@ void main() async {
 
   // Connecting to a nostr relay using websocket
   WebSocket webSocket = await WebSocket.connect(
-    'wss://relay.nostr.info', // or any nostr relay
+    'ws://192.168.1.3:6969', // or any nostr relay
   );
   // if the current socket fail try another one
   // wss://nostr.sandwich.farm
