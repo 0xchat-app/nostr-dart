@@ -1,91 +1,75 @@
+import 'dart:convert';
 import 'package:nostr/nostr.dart';
 
-/// Contact List and Petnames
-///
-/// A special event with kind 3, meaning "contact list" is defined as having a list of p tags, one for each of the followed/known profiles one is following.
-///
-/// Each tag entry should contain the key for the profile, a relay URL where events from that key can be found
-/// (can be set to an empty string if not needed), and a local name (or "petname") for that profile (can also be set to an empty string or not provided),
-/// i.e., ["p", "32-bytes hex key", "main relay URL", "petname"].
-/// The content can be anything and should be ignored.
-class Nip2 {
-  /// Returns the profils from a contact list event (kind=3)
-  ///
-  /// ```dart
-  ///  var event = Event.from(
-  ///    kind: 3,
-  ///    tags: [
-  ///      ["p", "91cf9..4e5ca", "wss://alicerelay.com/", "alice"],
-  ///      ["p", "14aeb..8dad4", "wss://bobrelay.com/nostr", "bob"],
-  ///      ["p", "612ae..e610f", "ws://carolrelay.com/ws", "carol"],
-  ///    ],
-  ///    content: "",
-  ///    privkey: "5ee1c8000ab28edd64d74a7d951ac2dd559814887b1b9e1ac7c5f89e96125c12",
-  ///  );
-  ///
-  ///  List<Profile> profiles = Nip2.decode(event);
-  ///```
-  static List<Profile> decode(Event event) {
-    if (event.kind == 3) {
-      return toProfiles(event.tags);
-    }
-    throw Exception("${event.kind} is not nip2 compatible");
-  }
-
-  /// Returns profiles from event.tags
-  ///
-  /// ```dart
-  /// List<List<String>> tags = [
-  ///   ["p", "91cf9..4e5ca", "wss://alicerelay.com/", "alice"],
-  ///   ["p", "14aeb..8dad4", "wss://bobrelay.com/nostr", "bob"],
-  ///   ["p", "612ae..e610f", "ws://carolrelay.com/ws", "carol"]
-  /// ];
-  /// List<Profile> profiles = Nip2.toProfiles(tags);
-  /// ```
-  static List<Profile> toProfiles(List<List<String>> tags) {
-    List<Profile> result = [];
-    for (var tag in tags) {
-      if (tag[0] == "p") result.add(Profile(tag[1], tag[2], tag[3]));
-    }
-    return result;
-  }
-
-  /// Returns tags from profiles list
-  ///
-  /// ```dart
-  /// List<Profile> profiles = [Profile("21df6d143fb96c2ec9d63726bf9edc71", "ws://erinrelay.com/ws", "erin")];
-  /// List<List<String>> tags = Nip2.toTags(profiles);
-  /// ```
-  static List<List<String>> toTags(List<Profile> profiles) {
+/// Lists
+class Nip51 {
+  static List<List<String>> toTags(List<String> items) {
     List<List<String>> result = [];
-    for (var profile in profiles) {
-      result.add(["p", profile.key, profile.relay, profile.petname]);
+    for (String item in items) {
+      result.add(["p", item]);
     }
     return result;
+  }
+
+  static String toContent(List<String> items, String privkey, String pubkey) {
+    var map = {for (String item in items) "p": item};
+    String content = jsonEncode(map);
+    return encrypt(privkey, '02$pubkey', content);
+  }
+
+  static Event createMute(List<String> items, String privkey, String pubkey) {
+    return Event.from(
+        kind: 10000,
+        tags: toTags(items),
+        content: toContent(items, privkey, pubkey),
+        privkey: privkey);
+  }
+
+  static Event createCategorizedPeople(
+      String identifier, List<String> items, String privkey, String pubkey) {
+    List<List<String>> tags = toTags(items);
+    tags.add(["d", identifier]);
+    return Event.from(
+        kind: 30000,
+        tags: tags,
+        content: toContent(items, privkey, pubkey),
+        privkey: privkey);
+  }
+
+  static createPin() {}
+  static createCategorizedBookmarks() {}
+
+  static Lists getLists(Event event) {
+    if (event.kind == 10000 ||
+        event.kind == 10001 ||
+        event.kind == 30000 ||
+        event.kind == 30001) {
+      throw Exception("${event.kind} is not nip51 compatible");
+    }
+    String identifier = "";
+    List<String> people = [];
+    List<String> bookmarks = [];
+    for (var tag in event.tags) {
+      if (tag[0] == "p") people.add(tag[1]);
+      if (tag[0] == "d") identifier = tag[1];
+    }
+    if (event.kind == 10000) identifier = "Mute";
+    if (event.kind == 10001) identifier = "Pin";
+
+    return Lists(event.pubkey, identifier, people, bookmarks);
   }
 }
 
-/// Each tag entry should contain the key for the profile, a relay URL where events from that key can be found
-/// (can be set to an empty string if not needed), and a local name (or "petname") for that profile (can also be set to an empty string or not provided),
-/// i.e., ["p", "32-bytes hex key", "main relay URL", "petname"].
-/// The content can be anything and should be ignored.
-///
-/// ```dart
-/// String key = "91cf9..4e5ca";
-/// String relay = "wss://alicerelay.com/";
-/// String petname = "alice";
-/// var profile = Profile(key, relay, petname);
 /// ```
-class Profile {
-  /// Each tag entry should contain the key for the profile,
-  String key;
+class Lists {
+  String owner;
 
-  /// A relay URL where events from that key can be found (can be set to an empty string if not needed)
-  String relay;
+  String identifier;
 
-  /// A local name (or "petname") for that profile (can also be set to an empty string or not provided)
-  String petname;
+  List<String> people;
+
+  List<String> bookmarks;
 
   /// Default constructor
-  Profile(this.key, this.relay, this.petname);
+  Lists(this.owner, this.identifier, this.people, this.bookmarks);
 }
