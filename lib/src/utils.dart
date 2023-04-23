@@ -18,6 +18,18 @@ int currentUnixTimestampSeconds() {
   return DateTime.now().millisecondsSinceEpoch ~/ 1000;
 }
 
+String bytesToHex(Uint8List bytes) {
+  return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+}
+
+Uint8List hexToBytes(String hex) {
+  List<int> bytes = [];
+  for (int i = 0; i < hex.length; i += 2) {
+    bytes.add(int.parse(hex.substring(i, i + 2), radix: 16));
+  }
+  return Uint8List.fromList(bytes);
+}
+
 // Encrypt data using self private key in nostr format ( with trailing ?iv=)
 String encrypt(String privateString, String publicString, String plainText) {
   Uint8List uintInputText = Utf8Encoder().convert(plainText);
@@ -111,4 +123,89 @@ Uint8List decryptRaw(
   //remove padding
   offset += cipherImpl.doFinal(cipherText, offset, finalPlainText, offset);
   return finalPlainText.sublist(0, offset);
+}
+
+/// tweakAdd
+BigInt decodeBigInt(Uint8List bytes) {
+  BigInt result = BigInt.from(0);
+  for (int i = 0; i < bytes.length; i++) {
+    result += BigInt.from(bytes[i]) << (8 * (bytes.length - i - 1));
+  }
+  return result;
+}
+
+Uint8List encodeBigInt(BigInt number) {
+  int size = (number.bitLength + 7) ~/ 8;
+  Uint8List result = Uint8List(size);
+  for (int i = 0; i < size; i++) {
+    result[size - i - 1] =
+        ((number >> (8 * i)) & BigInt.from(0xff)).toInt() & 0xff;
+  }
+  return result;
+}
+
+Uint8List tweakAdd(Uint8List privateKey, Uint8List tweak) {
+  // Load the secp256k1 curve parameters
+  ECDomainParameters params = ECCurve_secp256k1();
+  BigInt n = params.n;
+
+  // Convert the private key and tweak to BigInt
+  BigInt privateKeyBigInt = decodeBigInt(privateKey);
+  BigInt tweakBigInt = decodeBigInt(tweak);
+
+  // Add the private key and tweak (mod n)
+  BigInt derivedPrivateKeyBigInt = (privateKeyBigInt + tweakBigInt) % n;
+
+  // Convert the derived private key back to Uint8List
+  Uint8List derivedPrivateKey = encodeBigInt(derivedPrivateKeyBigInt);
+
+  return derivedPrivateKey;
+}
+
+/// encrypt & decrypt PrivateKey
+Uint8List generateKeyFromPassword(String password, int length) {
+  Uint8List salt = Uint8List.fromList(utf8.encode("0xchat.com"));
+  final scrypt = Scrypt()..init(ScryptParameters(16384, 8, 1, 32, salt));
+
+  return scrypt.process(Uint8List.fromList(utf8.encode(password)));
+}
+
+Uint8List encryptPrivateKey(Uint8List privateKey, String password) {
+  // Generate a key based on the password
+  final Uint8List key = generateKeyFromPassword(password, 32);
+
+  // Create the AES cipher in ECB mode
+  final BlockCipher cipher = AESEngine();
+
+  // Initialize the cipher with the key
+  cipher.init(true, KeyParameter(key));
+
+  // Encrypt the private key
+  Uint8List encryptedPrivateKey = Uint8List(privateKey.length);
+  for (int offset = 0; offset < privateKey.length; offset += cipher.blockSize) {
+    cipher.processBlock(privateKey, offset, encryptedPrivateKey, offset);
+  }
+
+  return encryptedPrivateKey;
+}
+
+Uint8List decryptPrivateKey(Uint8List encryptedPrivateKey, String password) {
+  // Generate a key based on the password
+  final Uint8List key = generateKeyFromPassword(password, 32);
+
+  // Create the AES cipher in ECB mode
+  final BlockCipher cipher = AESEngine();
+
+  // Initialize the cipher with the key
+  cipher.init(false, KeyParameter(key));
+
+  // Decrypt the private key
+  Uint8List privateKey = Uint8List(encryptedPrivateKey.length);
+  for (int offset = 0;
+      offset < encryptedPrivateKey.length;
+      offset += cipher.blockSize) {
+    cipher.processBlock(encryptedPrivateKey, offset, privateKey, offset);
+  }
+
+  return privateKey;
 }
