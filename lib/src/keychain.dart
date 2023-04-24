@@ -30,6 +30,10 @@ class Keychain {
     return bip340.sign(private, message, aux);
   }
 
+  static String getPublicKey(String private){
+    return bip340.getPublicKey(private);
+  }
+
   /// Encapsulate dart-bip340 verify() so you don't need to add bip340 as a dependency
   static bool verify(
     String? pubkey,

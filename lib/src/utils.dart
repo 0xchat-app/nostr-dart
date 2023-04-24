@@ -209,3 +209,16 @@ Uint8List decryptPrivateKey(Uint8List encryptedPrivateKey, String password) {
 
   return privateKey;
 }
+
+String generateStrongPassword(int length) {
+  final random = Random.secure();
+  const lowerCaseLetters = 'abcdefghijklmnopqrstuvwxyz';
+  const upperCaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const specialCharacters = r'!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+  final characters = '$lowerCaseLetters$upperCaseLetters$numbers$specialCharacters';
+
+  // generateStrongPassword
+  return List.generate(length, (index) => characters[random.nextInt(characters.length)]).join();
+}
