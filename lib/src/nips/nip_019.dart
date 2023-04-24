@@ -3,8 +3,47 @@ import 'package:convert/convert.dart';
 
 /// bech32-encoded entities
 class Nip19 {
-  static encode(String prefix, String pubkey) {
-    return bech32Encode(prefix, pubkey);
+  static encodePubkey(String pubkey) {
+    return bech32Encode("npub", pubkey);
+  }
+
+  static encodePrivkey(String privkey) {
+    return bech32Encode("nsec", privkey);
+  }
+
+  static encodeNote(String noteid) {
+    return bech32Encode("note", noteid);
+  }
+
+  static String decodePubkey(String data) {
+    Map map = decode(data);
+    if (map["prefix"] == "npub") {
+      return map["data"];
+    } else {
+      return "";
+    }
+  }
+
+  static String decodePrivkey(String data) {
+    Map map = decode(data);
+    if (map["prefix"] == "nsec") {
+      return map["data"];
+    } else {
+      return "";
+    }
+  }
+
+  static String decodeNote(String data) {
+    Map map = decode(data);
+    if (map["prefix"] == "note") {
+      return map["data"];
+    } else {
+      return "";
+    }
+  }
+
+  static encode(String prefix, String content) {
+    return bech32Encode(prefix, content);
   }
 
   static String bech32Encode(String prefix, String hexData) {
@@ -26,7 +65,8 @@ class Nip19 {
     return {'prefix': decodedData.hrp, 'data': hexData};
   }
 
-  static List<int> convertBits(List<int> data, int fromBits, int toBits, bool pad) {
+  static List<int> convertBits(
+      List<int> data, int fromBits, int toBits, bool pad) {
     var acc = 0;
     var bits = 0;
     final maxv = (1 << toBits) - 1;
