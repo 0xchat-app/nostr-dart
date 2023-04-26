@@ -15,6 +15,9 @@ class Filter {
   /// a list of pubkeys that are referenced in a "p" tag
   List<String>? p;
 
+  /// a list of identifiers that are referenced in a "d" tag
+  List<String>? d;
+
   /// a timestamp, events must be newer than this to pass
   int? since;
 
@@ -31,6 +34,7 @@ class Filter {
       this.kinds,
       this.e,
       this.p,
+      this.d,
       this.since,
       this.until,
       this.limit});
@@ -43,6 +47,8 @@ class Filter {
     kinds = json['kinds'] == null ? null : List<int>.from(json['kinds']);
     e = json['#e'] == null ? null : List<String>.from(json['#e']);
     p = json['#p'] == null ? null : List<String>.from(json['#p']);
+    d = json['#d'] == null ? null : List<String>.from(json['#d']);
+
     since = json['since'];
     until = json['until'];
     limit = json['limit'];
@@ -65,6 +71,9 @@ class Filter {
     }
     if (p != null) {
       data['#p'] = p;
+    }
+    if (d != null) {
+      data['#d'] = d;
     }
     if (since != null) {
       data['since'] = since;

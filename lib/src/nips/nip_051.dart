@@ -39,7 +39,7 @@ class Nip51 {
   static createPin() {}
   static createCategorizedBookmarks() {}
 
-  static Lists getLists(Event event) {
+  static Lists getLists(Event event, String privkey) {
     if (event.kind == 10000 ||
         event.kind == 10001 ||
         event.kind == 30000 ||
@@ -50,6 +50,12 @@ class Nip51 {
     List<String> people = [];
     List<String> bookmarks = [];
     for (var tag in event.tags) {
+      if (tag[0] == "p") people.add(tag[1]);
+      if (tag[0] == "d") identifier = tag[1];
+    }
+    String pubkey = Keychain.getPublicKey(privkey);
+    String content = decrypt(privkey, pubkey, event.content);
+    for(var tag in jsonDecode(content)){
       if (tag[0] == "p") people.add(tag[1]);
       if (tag[0] == "d") identifier = tag[1];
     }

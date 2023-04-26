@@ -1,6 +1,8 @@
 /// nip 101 - alias exchange
 ///
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:kepler/kepler.dart';
 import 'package:nostr/nostr.dart';
 
 class Nip101 {
@@ -20,6 +22,13 @@ class Nip101 {
       String enContent, String privkey, String sender) {
     String content = Nip4.decryptContent(enContent, privkey, sender);
     return jsonDecode(content);
+  }
+
+  static String aliasPrivkey(String toPubkey, String privkey) {
+    final secretIV = Kepler.byteSecret(privkey, '02$toPubkey');
+    Uint8List tweak = Uint8List.fromList(secretIV[0]);
+    Uint8List aliasPrivateKey = tweakAdd(hexToBytes(privkey), tweak);
+    return bytesToHex(aliasPrivateKey);
   }
 
   /// encrypt share secret = (fromAliasPrivkey, toPubkey)
