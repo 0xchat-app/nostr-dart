@@ -20,13 +20,13 @@ class Nip4 {
   ///```
   static EDMessage decode(Event event, String pubkey, String privkey) {
     if (event.kind == 4) {
-      return toEDMessage(event, pubkey, privkey);
+      return _toEDMessage(event, pubkey, privkey);
     }
     throw Exception("${event.kind} is not nip4 compatible");
   }
 
   /// Returns EDMessage from event
-  static EDMessage toEDMessage(Event event, String pubkey, String privkey) {
+  static EDMessage _toEDMessage(Event event, String pubkey, String privkey) {
     String sender = event.pubkey;
     int createdAt = event.createdAt;
     String receiver = "";
