@@ -38,7 +38,7 @@ class Nip101 {
       String fromAliasPrivkey, String toPubkey, String requestContent) {
     return Event.from(
         kind: 10100,
-        tags: [],
+        tags: [['p', toPubkey]],
         content:
             _enContent(fromPubkey, fromAliasPrivkey, toPubkey, requestContent),
         privkey: fromAliasPrivkey);
@@ -50,7 +50,7 @@ class Nip101 {
       String fromAliasPrivkey, String toAliasPubkey) {
     return Event.from(
         kind: 10101,
-        tags: [],
+        tags: [['p', toAliasPubkey]],
         content:
             _enContent(fromPubkey, fromAliasPrivkey, toAliasPubkey, "accept"),
         privkey: fromAliasPrivkey);
@@ -62,7 +62,7 @@ class Nip101 {
       String fromAliasPrivkey, String toAliasPubkey) {
     return Event.from(
         kind: 10102,
-        tags: [],
+        tags: [['p', toAliasPubkey]],
         content:
             _enContent(fromPubkey, fromAliasPrivkey, toAliasPubkey, "reject"),
         privkey: fromAliasPrivkey);
@@ -74,16 +74,16 @@ class Nip101 {
       String fromAliasPrivkey, String toAliasPubkey) {
     return Event.from(
         kind: 10103,
-        tags: [],
+        tags: [['p', toAliasPubkey]],
         content:
             _enContent(fromPubkey, fromAliasPrivkey, toAliasPubkey, "remove"),
         privkey: fromAliasPrivkey);
   }
 
   static Alias getRequest(
-      Event event, String pubkey, String privkey, String aliasPubkey) {
+      Event event, String pubkey, String privkey) {
     Map<String, dynamic> map = _deContent(event.content, privkey, event.pubkey);
-    return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
+    return Alias(pubkey, "", map['p'], event.pubkey, map['content'],
         event.kind);
   }
 
