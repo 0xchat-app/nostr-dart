@@ -17,6 +17,15 @@ class Nip51 {
     return encrypt(privkey, '02$pubkey', content);
   }
 
+  static List<String> fromContent(String content, String privkey, String pubkey){
+    List<String> item = [];
+    String deContent = decrypt(privkey, '02$pubkey', content);
+    for(var tag in jsonDecode(deContent)){
+      if (tag[0] == "p") item.add(tag[1]);
+    }
+    return item;
+  }
+
   static Event createMute(List<String> items, String privkey, String pubkey) {
     return Event.from(
         kind: 10000,
@@ -54,10 +63,9 @@ class Nip51 {
       if (tag[0] == "d") identifier = tag[1];
     }
     String pubkey = Keychain.getPublicKey(privkey);
-    String content = decrypt(privkey, pubkey, event.content);
+    String content = decrypt(privkey, '02$pubkey', event.content);
     for(var tag in jsonDecode(content)){
       if (tag[0] == "p") people.add(tag[1]);
-      if (tag[0] == "d") identifier = tag[1];
     }
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
