@@ -12,14 +12,23 @@ class Nip51 {
   }
 
   static String toContent(List<String> items, String privkey, String pubkey) {
-    var map = {for (String item in items) "p": item};
-    String content = jsonEncode(map);
+    var list = [];
+    for(String item in items){
+      list.add(['p', item]);
+    }
+    String content = jsonEncode(list);
     return encrypt(privkey, '02$pubkey', content);
   }
 
   static List<String> fromContent(String content, String privkey, String pubkey){
     List<String> item = [];
-    String deContent = decrypt(privkey, '02$pubkey', content);
+    int ivIndex = content.indexOf("?iv=");
+    if (ivIndex <= 0) {
+      print("Invalid content for dm, could not get ivIndex: $content");
+    }
+    String iv = content.substring(ivIndex + "?iv=".length, content.length);
+    String encString = content.substring(0, ivIndex);
+    String deContent = decrypt(privkey, '02$pubkey', encString, iv);
     for(var tag in jsonDecode(deContent)){
       if (tag[0] == "p") item.add(tag[1]);
     }
@@ -35,13 +44,13 @@ class Nip51 {
   }
 
   static Event createCategorizedPeople(
-      String identifier, List<String> items, String privkey, String pubkey) {
+      String identifier, List<String> items, List<String> contentItems, String privkey, String pubkey) {
     List<List<String>> tags = toTags(items);
     tags.add(["d", identifier]);
     return Event.from(
         kind: 30000,
         tags: tags,
-        content: toContent(items, privkey, pubkey),
+        content: toContent(contentItems, privkey, pubkey),
         privkey: privkey);
   }
 
@@ -49,10 +58,10 @@ class Nip51 {
   static createCategorizedBookmarks() {}
 
   static Lists getLists(Event event, String privkey) {
-    if (event.kind == 10000 ||
-        event.kind == 10001 ||
-        event.kind == 30000 ||
-        event.kind == 30001) {
+    if (event.kind != 10000 &&
+        event.kind != 10001 &&
+        event.kind != 30000 &&
+        event.kind != 30001) {
       throw Exception("${event.kind} is not nip51 compatible");
     }
     String identifier = "";
@@ -63,10 +72,8 @@ class Nip51 {
       if (tag[0] == "d") identifier = tag[1];
     }
     String pubkey = Keychain.getPublicKey(privkey);
-    String content = decrypt(privkey, '02$pubkey', event.content);
-    for(var tag in jsonDecode(content)){
-      if (tag[0] == "p") people.add(tag[1]);
-    }
+    List<String> content = Nip51.fromContent(event.content, privkey, pubkey);
+    people.addAll(content);
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
 
