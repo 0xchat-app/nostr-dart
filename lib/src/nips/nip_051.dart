@@ -3,39 +3,54 @@ import 'package:nostr/nostr.dart';
 
 /// Lists
 class Nip51 {
-  static List<List<String>> toTags(List<String> items) {
+  static List<List<String>> toTags(List<People> items) {
     List<List<String>> result = [];
-    for (String item in items) {
-      result.add(["p", item]);
+    for (People item in items) {
+      result.add([
+        "p",
+        item.pubkey,
+        item.aliasPubKey ?? "",
+        item.mainRelay ?? "",
+        item.petName ?? ""
+      ]);
     }
     return result;
   }
 
-  static String toContent(List<String> items, String privkey, String pubkey) {
+  static String toContent(List<People> items, String privkey, String pubkey) {
     var list = [];
-    for(String item in items){
-      list.add(['p', item]);
+    for (People item in items) {
+      list.add([
+        'p',
+        item.pubkey,
+        item.aliasPubKey ?? "",
+        item.mainRelay ?? "",
+        item.petName ?? ""
+      ]);
     }
     String content = jsonEncode(list);
     return encrypt(privkey, '02$pubkey', content);
   }
 
-  static List<String> fromContent(String content, String privkey, String pubkey){
-    List<String> item = [];
+  static List<People> fromContent(
+      String content, String privkey, String pubkey) {
+    List<People> item = [];
     int ivIndex = content.indexOf("?iv=");
     if (ivIndex <= 0) {
-      print("Invalid content for dm, could not get ivIndex: $content");
+      print("Invalid content, could not get ivIndex: $content");
     }
     String iv = content.substring(ivIndex + "?iv=".length, content.length);
     String encString = content.substring(0, ivIndex);
     String deContent = decrypt(privkey, '02$pubkey', encString, iv);
-    for(var tag in jsonDecode(deContent)){
-      if (tag[0] == "p") item.add(tag[1]);
+    for (List tag in jsonDecode(deContent)) {
+      if (tag[0] == "p") {
+        item.add(People(tag[1], tag.length > 2 ? tag[2] : "", tag.length > 3 ? tag[3] : "", tag.length > 4 ? tag[4] : ""));
+      }
     }
     return item;
   }
 
-  static Event createMute(List<String> items, String privkey, String pubkey) {
+  static Event createMute(List<People> items, String privkey, String pubkey) {
     return Event.from(
         kind: 10000,
         tags: toTags(items),
@@ -43,8 +58,8 @@ class Nip51 {
         privkey: privkey);
   }
 
-  static Event createCategorizedPeople(
-      String identifier, List<String> items, List<String> contentItems, String privkey, String pubkey) {
+  static Event createCategorizedPeople(String identifier, List<People> items,
+      List<People> contentItems, String privkey, String pubkey) {
     List<List<String>> tags = toTags(items);
     tags.add(["d", identifier]);
     return Event.from(
@@ -65,14 +80,16 @@ class Nip51 {
       throw Exception("${event.kind} is not nip51 compatible");
     }
     String identifier = "";
-    List<String> people = [];
+    List<People> people = [];
     List<String> bookmarks = [];
-    for (var tag in event.tags) {
-      if (tag[0] == "p") people.add(tag[1]);
+    for (List tag in event.tags) {
+      if (tag[0] == "p") {
+        people.add(People(tag[1], tag.length > 2 ? tag[2] : "", tag.length > 3 ? tag[3] : "", tag.length > 4 ? tag[4] : ""));
+      }
       if (tag[0] == "d") identifier = tag[1];
     }
     String pubkey = Keychain.getPublicKey(privkey);
-    List<String> content = Nip51.fromContent(event.content, privkey, pubkey);
+    List<People> content = Nip51.fromContent(event.content, privkey, pubkey);
     people.addAll(content);
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
@@ -81,13 +98,23 @@ class Nip51 {
   }
 }
 
-/// ```
+///
+class People {
+  String pubkey;
+  String? aliasPubKey;
+  String? mainRelay;
+  String? petName;
+
+  /// Default constructor
+  People(this.pubkey, this.aliasPubKey, this.mainRelay, this.petName);
+}
+
 class Lists {
   String owner;
 
   String identifier;
 
-  List<String> people;
+  List<People> people;
 
   List<String> bookmarks;
 
