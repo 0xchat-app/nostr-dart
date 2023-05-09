@@ -80,6 +80,14 @@ class Nip101 {
         privkey: fromAliasPrivkey);
   }
 
+  static String getP(Event event) {
+    if (event.tags != null && event.tags[0].length > 1 &&
+        event.tags[0][0] == 'p') {
+      return event.tags[0][1];
+    }
+    return '';
+  }
+
   static Alias getRequest(
       Event event, String pubkey, String privkey) {
     Map<String, dynamic> map = _deContent(event.content, privkey, event.pubkey);
