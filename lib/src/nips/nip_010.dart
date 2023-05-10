@@ -1,10 +1,10 @@
 import 'package:nostr/nostr.dart';
 
 class Nip10 {
-  static Thread decode(Event event){
+  static Thread fromTags(List<List<String>> tags){
     List<ETags> etags = [];
     List<PTags> ptags = [];
-    for (var tag in event.tags) {
+    for (var tag in tags) {
       if (tag[0] == "p") ptags.add(PTags(tag[1], tag[2]));
       if (tag[0] == "e") etags.add(ETags(tag[1], tag[2], tag[3]));
     }

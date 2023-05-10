@@ -6,7 +6,7 @@ class Nip28 {
   static List<String> tagsToBadges(List<List<String>> tags) {
     List<String> result = [];
     for (var tag in tags) {
-      if (tag[0] == "b") result.add(tag[1]);
+      if (tag[0] == "badges") result.add(tag[1]);
     }
     return result;
   }
@@ -14,7 +14,7 @@ class Nip28 {
   static List<List<String>> badgesToTags(List<String> badges) {
     List<List<String>> result = [];
     for (var badge in badges) {
-      result.add(["b", badge]);
+      result.add(["badges", badge]);
     }
     return result;
   }
