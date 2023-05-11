@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:nostr/nostr.dart';
+import 'package:nostr/src/nips/nip_010.dart';
 
 /// Public Chat & Channel
 class Nip28 {
@@ -32,15 +33,10 @@ class Nip28 {
   static ChannelMessage getChannelMessage(Event event) {
     if (event.kind == 42) {
       var content = event.content;
-      String channelId = "";
-      String replyId = "";
-      String replyUser = "";
-      for (var tag in event.tags) {
-        if (tag[0] == "e" && tag[3] == "root") channelId = tag[1];
-        if (tag[0] == "e" && tag[3] == "reply") replyId = tag[1];
-        if (tag[0] == "p") replyUser = tag[1];
-      }
-      return ChannelMessage(event.id, channelId, replyId, replyUser, content);
+      Thread thread = Nip10.fromTags(event.tags);
+      String channelId = thread.root.eventId;
+      return ChannelMessage(
+          channelId, event.pubkey, content, thread, event.createdAt);
     }
     throw Exception("${event.kind} is not nip42 compatible");
   }
@@ -74,12 +70,14 @@ class Nip28 {
     return event;
   }
 
-  static Event sendChannelMessage(String content, String channelId,
-      String replyId, String relayURL, String replayPubkey, String privkey) {
+  static Event sendChannelMessage(
+      String channelId, String content, Thread? thread, String privkey) {
     List<List<String>> tags = [];
-    tags.add(["e", channelId, relayURL, "root"]);
-    if (replyId.isNotEmpty) tags.add(["e", replyId, relayURL, "reply"]);
-    if (replayPubkey.isNotEmpty) tags.add(["p", relayURL, replayPubkey]);
+    if (thread != null) {
+      List<ETags> eTags = [thread.root];
+      eTags.addAll(thread.replys);
+      tags = Nip10.toTags(eTags, thread.ptags);
+    }
     Event event =
         Event.from(kind: 42, tags: tags, content: content, privkey: privkey);
     return event;
@@ -137,10 +135,10 @@ class Channel {
 class ChannelMessage {
   String channelId;
   String sender;
-  String replyId;
-  String replyUser;
   String content;
+  Thread thread;
+  int createTime;
 
   ChannelMessage(
-      this.sender, this.channelId, this.replyId, this.replyUser, this.content);
+      this.channelId, this.sender, this.content, this.thread, this.createTime);
 }

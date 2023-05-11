@@ -1,14 +1,21 @@
 import 'package:nostr/nostr.dart';
 
 class Nip10 {
-  static Thread fromTags(List<List<String>> tags){
-    List<ETags> etags = [];
+  static Thread fromTags(List<List<String>> tags) {
+    ETags root = ETags('', '', '');
+    List<ETags> replys = [];
     List<PTags> ptags = [];
     for (var tag in tags) {
       if (tag[0] == "p") ptags.add(PTags(tag[1], tag[2]));
-      if (tag[0] == "e") etags.add(ETags(tag[1], tag[2], tag[3]));
+      if (tag[0] == "e") {
+        if (tag[3] == 'root') {
+          root = ETags(tag[1], tag[2], tag[3]);
+        } else {
+          replys.add(ETags(tag[1], tag[2], tag[3]));
+        }
+      }
     }
-    return Thread(etags, ptags);
+    return Thread(root, replys, ptags);
   }
 
   static List<List<String>> toTags(List<ETags> etags, List<PTags> ptags) {
@@ -17,7 +24,7 @@ class Nip10 {
       result.add(["e", etag.eventId, etag.relayURL, etag.marker]);
     }
     for (var ptag in ptags) {
-      result.add(["e", ptag.pubkey, ptag.relayURL]);
+      result.add(["p", ptag.pubkey, ptag.relayURL]);
     }
     return result;
   }
@@ -39,7 +46,8 @@ class PTags {
 }
 
 class Thread {
-  List<ETags> etags;
+  ETags root;
+  List<ETags> replys;
   List<PTags> ptags;
-  Thread(this.etags, this.ptags);
+  Thread(this.root, this.replys, this.ptags);
 }
