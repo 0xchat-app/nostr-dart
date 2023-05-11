@@ -18,7 +18,11 @@ class Nip10 {
     return Thread(root, replys, ptags);
   }
 
-  static List<List<String>> toTags(List<ETags> etags, List<PTags> ptags) {
+  static ETags rootTag(String eventId, String relay) {
+    return ETags(eventId, relay, 'root');
+  }
+
+    static List<List<String>> toTags(List<ETags> etags, List<PTags> ptags) {
     List<List<String>> result = [];
     for (var etag in etags) {
       result.add(["e", etag.eventId, etag.relayURL, etag.marker]);

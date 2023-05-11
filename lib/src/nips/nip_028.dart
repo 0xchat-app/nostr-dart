@@ -71,12 +71,15 @@ class Nip28 {
   }
 
   static Event sendChannelMessage(
-      String channelId, String content, Thread? thread, String privkey) {
+      String channelId, String content, String? relay, Thread? thread, String privkey) {
     List<List<String>> tags = [];
     if (thread != null) {
       List<ETags> eTags = [thread.root];
       eTags.addAll(thread.replys);
       tags = Nip10.toTags(eTags, thread.ptags);
+    }
+    else{
+      tags = Nip10.toTags([Nip10.rootTag(channelId, relay != null ? relay : '')], []);
     }
     Event event =
         Event.from(kind: 42, tags: tags, content: content, privkey: privkey);
