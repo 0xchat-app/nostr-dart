@@ -4,6 +4,13 @@ import 'package:nostr/src/nips/nip_010.dart';
 
 /// Public Chat & Channel
 class Nip28 {
+  static String tagsToChannelId(List<List<String>> tags) {
+    for (var tag in tags) {
+      if (tag[0] == "e") return tag[1];
+    }
+    return '';
+  }
+
   static List<String> tagsToBadges(List<List<String>> tags) {
     List<String> result = [];
     for (var tag in tags) {
@@ -25,6 +32,13 @@ class Nip28 {
       var content = jsonDecode(event.content);
       List<String> badges = tagsToBadges(event.tags);
       return Channel(event.id, content["name"], content["about"],
+          content["picture"], event.pubkey, badges);
+    }
+    else if(event.kind == 41){
+      var content = jsonDecode(event.content);
+      List<String> badges = tagsToBadges(event.tags);
+      String channelId = tagsToChannelId(event.tags);
+      return Channel(channelId, content["name"], content["about"],
           content["picture"], event.pubkey, badges);
     }
     throw Exception("${event.kind} is not nip40 compatible");
