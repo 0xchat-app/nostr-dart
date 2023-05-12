@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:nostr/nostr.dart';
-import 'package:nostr/src/nips/nip_010.dart';
 
 /// Public Chat & Channel
 class Nip28 {
@@ -11,32 +10,14 @@ class Nip28 {
     return '';
   }
 
-  static List<String> tagsToBadges(List<List<String>> tags) {
-    List<String> result = [];
-    for (var tag in tags) {
-      if (tag[0] == "badges") result.add(tag[1]);
-    }
-    return result;
-  }
-
-  static List<List<String>> badgesToTags(List<String> badges) {
-    List<List<String>> result = [];
-    for (var badge in badges) {
-      result.add(["badges", badge]);
-    }
-    return result;
-  }
-
   static Channel getChannel(Event event) {
-    if (event.kind == 40) {
-      var content = jsonDecode(event.content);
-      List<String> badges = tagsToBadges(event.tags);
+    Map content = jsonDecode(event.content);
+    List<String> badges =
+        content.containsKey("badges") ? jsonDecode(content["badges"]) : [];
+    if (event.kind == 40) { // create channel
       return Channel(event.id, content["name"], content["about"],
           content["picture"], event.pubkey, badges);
-    }
-    else if(event.kind == 41){
-      var content = jsonDecode(event.content);
-      List<String> badges = tagsToBadges(event.tags);
+    } else if (event.kind == 41) {  // set channel metadata
       String channelId = tagsToChannelId(event.tags);
       return Channel(channelId, content["name"], content["about"],
           content["picture"], event.pubkey, badges);
@@ -61,11 +42,11 @@ class Nip28 {
       'name': name,
       'about': about,
       'picture': picture,
+      'badges': jsonEncode(badges),
     };
     String content = jsonEncode(map);
-    List<List<String>> tags = badgesToTags(badges);
     Event event =
-        Event.from(kind: 40, tags: tags, content: content, privkey: privkey);
+        Event.from(kind: 40, tags: [], content: content, privkey: privkey);
     return event;
   }
 
@@ -75,25 +56,25 @@ class Nip28 {
       'name': name,
       'about': about,
       'picture': picture,
+      'badges': jsonEncode(badges),
     };
     String content = jsonEncode(map);
-    List<List<String>> tags = badgesToTags(badges);
+    List<List<String>> tags = [];
     tags.add(["e", channelId, relayURL]);
     Event event =
         Event.from(kind: 41, tags: tags, content: content, privkey: privkey);
     return event;
   }
 
-  static Event sendChannelMessage(
-      String channelId, String content, String? relay, Thread? thread, String privkey) {
+  static Event sendChannelMessage(String channelId, String content,
+      String? relay, Thread? thread, String privkey) {
     List<List<String>> tags = [];
     if (thread != null) {
       List<ETags> eTags = [thread.root];
       eTags.addAll(thread.replys);
       tags = Nip10.toTags(eTags, thread.ptags);
-    }
-    else{
-      tags = Nip10.toTags([Nip10.rootTag(channelId, relay != null ? relay : '')], []);
+    } else {
+      tags = Nip10.toTags([Nip10.rootTag(channelId, relay ?? '')], []);
     }
     Event event =
         Event.from(kind: 42, tags: tags, content: content, privkey: privkey);
