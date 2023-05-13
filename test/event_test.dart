@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:bip340/bip340.dart';
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 import 'package:test/test.dart';
 
 void main() {

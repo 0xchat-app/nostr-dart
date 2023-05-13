@@ -1,4 +1,4 @@
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 
 /// Encrypted Direct Message
 class Nip4 {

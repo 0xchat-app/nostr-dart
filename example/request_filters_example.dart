@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 
 void main() async {
 // Create a subscription message request with one or many filters

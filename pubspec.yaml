@@ -1,4 +1,4 @@
-name: nostr_dart
+name: nostr_core_dart
 description: A library for nostr protocol implemented in dart for flutter
 version: 1.0.0
 homepage: https://github.com/0xchat-app/nostr-dart

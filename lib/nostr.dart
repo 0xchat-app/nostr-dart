@@ -1,7 +1,7 @@
 /// Support for doing something awesome.
 ///
 /// More dartdocs go here.
-library nostr_dart;
+library nostr_core_dart;
 
 export 'src/event.dart';
 export 'src/keychain.dart';

@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:kepler/kepler.dart';
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 import 'package:bip340/bip340.dart' as bip340;
 
 

@@ -1,4 +1,4 @@
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 
 class Nip1 {
   static Event setMetadata(String content, String privkey) {

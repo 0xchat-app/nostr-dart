@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:convert/convert.dart';
 import 'package:pointycastle/export.dart';
 import 'package:bip340/bip340.dart' as bip340;
-import 'package:nostr_dart/src/utils.dart';
+import 'package:nostr_core_dart/src/utils.dart';
 
 /// The only object type that exists is the event, which has the following format on the wire:
 ///

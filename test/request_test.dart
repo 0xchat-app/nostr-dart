@@ -1,5 +1,5 @@
-import 'package:nostr_dart/src/filter.dart';
-import 'package:nostr_dart/src/request.dart';
+import 'package:nostr_core_dart/src/filter.dart';
+import 'package:nostr_core_dart/src/request.dart';
 import 'package:test/test.dart';
 
 void main() {

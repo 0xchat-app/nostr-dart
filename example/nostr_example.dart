@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 
 void main() async {
   // Use the Keychain class to manipulate private/public keys and use handy methods encapsulated from dart-bip340

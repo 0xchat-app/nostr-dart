@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 
 class Nip20 {
   static Ok? getOk(String okPayload) {

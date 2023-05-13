@@ -3,7 +3,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:kepler/kepler.dart';
-import 'package:nostr_dart/nostr.dart';
+import 'package:nostr_core_dart/nostr.dart';
 
 class Nip101 {
   static String encryptContent(String fromPubkey, String fromAliasPrivkey,
