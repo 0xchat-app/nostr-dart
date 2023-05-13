@@ -1,4 +1,4 @@
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 
 void main() async {
   String subscriptionId = generate64RandomHexChars();

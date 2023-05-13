@@ -1,2 +1,2 @@
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 

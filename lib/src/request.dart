@@ -1,6 +1,5 @@
 import 'dart:convert';
-
-import 'package:nostr/src/filter.dart';
+import 'package:nostr_dart/src/filter.dart';
 
 /// Used to request events and subscribe to new updates.
 class Request {

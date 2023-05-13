@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 
 void main() {
   String user1 = "877069ebb03f3936910880847c27ec9c0e693b57e68d53b7b5038f86984bcba8";

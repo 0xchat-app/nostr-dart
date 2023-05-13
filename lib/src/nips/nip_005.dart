@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 import 'package:http/http.dart' as http;
 
 /// Mapping Nostr keys to DNS-based internet identifiers

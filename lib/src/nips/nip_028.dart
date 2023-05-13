@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 
 /// Public Chat & Channel
 class Nip28 {

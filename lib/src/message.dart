@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 
 // Used to deserialize any kind of message that a nostr client or relay can transmit.
 class Message {

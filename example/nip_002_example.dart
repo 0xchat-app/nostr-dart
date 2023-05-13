@@ -1,4 +1,4 @@
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 
 void main() {
   // Decode profiles from an event of kind=3

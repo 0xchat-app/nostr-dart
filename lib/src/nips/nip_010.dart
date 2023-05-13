@@ -1,4 +1,4 @@
-import 'package:nostr/nostr.dart';
+import 'package:nostr_dart/nostr.dart';
 
 class Nip10 {
   static Thread fromTags(List<List<String>> tags) {

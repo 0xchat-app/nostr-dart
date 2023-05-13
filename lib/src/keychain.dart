@@ -1,5 +1,5 @@
 import 'package:bip340/bip340.dart' as bip340;
-import 'package:nostr/src/utils.dart';
+import 'package:nostr_dart/src/utils.dart';
 
 /// A keychain encapsulates a public key and a private key, which are used for tasks such as encrypting and decrypting messages, or creating and verifying digital signatures.
 class Keychain {
