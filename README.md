@@ -4,7 +4,7 @@ Forked from https://github.com/ethicnology/dart-nostr/, this is a Dart implement
 
 ## Getting started
 ```sh
-flutter pub add nostr_dart
+flutter pub add nostr_core_dart 
 ```
 
 
