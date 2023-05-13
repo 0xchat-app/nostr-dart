@@ -6,7 +6,7 @@ import 'package:kepler/kepler.dart';
 import 'package:nostr_dart/nostr.dart';
 
 class Nip101 {
-  static String _enContent(String fromPubkey, String fromAliasPrivkey,
+  static String encryptContent(String fromPubkey, String fromAliasPrivkey,
       String toPubkey, String content) {
     Map<String, dynamic> map = {
       'p': fromPubkey,
@@ -38,9 +38,11 @@ class Nip101 {
       String fromAliasPrivkey, String toPubkey, String requestContent) {
     return Event.from(
         kind: 10100,
-        tags: [['p', toPubkey]],
-        content:
-            _enContent(fromPubkey, fromAliasPrivkey, toPubkey, requestContent),
+        tags: [
+          ['p', toPubkey]
+        ],
+        content: encryptContent(
+            fromPubkey, fromAliasPrivkey, toPubkey, requestContent),
         privkey: fromAliasPrivkey);
   }
 
@@ -50,9 +52,11 @@ class Nip101 {
       String fromAliasPrivkey, String toAliasPubkey) {
     return Event.from(
         kind: 10101,
-        tags: [['p', toAliasPubkey]],
-        content:
-            _enContent(fromPubkey, fromAliasPrivkey, toAliasPubkey, "accept"),
+        tags: [
+          ['p', toAliasPubkey]
+        ],
+        content: encryptContent(
+            fromPubkey, fromAliasPrivkey, toAliasPubkey, "accept"),
         privkey: fromAliasPrivkey);
   }
 
@@ -62,9 +66,11 @@ class Nip101 {
       String fromAliasPrivkey, String toAliasPubkey) {
     return Event.from(
         kind: 10102,
-        tags: [['p', toAliasPubkey]],
-        content:
-            _enContent(fromPubkey, fromAliasPrivkey, toAliasPubkey, "reject"),
+        tags: [
+          ['p', toAliasPubkey]
+        ],
+        content: encryptContent(
+            fromPubkey, fromAliasPrivkey, toAliasPubkey, "reject"),
         privkey: fromAliasPrivkey);
   }
 
@@ -74,25 +80,27 @@ class Nip101 {
       String fromAliasPrivkey, String toAliasPubkey) {
     return Event.from(
         kind: 10103,
-        tags: [['p', toAliasPubkey]],
-        content:
-            _enContent(fromPubkey, fromAliasPrivkey, toAliasPubkey, "remove"),
+        tags: [
+          ['p', toAliasPubkey]
+        ],
+        content: encryptContent(
+            fromPubkey, fromAliasPrivkey, toAliasPubkey, "remove"),
         privkey: fromAliasPrivkey);
   }
 
   static String getP(Event event) {
-    if (event.tags != null && event.tags[0].length > 1 &&
+    if (event.tags != null &&
+        event.tags[0].length > 1 &&
         event.tags[0][0] == 'p') {
       return event.tags[0][1];
     }
     return '';
   }
 
-  static Alias getRequest(
-      Event event, String pubkey, String privkey) {
+  static Alias getRequest(Event event, String pubkey, String privkey) {
     Map<String, dynamic> map = _deContent(event.content, privkey, event.pubkey);
-    return Alias(pubkey, "", map['p'], event.pubkey, map['content'],
-        event.kind);
+    return Alias(
+        pubkey, "", map['p'], event.pubkey, map['content'], event.kind);
   }
 
   static Alias getAccept(

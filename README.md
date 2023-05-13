@@ -1,7 +1,6 @@
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
-[![pub package](https://img.shields.io/pub/v/nostr.svg)](https://pub.dartlang.org/packages/nostr)
 # nostr_dart
-Forked from https://github.com/ethicnology/dart-nostr/, this is a Dart implementation of the Nostr protocol. This library provides an expanded set of functionalities and enhancements, aimed to improve performance and ease of use within the context of 0xchat.
+Forked from https://github.com/ethicnology/dart-nostr/, this is a Dart implementation of the Nostr protocol, provides an expanded set of functionalities and enhancements, aimed to improve performance and ease of use within the context of 0xchat.
 
 ## Getting started
 ```sh
