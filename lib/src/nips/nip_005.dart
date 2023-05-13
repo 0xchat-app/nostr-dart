@@ -13,7 +13,7 @@ class Nip5 {
   ///     "b0635d6a9851d3aed0cd6c495b282167acf761729078d975fc341b22650b07b9": [ "wss://relay.example.com", "wss://relay2.example.com" ]
   ///   }
   /// }
-  static Future<Did?> getDid(String name, String domain) async {
+  static Future<DNS?> getDNS(String name, String domain) async {
     final response = await http
         .get(Uri.parse('https://$domain/.well-known/nostr.json?name=$name'));
 
@@ -21,14 +21,14 @@ class Nip5 {
       var jsonResponse = jsonDecode(response.body);
       String pubkey = jsonResponse["names"][name];
       List<String> relays = jsonResponse["relays"][pubkey];
-      return Did(name, domain, pubkey, relays);
+      return DNS(name, domain, pubkey, relays);
     } else {
       print('Request failed with status: ${response.statusCode}.');
       return null;
     }
   }
 
-  static Event setDid(String name, String domain, String privkey) {
+  static Event setDNS(String name, String domain, String privkey) {
     assert(isValidName(name) == true);
     String content = generateContent(name, domain);
     return Event.from(kind: 0, tags: [], content: content, privkey: privkey);
@@ -50,7 +50,7 @@ class Nip5 {
 }
 
 ///
-class Did {
+class DNS {
   String name;
 
   String domain;
@@ -60,5 +60,5 @@ class Did {
   List<String> relays;
 
   /// Default constructor
-  Did(this.name, this.domain, this.pubkey, this.relays);
+  DNS(this.name, this.domain, this.pubkey, this.relays);
 }
