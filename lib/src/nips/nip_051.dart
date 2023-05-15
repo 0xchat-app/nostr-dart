@@ -9,9 +9,9 @@ class Nip51 {
       result.add([
         "p",
         item.pubkey,
-        item.aliasPubKey ?? "",
         item.mainRelay ?? "",
-        item.petName ?? ""
+        item.petName ?? "",
+        item.aliasPubKey ?? "",
       ]);
     }
     return result;
@@ -32,9 +32,9 @@ class Nip51 {
       list.add([
         'p',
         item.pubkey,
-        item.aliasPubKey ?? "",
         item.mainRelay ?? "",
-        item.petName ?? ""
+        item.petName ?? "",
+        item.aliasPubKey ?? "",
       ]);
     }
     String content = jsonEncode(list);
@@ -139,7 +139,7 @@ class People {
   String? petName;
 
   /// Default constructor
-  People(this.pubkey, this.aliasPubKey, this.mainRelay, this.petName);
+  People(this.pubkey, this.mainRelay, this.petName, this.aliasPubKey);
 }
 
 class Lists {
