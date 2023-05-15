@@ -1,5 +1,3 @@
-import 'package:nostr_core_dart/nostr.dart';
-
 class Nip10 {
   static Thread fromTags(List<List<String>> tags) {
     ETags root = ETags('', '', '');
@@ -22,7 +20,7 @@ class Nip10 {
     return ETags(eventId, relay, 'root');
   }
 
-    static List<List<String>> toTags(List<ETags> etags, List<PTags> ptags) {
+  static List<List<String>> toTags(List<ETags> etags, List<PTags> ptags) {
     List<List<String>> result = [];
     for (var etag in etags) {
       result.add(["e", etag.eventId, etag.relayURL, etag.marker]);
