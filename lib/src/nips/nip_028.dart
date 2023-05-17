@@ -12,8 +12,9 @@ class Nip28 {
 
   static Channel getChannel(Event event) {
     Map content = jsonDecode(event.content);
-    List<String> badges =
+    List<dynamic> badgesObject =
         content.containsKey("badges") ? jsonDecode(content["badges"]) : [];
+    List<String> badges = badgesObject.cast<String>();
     if (event.kind == 40) { // create channel
       return Channel(event.id, content["name"], content["about"],
           content["picture"], event.pubkey, badges);
