@@ -55,10 +55,11 @@ class Nip4 {
     }
     String iv = content.substring(ivIndex + "?iv=".length, content.length);
     String encString = content.substring(0, ivIndex);
-
-    String result = decrypt(privkey, '02$pubkey', encString, iv);
-
-    return result;
+    try {
+      return decrypt(privkey, '02$pubkey', encString, iv);
+    } catch (e) {
+      return "";
+    }
   }
 
   static Event encode(String sender, String receiver, String content,
