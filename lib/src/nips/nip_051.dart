@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bip340/bip340.dart' as bip340;
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Lists
@@ -51,53 +52,67 @@ class Nip51 {
     return encrypt(privkey, '02$pubkey', content);
   }
 
-  static List<People> fromContent(
+  static Map<String, List> fromContent(
       String content, String privkey, String pubkey) {
-    List<People> item = [];
+    List<People> people = [];
+    List<String> bookmarks = [];
     int ivIndex = content.indexOf("?iv=");
     if (ivIndex <= 0) {
       print("Invalid content, could not get ivIndex: $content");
     }
     String iv = content.substring(ivIndex + "?iv=".length, content.length);
     String encString = content.substring(0, ivIndex);
-    String deContent = decrypt(privkey, '02$pubkey', encString, iv);
+    String deContent =
+        decrypt(privkey, "02$pubkey", encString, iv);
     for (List tag in jsonDecode(deContent)) {
       if (tag[0] == "p") {
-        item.add(People(tag[1], tag.length > 2 ? tag[2] : "",
+        people.add(People(tag[1], tag.length > 2 ? tag[2] : "",
             tag.length > 3 ? tag[3] : "", tag.length > 4 ? tag[4] : ""));
+      } else if (tag[0] == "e") {
+        // bookmark
+        bookmarks.add(tag[1]);
       }
     }
-    return item;
+    return {"people": people, "bookmarks": bookmarks};
   }
 
-  static Event createMute(List<People> items, String privkey, String pubkey) {
+  static Event createMutePeople(List<People> items, List<People> encryptedItems,
+      String privkey, String pubkey) {
     return Event.from(
         kind: 10000,
         tags: peoplesToTags(items),
-        content: peoplesToContent(items, privkey, pubkey),
+        content: peoplesToContent(encryptedItems, privkey, pubkey),
+        privkey: privkey);
+  }
+
+  static createPinEvent(List<String> items, List<String> encryptedItems,
+      String privkey, String pubkey) {
+    return Event.from(
+        kind: 10001,
+        tags: bookmarksToTags(items),
+        content: bookmarksToContent(encryptedItems, privkey, pubkey),
         privkey: privkey);
   }
 
   static Event createCategorizedPeople(String identifier, List<People> items,
-      List<People> contentItems, String privkey, String pubkey) {
+      List<People> encryptedItems, String privkey, String pubkey) {
     List<List<String>> tags = peoplesToTags(items);
     tags.add(["d", identifier]);
     return Event.from(
         kind: 30000,
         tags: tags,
-        content: peoplesToContent(contentItems, privkey, pubkey),
+        content: peoplesToContent(encryptedItems, privkey, pubkey),
         privkey: privkey);
   }
 
-  static createPin() {}
   static createCategorizedBookmarks(String identifier, List<String> items,
-      List<String> contentItems, String privkey, String pubkey) {
+      List<String> encryptedItems, String privkey, String pubkey) {
     List<List<String>> tags = bookmarksToTags(items);
     tags.add(["d", identifier]);
     return Event.from(
         kind: 30001,
         tags: tags,
-        content: bookmarksToContent(contentItems, privkey, pubkey),
+        content: bookmarksToContent(encryptedItems, privkey, pubkey),
         privkey: privkey);
   }
 
@@ -121,9 +136,10 @@ class Nip51 {
       }
       if (tag[0] == "d") identifier = tag[1];
     }
-    String pubkey = Keychain.getPublicKey(privkey);
-    List<People> content = Nip51.fromContent(event.content, privkey, pubkey);
-    people.addAll(content);
+    String pubkey = bip340.getPublicKey(privkey);
+    Map content = Nip51.fromContent(event.content, privkey, pubkey);
+    people.addAll(content["people"]);
+    bookmarks.addAll(content["bookmarks"]);
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
 
@@ -134,9 +150,9 @@ class Nip51 {
 ///
 class People {
   String pubkey;
-  String? aliasPubKey;
   String? mainRelay;
   String? petName;
+  String? aliasPubKey;
 
   /// Default constructor
   People(this.pubkey, this.mainRelay, this.petName, this.aliasPubKey);

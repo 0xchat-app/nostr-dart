@@ -3,62 +3,139 @@ import 'package:nostr_core_dart/nostr.dart';
 
 /// Public Chat & Channel
 class Nip28 {
-  static String tagsToChannelId(List<List<String>> tags) {
-    for (var tag in tags) {
-      if (tag[0] == "e") return tag[1];
+  static Channel getChannelCreation(Event event) {
+    try {
+      Map content = jsonDecode(event.content);
+      if (event.kind == 40) {
+        // create channel
+        Map<String, String> additional = Map.from(content);
+        String? name = additional.remove("name");
+        String? about = additional.remove("about");
+        String? picture = additional.remove("picture");
+        return Channel(
+            event.id, name!, about!, picture!, event.pubkey, additional);
+      } else {
+        throw Exception("${event.kind} is not nip28 compatible");
+      }
+    } catch (e) {
+      throw Exception(e.toString());
     }
-    return '';
   }
 
-  static Channel getChannel(Event event) {
-    Map content = jsonDecode(event.content);
-    List<dynamic> badgesObject =
-        content.containsKey("badges") ? jsonDecode(content["badges"]) : [];
-    List<String> badges = badgesObject.cast<String>();
-    if (event.kind == 40) { // create channel
-      return Channel(event.id, content["name"], content["about"],
-          content["picture"], event.pubkey, badges);
-    } else if (event.kind == 41) {  // set channel metadata
-      String channelId = tagsToChannelId(event.tags);
-      return Channel(channelId, content["name"], content["about"],
-          content["picture"], event.pubkey, badges);
+  static Channel getChannelMetadata(Event event) {
+    try {
+      Map content = jsonDecode(event.content);
+      if (event.kind == 41) {
+        // create channel
+        Map<String, String> additional = Map.from(content);
+        String? name = additional.remove("name");
+        String? about = additional.remove("about");
+        String? picture = additional.remove("picture");
+        String? channelId;
+        String? relay;
+        for (var tag in event.tags) {
+          if (tag[0] == "e") {
+            channelId = tag[1];
+            relay = tag[2];
+          }
+        }
+        Channel result = Channel(
+            channelId!, name!, about!, picture!, event.pubkey, additional);
+        result.relay = relay;
+        return result;
+      } else {
+        throw Exception("${event.kind} is not nip28 compatible");
+      }
+    } catch (e) {
+      throw Exception(e.toString());
     }
-    throw Exception("${event.kind} is not nip40 compatible");
   }
 
   static ChannelMessage getChannelMessage(Event event) {
-    if (event.kind == 42) {
-      var content = event.content;
-      Thread thread = Nip10.fromTags(event.tags);
-      String channelId = thread.root.eventId;
-      return ChannelMessage(
-          channelId, event.pubkey, content, thread, event.createdAt);
+    try {
+      if (event.kind == 42) {
+        var content = event.content;
+        Thread thread = Nip10.fromTags(event.tags);
+        String channelId = thread.root.eventId;
+        return ChannelMessage(
+            channelId, event.pubkey, content, thread, event.createdAt);
+      }
+      throw Exception("${event.kind} is not nip28 compatible");
+    } catch (e) {
+      throw Exception(e.toString());
     }
-    throw Exception("${event.kind} is not nip42 compatible");
+  }
+
+  static ChannelMessageHidden getMessageHidden(Event event) {
+    try {
+      if (event.kind == 43) {
+        String? messageId;
+        for (var tag in event.tags) {
+          if (tag[0] == "e") {
+            messageId = tag[1];
+            break;
+          }
+        }
+        Map content = jsonDecode(event.content);
+        String reason = content['reason'];
+        return ChannelMessageHidden(
+            event.pubkey, messageId!, reason, event.createdAt);
+      }
+      throw Exception("${event.kind} is not nip28(hide message) compatible");
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  static ChannelUserMuted getUserMuted(Event event) {
+    try {
+      if (event.kind == 44) {
+        String? userPubkey;
+        for (var tag in event.tags) {
+          if (tag[0] == "p") {
+            userPubkey = tag[1];
+            break;
+          }
+        }
+        Map content = jsonDecode(event.content);
+        String reason = content['reason'];
+        return ChannelUserMuted(
+            event.pubkey, userPubkey!, reason, event.createdAt);
+      }
+      throw Exception("${event.kind} is not nip28(mute user) compatible");
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 
   static Event createChannel(String name, String about, String picture,
-      List<String> badges, String privkey) {
+      Map<String, String> additional, String privkey) {
     Map<String, dynamic> map = {
       'name': name,
       'about': about,
       'picture': picture,
-      'badges': jsonEncode(badges),
     };
+    map.addAll(additional);
     String content = jsonEncode(map);
     Event event =
         Event.from(kind: 40, tags: [], content: content, privkey: privkey);
     return event;
   }
 
-  static Event setChannelMetaData(String name, String about, String picture,
-      List<String> badges, String channelId, String relayURL, String privkey) {
+  static Event setChannelMetaData(
+      String name,
+      String about,
+      String picture,
+      Map<String, String> additional,
+      String channelId,
+      String relayURL,
+      String privkey) {
     Map<String, dynamic> map = {
       'name': name,
       'about': about,
       'picture': picture,
-      'badges': jsonEncode(badges),
     };
+    map.addAll(additional);
     String content = jsonEncode(map);
     List<List<String>> tags = [];
     tags.add(["e", channelId, relayURL]);
@@ -67,16 +144,13 @@ class Nip28 {
     return event;
   }
 
-  static Event sendChannelMessage(String channelId, String content,
-      String? relay, Thread? thread, String privkey) {
+  static Event sendChannelMessage(
+      String channelId, String content, String privkey,
+      {String? relay, List<ETag>? etags, List<PTag>? ptags}) {
     List<List<String>> tags = [];
-    if (thread != null) {
-      List<ETags> eTags = [thread.root];
-      eTags.addAll(thread.replys);
-      tags = Nip10.toTags(eTags, thread.ptags);
-    } else {
-      tags = Nip10.toTags([Nip10.rootTag(channelId, relay ?? '')], []);
-    }
+    Thread t =
+        Thread(Nip10.rootTag(channelId, relay ?? ''), etags ?? [], ptags ?? []);
+    tags = Nip10.toTags(t);
     Event event =
         Event.from(kind: 42, tags: tags, content: content, privkey: privkey);
     return event;
@@ -119,15 +193,16 @@ class Channel {
 
   String picture;
 
-  /// kind40 pubkey
   String owner;
 
-  /// only users with badges can send messages, avoid spam
-  List<String> badges;
+  String? relay;
+
+  /// Clients MAY add additional metadata fields.
+  Map<String, String> additional;
 
   /// Default constructor
   Channel(this.channelId, this.name, this.about, this.picture, this.owner,
-      this.badges);
+      this.additional);
 }
 
 /// messages in channel
@@ -140,4 +215,24 @@ class ChannelMessage {
 
   ChannelMessage(
       this.channelId, this.sender, this.content, this.thread, this.createTime);
+}
+
+class ChannelMessageHidden {
+  String operator;
+  String messageId;
+  String reason;
+  int createTime;
+
+  ChannelMessageHidden(
+      this.operator, this.messageId, this.reason, this.createTime);
+}
+
+class ChannelUserMuted {
+  String operator;
+  String userPubkey;
+  String reason;
+  int createTime;
+
+  ChannelUserMuted(
+      this.operator, this.userPubkey, this.reason, this.createTime);
 }

@@ -1,37 +1,42 @@
 import 'dart:convert';
 import 'package:nostr_core_dart/nostr.dart';
-import 'package:http/http.dart' as http;
 
 /// Mapping Nostr keys to DNS-based internet identifiers
 class Nip5 {
-  ///```It will make a GET request to https://example.com/.well-known/nostr.json?name=bob and get back a response that will look like
-  ///{
-  ///   "names": {
-  ///     "bob": "b0635d6a9851d3aed0cd6c495b282167acf761729078d975fc341b22650b07b9"
-  ///   },
-  ///   "relays": {
-  ///     "b0635d6a9851d3aed0cd6c495b282167acf761729078d975fc341b22650b07b9": [ "wss://relay.example.com", "wss://relay2.example.com" ]
-  ///   }
+  /// decode setmetadata event
+  /// {
+  ///   "pubkey": "b0635d6a9851d3aed0cd6c495b282167acf761729078d975fc341b22650b07b9",
+  ///   "kind": 0,
+  ///   "content": "{\"name\": \"bob\", \"nip05\": \"bob@example.com\"}"
   /// }
-  static Future<DNS?> getDNS(String name, String domain) async {
-    final response = await http
-        .get(Uri.parse('https://$domain/.well-known/nostr.json?name=$name'));
-
-    if (response.statusCode == 200) {
-      var jsonResponse = jsonDecode(response.body);
-      String pubkey = jsonResponse["names"][name];
-      List<String> relays = jsonResponse["relays"][pubkey];
-      return DNS(name, domain, pubkey, relays);
-    } else {
-      print('Request failed with status: ${response.statusCode}.');
-      return null;
+  static Future<DNS?> decode(Event event) async {
+    if (event.kind == 0) {
+      try {
+        Map map = jsonDecode(event.content);
+        String dns = map['nip05'];
+        List<dynamic> relays = map['relays'];
+        if (dns.isNotEmpty) {
+          List<dynamic> parts = dns.split('@');
+          String name = parts[0];
+          String domain = parts[1];
+          return DNS(name, domain, event.pubkey, relays.map((e) => e.toString()).toList());
+        }
+      } catch (e) {
+        throw Exception(e.toString());
+      }
     }
+    throw Exception("${event.kind} is not nip1 compatible");
   }
 
-  static Event setDNS(String name, String domain, String privkey) {
-    assert(isValidName(name) == true);
-    String content = generateContent(name, domain);
-    return Event.from(kind: 0, tags: [], content: content, privkey: privkey);
+  /// encode set metadata event
+  static Event encode(
+      String name, String domain, List<String> relays, String privkey) {
+    if (isValidName(name) && isValidDomain(domain)) {
+      String content = generateContent(name, domain, relays);
+      return Nip1.setMetadata(content, privkey);
+    } else {
+      throw Exception("not a valid name or domain!");
+    }
   }
 
   static bool isValidName(String input) {
@@ -39,12 +44,21 @@ class Nip5 {
     return regExp.hasMatch(input);
   }
 
-  static String generateContent(String name, String domain) {
+  static bool isValidDomain(String domain) {
+    RegExp regExp = RegExp(
+      r'^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$',
+      caseSensitive: false,
+    );
+    return regExp.hasMatch(domain);
+  }
+
+  static String generateContent(
+      String name, String domain, List<String> relays) {
     Map<String, dynamic> map = {
       'name': name,
-      'nip5': '$name@$domain',
+      'nip05': '$name@$domain',
+      'relays': relays,
     };
-
     return jsonEncode(map);
   }
 }

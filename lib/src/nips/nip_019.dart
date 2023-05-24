@@ -16,7 +16,7 @@ class Nip19 {
   }
 
   static String decodePubkey(String data) {
-    Map map = decode(data);
+    Map map = bech32Decode(data);
     if (map["prefix"] == "npub") {
       return map["data"];
     } else {
@@ -25,7 +25,7 @@ class Nip19 {
   }
 
   static String decodePrivkey(String data) {
-    Map map = decode(data);
+    Map map = bech32Decode(data);
     if (map["prefix"] == "nsec") {
       return map["data"];
     } else {
@@ -34,65 +34,58 @@ class Nip19 {
   }
 
   static String decodeNote(String data) {
-    Map map = decode(data);
+    Map map = bech32Decode(data);
     if (map["prefix"] == "note") {
       return map["data"];
     } else {
       return "";
     }
   }
+}
 
-  static encode(String prefix, String content) {
-    return bech32Encode(prefix, content);
-  }
+/// help functions
 
-  static String bech32Encode(String prefix, String hexData) {
-    final data = hex.decode(hexData);
-    final convertedData = convertBits(data, 8, 5, true);
-    final bech32Data = Bech32(prefix, convertedData);
-    return bech32.encode(bech32Data);
-  }
+String bech32Encode(String prefix, String hexData) {
+  final data = hex.decode(hexData);
+  final convertedData = convertBits(data, 8, 5, true);
+  final bech32Data = Bech32(prefix, convertedData);
+  return bech32.encode(bech32Data);
+}
 
-  static Map<String, String> decode(String data) {
-    return bech32Decode(data);
-  }
+Map<String, String> bech32Decode(String bech32Data) {
+  final decodedData = bech32.decode(bech32Data);
+  final convertedData = convertBits(decodedData.data, 5, 8, false);
+  final hexData = hex.encode(convertedData);
 
-  static Map<String, String> bech32Decode(String bech32Data) {
-    final decodedData = bech32.decode(bech32Data);
-    final convertedData = convertBits(decodedData.data, 5, 8, false);
-    final hexData = hex.encode(convertedData);
+  return {'prefix': decodedData.hrp, 'data': hexData};
+}
 
-    return {'prefix': decodedData.hrp, 'data': hexData};
-  }
+List<int> convertBits(List<int> data, int fromBits, int toBits, bool pad) {
+  var acc = 0;
+  var bits = 0;
+  final maxv = (1 << toBits) - 1;
+  final result = <int>[];
 
-  static List<int> convertBits(
-      List<int> data, int fromBits, int toBits, bool pad) {
-    var acc = 0;
-    var bits = 0;
-    final maxv = (1 << toBits) - 1;
-    final result = <int>[];
-
-    for (final value in data) {
-      if (value < 0 || value >> fromBits != 0) {
-        throw Exception('Invalid value: $value');
-      }
-      acc = (acc << fromBits) | value;
-      bits += fromBits;
-
-      while (bits >= toBits) {
-        bits -= toBits;
-        result.add((acc >> bits) & maxv);
-      }
+  for (final value in data) {
+    if (value < 0 || value >> fromBits != 0) {
+      throw Exception('Invalid value: $value');
     }
+    acc = (acc << fromBits) | value;
+    bits += fromBits;
 
-    if (pad) {
-      if (bits > 0) {
-        result.add((acc << (toBits - bits)) & maxv);
-      }
-    } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv) != 0) {
-      throw Exception('Invalid data');
+    while (bits >= toBits) {
+      bits -= toBits;
+      result.add((acc >> bits) & maxv);
     }
-
-    return result;
   }
+
+  if (pad) {
+    if (bits > 0) {
+      result.add((acc << (toBits - bits)) & maxv);
+    }
+  } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv) != 0) {
+    throw Exception('Invalid data');
+  }
+
+  return result;
 }
