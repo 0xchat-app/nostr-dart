@@ -33,6 +33,17 @@ class Nip58 {
     }
   }
 
+  static Event setBadgeDefinition(String identifies, String name,
+      String description, BadgeImage image, BadgeImage thumb, String privkey) {
+    List<List<String>> tags = [];
+    tags.add(['d', identifies]);
+    tags.add(['name', name]);
+    tags.add(['description', description]);
+    tags.add(['image', image.url, image.size]);
+    tags.add(['thumb', thumb.url, thumb.size]);
+    return Event.from(kind: 30009, tags: tags, content: '', privkey: privkey);
+  }
+
   // {
   //   "id": "<badge award event id>",
   //   "kind": 8,

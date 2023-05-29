@@ -6,7 +6,7 @@ class Nip33 {
   static EventCoordinates getEventCoordinates(List<String> tag) {
     if (tag[0] == 'a') {
       List<dynamic> parts = tag[1].split(':');
-      int kind = parts[0];
+      int kind = int.parse(parts[0]);
       String pubkey = parts[1];
       String identifier = parts[2];
       String? relay;
