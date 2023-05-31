@@ -62,7 +62,7 @@ class Nip4 {
     }
   }
 
-  static Event encode(String sender, String receiver, String content,
+  static Event encode(String receiver, String content,
       String replyId, String privkey) {
     String enContent = encryptContent(content, privkey, receiver);
     List<List<String>> tags = toTags(receiver, replyId);
