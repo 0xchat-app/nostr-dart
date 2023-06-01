@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:pointycastle/export.dart';
 import 'package:kepler/kepler.dart';
+import 'package:bip340/bip340.dart' as bip340;
 
 /// generates 32 random bytes converted in hex
 String generate64RandomHexChars() {
@@ -217,8 +218,18 @@ String generateStrongPassword(int length) {
   const numbers = '0123456789';
   const specialCharacters = r'!@#$%^&*()_+-=[]{}|;:,.<>?';
 
-  final characters = '$lowerCaseLetters$upperCaseLetters$numbers$specialCharacters';
+  final characters =
+      '$lowerCaseLetters$upperCaseLetters$numbers$specialCharacters';
 
   // generateStrongPassword
-  return List.generate(length, (index) => characters[random.nextInt(characters.length)]).join();
+  return List.generate(
+      length, (index) => characters[random.nextInt(characters.length)]).join();
+}
+
+String signData(List data, String privateKey) {
+  String serializedData = json.encode(data);
+  Uint8List hash =
+      SHA256Digest().process(Uint8List.fromList(utf8.encode(serializedData)));
+  String aux = generate64RandomHexChars();
+  return bip340.sign(privateKey, hex.encode(hash), aux);
 }
