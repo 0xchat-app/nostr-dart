@@ -225,7 +225,20 @@ void main() {
   });
 
   test('Event.deserialize throw', () {
-    expect(() => Event.deserialize([]), throwsException);
+    Event event = Event(
+        '92025e05149429f8fdfd88269aa21aaeefed1d4e5bec7c4ce9cff386c55a7639',
+        'c773d875158d367b9aadfc61de320ca2dfbbbc506519741c2aaf466135bd549f',
+        1685609904,
+        10100,
+        [
+          [
+            "p",
+            "8257bec205ae33441a3c231a21ebec3e19781cafa65c9d5f72e4e1e2333da85e"
+          ]
+        ],
+        'ZfGX4zApxAHr7ia0kML27NoFWn54cG05SnX0ybBz9MG7LJN87xIBqIt7BhG/310sVdCvfVcgJcSIGq4d0JyqJ8QMP5UFQvHigfwxQ+if6fMSA7ToxyAsjCdhzOqwLUn5nn41bHnW1XihCbKG8Vcs7BGTej2zgIHZgIf1vjykVhZnZ3SEfBbwObed3ZWbVoyc3gQeHqk0WQ1CTtC3nD4xFUG6/5LhGqq6UYNThS78417MuuanK9GivlCdBbjG2u3OdEx7tqxqjZiL8PL6xXZnw38//8MfKiDpLGIoN/N+aXMxImLKZskpJmxjZUnPLDwy6oBT3wbJF6L3hUhV7kCYArh0FmqHT6RibExSHZ3vwWUzUEjYPFLIHD94WOgzu12TQ7s/4mRFwXoAQBwmxOi9th0rST4cckv4luqKCiJ6LsQ=?iv=f59jD5q26UIvJhlfKbGglA==',
+        'cf30c50dbdd719b0e89250d94253fed7b27bf0a1178c846a32f867f6bca36743da68ad2b5e2a0375639d57becba7cc70ea850f5f4da42fde06941ac6816260');
+    expect(event.isValid(), true);
   });
 
   test('Event.partial', () {
