@@ -1,8 +1,7 @@
 import 'dart:math';
-
-import 'package:convert/convert.dart';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:convert/convert.dart';
 import 'package:pointycastle/export.dart';
 import 'package:kepler/kepler.dart';
 import 'package:bip340/bip340.dart' as bip340;
@@ -232,4 +231,11 @@ String signData(List data, String privateKey) {
       SHA256Digest().process(Uint8List.fromList(utf8.encode(serializedData)));
   String aux = generate64RandomHexChars();
   return bip340.sign(privateKey, hex.encode(hash), aux);
+}
+
+Uint8List getSharedSecret(String privateString, String publicString) {
+  List<List<int>> byteSecret =
+      Kepler.byteSecret(privateString, '02$publicString');
+  final secretIV = byteSecret;
+  return Uint8List.fromList(secretIV[0]);
 }
