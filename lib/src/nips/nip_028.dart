@@ -66,20 +66,24 @@ class Nip28 {
     }
   }
 
+  static String? tagsToMessageId(List<List<String>> tags) {
+    String? messageId;
+    for (var tag in tags) {
+      if (tag[0] == "e") {
+        messageId = tag[1];
+        break;
+      }
+    }
+    return messageId;
+  }
+
   static ChannelMessageHidden getMessageHidden(Event event) {
     try {
       if (event.kind == 43) {
-        String? messageId;
-        for (var tag in event.tags) {
-          if (tag[0] == "e") {
-            messageId = tag[1];
-            break;
-          }
-        }
         Map content = jsonDecode(event.content);
         String reason = content['reason'];
-        return ChannelMessageHidden(
-            event.pubkey, messageId!, reason, event.createdAt);
+        return ChannelMessageHidden(event.pubkey, tagsToMessageId(event.tags)!,
+            reason, event.createdAt);
       }
       throw Exception("${event.kind} is not nip28(hide message) compatible");
     } catch (e) {

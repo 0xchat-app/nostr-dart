@@ -232,10 +232,3 @@ String signData(List data, String privateKey) {
   String aux = generate64RandomHexChars();
   return bip340.sign(privateKey, hex.encode(hash), aux);
 }
-
-Uint8List getSharedSecret(String privateString, String publicString) {
-  List<List<int>> byteSecret =
-      Kepler.byteSecret(privateString, '02$publicString');
-  final secretIV = byteSecret;
-  return Uint8List.fromList(secretIV[0]);
-}

@@ -21,6 +21,13 @@ class Nip101 {
     return bip340.sign(privateKey, generateId(data), aux);
   }
 
+  static Uint8List getSharedSecret(String privateString, String publicString) {
+    List<List<int>> byteSecret =
+    Kepler.byteSecret(privateString, '02$publicString');
+    final secretIV = byteSecret;
+    return Uint8List.fromList(secretIV[0]);
+  }
+
   static bool isValid(String verifyId, String pubkey, String sig) {
     if (bip340.verify(pubkey, verifyId, sig)) {
       return true;

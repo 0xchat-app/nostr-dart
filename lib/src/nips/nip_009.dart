@@ -16,15 +16,19 @@ class Nip9 {
   }
 
   static DeleteEvent? toDeleteEvent(Event event) {
-    List<String> deleteEvents = [];
-    for (var tag in event.tags) {
-      if (tag[0] == "e") deleteEvents.add(tag[1]);
-    }
     return DeleteEvent(
-        event.pubkey, deleteEvents, event.content, event.createdAt);
+        event.pubkey, tagsToList(event.tags), event.content, event.createdAt);
   }
 
-  static decode(Event event) {
+  static List<String> tagsToList(List<List<String>> tags) {
+    List<String> deleteEvents = [];
+    for (var tag in tags) {
+      if (tag[0] == "e") deleteEvents.add(tag[1]);
+    }
+    return deleteEvents;
+  }
+
+  static DeleteEvent? decode(Event event) {
     if (event.kind == 5) {
       return toDeleteEvent(event);
     }
