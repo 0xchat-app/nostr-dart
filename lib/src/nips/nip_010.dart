@@ -37,11 +37,15 @@ class Nip10 {
     List<List<String>> result = [];
     result.add(
         ["e", thread.root.eventId, thread.root.relayURL, thread.root.marker]);
-    for (var etag in thread.etags) {
-      result.add(["e", etag.eventId, etag.relayURL, etag.marker]);
+    if(thread.etags != null){
+      for (var etag in thread.etags!) {
+        result.add(["e", etag.eventId, etag.relayURL, etag.marker]);
+      }
     }
-    for (var ptag in thread.ptags) {
-      result.add(["p", ptag.pubkey, ptag.relayURL]);
+    if(thread.ptags != null){
+      for (var ptag in thread.ptags!) {
+        result.add(["p", ptag.pubkey, ptag.relayURL]);
+      }
     }
     return result;
   }
@@ -64,7 +68,7 @@ class PTag {
 
 class Thread {
   ETag root;
-  List<ETag> etags;
-  List<PTag> ptags;
+  List<ETag>? etags;
+  List<PTag>? ptags;
   Thread(this.root, this.etags, this.ptags);
 }

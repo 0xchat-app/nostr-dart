@@ -78,7 +78,7 @@ class Nip4 {
   static List<List<String>> toTags(String p, String e) {
     List<List<String>> result = [];
     result.add(["p", p]);
-    if (e.isNotEmpty) result.add(["e", e]);
+    if (e.isNotEmpty) result.add(["e", e, '', 'reply']);
     return result;
   }
 }
