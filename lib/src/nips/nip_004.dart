@@ -38,7 +38,7 @@ class Nip4 {
       if (tag[0] == "e") replyId = tag[1];
     }
 
-    if (receiver.isNotEmpty && receiver.compareTo(pubkey) == 0) {
+    if (receiver.isNotEmpty) {
       content = decryptContent(event.content, privkey, sender);
     } else {
       throw Exception("not correct receiver, is not nip4 compatible");
