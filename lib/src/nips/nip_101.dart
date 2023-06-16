@@ -154,7 +154,7 @@ class Nip101 {
     Map<String, dynamic> map =
         decryptContent(event.createdAt, event.content, privkey, event.pubkey);
     return Alias(
-        pubkey, "", map['p'], event.pubkey, map['content'], event.kind);
+        pubkey, "", map['p'], event.pubkey, map['content'], event.kind, event.createdAt);
   }
 
   static Alias getAccept(
@@ -162,7 +162,7 @@ class Nip101 {
     Map<String, dynamic> map = decryptContent(
         event.createdAt, event.content, aliasPrikey, event.pubkey);
     return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
-        event.kind);
+        event.kind, event.createdAt);
   }
 
   static Alias getReject(
@@ -170,7 +170,7 @@ class Nip101 {
     Map<String, dynamic> map = decryptContent(
         event.createdAt, event.content, aliasPrikey, event.pubkey);
     return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
-        event.kind);
+        event.kind, event.createdAt);
   }
 
   static Alias getRemove(
@@ -178,7 +178,7 @@ class Nip101 {
     Map<String, dynamic> map = decryptContent(
         event.createdAt, event.content, aliasPrikey, event.pubkey);
     return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
-        event.kind);
+        event.kind, event.createdAt);
   }
 }
 
@@ -190,7 +190,8 @@ class Alias {
 
   String content;
   int kind;
+  int createTime;
 
   Alias(this.fromPubkey, this.fromAliasPubkey, this.toPubkey,
-      this.toAliasPubkey, this.content, this.kind);
+      this.toAliasPubkey, this.content, this.kind, this.createTime);
 }
