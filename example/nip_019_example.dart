@@ -13,9 +13,9 @@ void main() {
   //
   // Map map = bech32Decode('bech32Decode');
 
-  String encodeProfile = Nip19.encodeProfile('3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d', ["wss://r.x.com", "wss://djbas.sadkb.com"]);
-  print(encodeProfile);
+  String encodeShareableEntity = Nip19.encodeShareableEntity('nprofile', '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d', ["wss://r.x.com", "wss://djbas.sadkb.com"], null);
+  print(encodeShareableEntity);
 
-  Map profile = Nip19.decodeProfile(encodeProfile);
-  print(profile);
+  Map decodeShareableEntity = Nip19.decodeShareableEntity(encodeShareableEntity);
+  print(decodeShareableEntity);
 }

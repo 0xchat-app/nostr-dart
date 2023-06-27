@@ -11,11 +11,13 @@ class Nip27 {
       if (group != null) {
         String? uri = Nip21.decode(group);
         if (uri != null) {
-          Map<String, dynamic> map = Nip19.decodeProfile(uri);
-          String pubkey = map['pubkey'];
-          if (pubkey.isNotEmpty) {
-            mentions.add(
-                ProfileMention(match.start, match.end, pubkey, map['relays']));
+          Map<String, dynamic> map = Nip19.decodeShareableEntity(uri);
+          if (map['prefix'] == 'nprofile') {
+            String pubkey = map['special'];
+            if (pubkey.isNotEmpty) {
+              mentions.add(ProfileMention(
+                  match.start, match.end, pubkey, map['relays']));
+            }
           }
         }
       }
@@ -27,8 +29,8 @@ class Nip27 {
       List<ProfileMention> mentions, String content) {
     int offset = 0;
     for (ProfileMention mention in mentions) {
-      String encodeProfile =
-          Nip21.encode(Nip19.encodeProfile(mention.pubkey, mention.relays));
+      String encodeProfile = Nip21.encode(Nip19.encodeShareableEntity(
+          'nprofile', mention.pubkey, mention.relays, null));
       String subString =
           content.substring(mention.start + offset, mention.end + offset);
       content = content.replaceFirst(

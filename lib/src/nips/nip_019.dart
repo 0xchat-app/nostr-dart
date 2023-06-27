@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bech32/bech32.dart';
 import 'package:convert/convert.dart';
 import 'package:nostr_core_dart/nostr.dart';
@@ -43,11 +45,56 @@ class Nip19 {
     }
   }
 
-  static Map<String, dynamic> decodeProfile(String profile) {
-    String pubkey = '';
+  // 0: special
+  // depends on the bech32 prefix:
+  // for nprofile it will be the 32 bytes of the profile public key
+  // for nevent it will be the 32 bytes of the event id
+  // for nrelay, this is the relay URL
+  // for naddr, it is the identifier (the "d" tag) of the event being referenced
+  // 1: relay
+  // for nprofile, nevent and naddr, optionally, a relay in which the entity (profile or event) is more likely to be found, encoded as ascii
+  // this may be included multiple times
+  // 2: author
+  // for naddr, the 32 bytes of the pubkey of the event
+  // for nevent, optionally, the 32 bytes of the pubkey of the event
+  // 3: kind
+  // for naddr, the 32-bit unsigned integer of the kind, big-endian
+  // for nevent, optionally, the 32-bit unsigned integer of the kind, big-endian
+  static String encodeShareableEntity(String prefix, String special,
+      List<String>? relays, String? author) {
+    // 0:special
+    String result =
+        '00${hexToBytes(special).length.toRadixString(16).padLeft(2, '0')}$special';
+    // 1:relay
+    if (relays != null) {
+      for (var relay in relays) {
+        result = '${result}01';
+        String value = relay.codeUnits
+            .map((number) => number.toRadixString(16).padLeft(2, '0'))
+            .join('');
+        result =
+            '$result${hexToBytes(value).length.toRadixString(16).padLeft(2, '0')}$value';
+      }
+    }
+    // 2:author
+    if (author != null) {
+      result = '${result}02';
+      result =
+          '$result${hexToBytes(author).length.toRadixString(16).padLeft(2, '0')}$author';
+    }
+    // TODO: 3:kind
+    return bech32Encode(prefix, result, maxLength: result.length);
+  }
+
+  static Map<String, dynamic> decodeShareableEntity(String shareableEntity) {
+    String prefix = '';
+    String special = '';
     List<String> relays = [];
-    final data =
-        hexToBytes(bech32Decode(profile, maxLength: profile.length)['data']!);
+    String? author;
+    Map<String, String> decodedMap =
+        bech32Decode(shareableEntity, maxLength: shareableEntity.length);
+    prefix = decodedMap['prefix']!;
+    final data = hexToBytes(decodedMap['data']!);
 
     var index = 0;
     while (index < data.length) {
@@ -58,27 +105,22 @@ class Nip19 {
       index += length;
 
       if (type == 0) {
-        pubkey = bytesToHex(value);
+        special = bytesToHex(value);
       } else if (type == 1) {
         relays.add(String.fromCharCodes(value));
+      } else if (type == 2) {
+        author = bytesToHex(value);
+      } else if (type == 3) {
+        // TODO: kind
       }
     }
 
-    return {'pubkey': pubkey, 'relays': relays};
-  }
-
-  static String encodeProfile(String pubkey, List<String> relays) {
-    String result = '0020$pubkey';
-    for (var relay in relays) {
-      result = '${result}01';
-      String value = relay.codeUnits
-          .map((number) => number.toRadixString(16).padLeft(2, '0'))
-          .join('');
-      result =
-          '$result${hexToBytes(value).length.toRadixString(16).padLeft(2, '0')}$value';
-    }
-
-    return bech32Encode('nprofile', result, maxLength: result.length);
+    return {
+      'prefix': prefix,
+      'special': special,
+      'relays': relays,
+      'author': author
+    };
   }
 }
 
