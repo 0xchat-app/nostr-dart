@@ -130,7 +130,7 @@ class Nip28 {
       String name,
       String about,
       String picture,
-      Map<String, String> additional,
+      Map<String, String>? additional,
       String channelId,
       String relayURL,
       String privkey) {
@@ -139,7 +139,7 @@ class Nip28 {
       'about': about,
       'picture': picture,
     };
-    map.addAll(additional);
+    if(additional != null) map.addAll(additional);
     String content = jsonEncode(map);
     List<List<String>> tags = [];
     tags.add(["e", channelId, relayURL]);
