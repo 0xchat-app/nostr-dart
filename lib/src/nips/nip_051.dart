@@ -52,13 +52,14 @@ class Nip51 {
     return encrypt(privkey, '02$pubkey', content);
   }
 
-  static Map<String, List> fromContent(
+  static Map<String, List>? fromContent(
       String content, String privkey, String pubkey) {
     List<People> people = [];
     List<String> bookmarks = [];
     int ivIndex = content.indexOf("?iv=");
     if (ivIndex <= 0) {
       print("Invalid content, could not get ivIndex: $content");
+      return null;
     }
     String iv = content.substring(ivIndex + "?iv=".length, content.length);
     String encString = content.substring(0, ivIndex);
@@ -137,9 +138,11 @@ class Nip51 {
       if (tag[0] == "d") identifier = tag[1];
     }
     String pubkey = bip340.getPublicKey(privkey);
-    Map content = Nip51.fromContent(event.content, privkey, pubkey);
-    people.addAll(content["people"]);
-    bookmarks.addAll(content["bookmarks"]);
+    Map? content = Nip51.fromContent(event.content, privkey, pubkey);
+    if(content != null){
+      people.addAll(content["people"]);
+      bookmarks.addAll(content["bookmarks"]);
+    }
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
 
