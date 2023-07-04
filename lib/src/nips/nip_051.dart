@@ -146,7 +146,7 @@ class Nip51 {
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
 
-    return Lists(event.pubkey, identifier, people, bookmarks);
+    return Lists(event.pubkey, identifier, people, bookmarks, event.createdAt);
   }
 }
 
@@ -170,6 +170,8 @@ class Lists {
 
   List<String> bookmarks;
 
+  int createTime;
+
   /// Default constructor
-  Lists(this.owner, this.identifier, this.people, this.bookmarks);
+  Lists(this.owner, this.identifier, this.people, this.bookmarks, this.createTime);
 }
