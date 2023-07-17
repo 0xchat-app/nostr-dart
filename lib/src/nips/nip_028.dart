@@ -102,7 +102,7 @@ class Nip28 {
           }
         }
         Map content = jsonDecode(event.content);
-        String reason = content['reason'];
+        String reason = content.containsKey('reason') ? content['reason'] : '';
         return ChannelUserMuted(
             event.pubkey, userPubkey!, reason, event.createdAt);
       }
@@ -139,7 +139,7 @@ class Nip28 {
       'about': about,
       'picture': picture,
     };
-    if(additional != null) map.addAll(additional);
+    if (additional != null) map.addAll(additional);
     String content = jsonEncode(map);
     List<List<String>> tags = [];
     tags.add(["e", channelId, relayURL]);
