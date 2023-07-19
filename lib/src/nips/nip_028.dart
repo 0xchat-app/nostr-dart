@@ -101,8 +101,11 @@ class Nip28 {
             break;
           }
         }
-        Map content = jsonDecode(event.content);
-        String reason = content.containsKey('reason') ? content['reason'] : '';
+        String reason = '';
+        if (event.content.isNotEmpty) {
+          Map content = jsonDecode(event.content);
+          reason = content.containsKey('reason') ? content['reason'] : '';
+        }
         return ChannelUserMuted(
             event.pubkey, userPubkey!, reason, event.createdAt);
       }
