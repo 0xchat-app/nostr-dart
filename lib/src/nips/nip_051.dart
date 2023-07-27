@@ -99,10 +99,11 @@ class Nip51 {
       List<People> encryptedItems, String privkey, String pubkey) {
     List<List<String>> tags = peoplesToTags(items);
     tags.add(["d", identifier]);
+    String content = peoplesToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 30000,
         tags: tags,
-        content: peoplesToContent(encryptedItems, privkey, pubkey),
+        content: content,
         privkey: privkey);
   }
 
@@ -110,10 +111,11 @@ class Nip51 {
       List<String> encryptedItems, String privkey, String pubkey) {
     List<List<String>> tags = bookmarksToTags(items);
     tags.add(["d", identifier]);
+    String content = bookmarksToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 30001,
         tags: tags,
-        content: bookmarksToContent(encryptedItems, privkey, pubkey),
+        content: content,
         privkey: privkey);
   }
 
