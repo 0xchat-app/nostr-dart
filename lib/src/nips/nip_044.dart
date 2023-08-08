@@ -24,7 +24,7 @@ class Nip44 {
   }
 
   /// Returns EDMessage from event
-  static Future<EDMessage> _toEDMessage(Event event, String pubkey, String privkey) async {
+  static Future<EDMessage> _toEDMessage(Event event, String receiver, String privkey) async {
     String sender = event.pubkey;
     int createdAt = event.createdAt;
     String receiver = "";
@@ -36,12 +36,12 @@ class Nip44 {
       if (tag[0] == "e") replyId = tag[1];
     }
 
-    if (receiver.isNotEmpty && receiver.compareTo(pubkey) == 0) {
+    if (receiver.isNotEmpty && receiver.compareTo(receiver) == 0) {
       content = await decryptContent(event.content, privkey, sender);
-    } else if (receiver.isNotEmpty && sender.compareTo(pubkey) == 0) {
+    } else if (receiver.isNotEmpty && sender.compareTo(receiver) == 0) {
       content = await decryptContent(event.content, privkey, receiver);
     } else {
-      throw Exception("not correct receiver, is not nip4 compatible");
+      throw Exception("not correct receiver, is not nip44 compatible");
     }
 
     return EDMessage(sender, receiver, createdAt, content, replyId);
@@ -97,7 +97,7 @@ class Nip44 {
     final secretKey = shareSecret(privateString, publicString);
     // Generate a random 96-bit nonce.
     final nonce = generate24RandomBytes();
-    Uint8List uintInputText = Utf8Encoder().convert(content);
+    final uintInputText = utf8.encode(content);
     // Encrypt
     final secretBox = await algorithm.encrypt(
       uintInputText,
