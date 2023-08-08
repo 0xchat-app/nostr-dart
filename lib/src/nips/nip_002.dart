@@ -45,7 +45,10 @@ class Nip2 {
   static List<Profile> toProfiles(List<List<String>> tags) {
     List<Profile> result = [];
     for (var tag in tags) {
-      if (tag[0] == "p") result.add(Profile(tag[1], tag[2], tag[3]));
+      if (tag[0] == "p") {
+        result.add(Profile(tag[1], tag.length > 2 ? tag[2] : '',
+            tag.length > 3 ? tag[3] : ''));
+      }
     }
     return result;
   }
