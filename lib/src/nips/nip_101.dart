@@ -80,7 +80,7 @@ class Nip101 {
         event.kind, event.createdAt);
   }
 
-  static Alias getRemove(Event event, String creator) {
+  static Alias getClose(Event event, String creator) {
     if (creator == event.pubkey) {
       return Alias(event.pubkey, '', getP(event.tags), '', event.id, event.kind,
           event.createdAt);

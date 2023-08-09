@@ -5,10 +5,12 @@ import 'package:nostr_core_dart/nostr.dart';
 /// https://github.com/vitorpamplona/nips/blob/sealed-dms/24.md
 class Nip24 {
   static Future<Event> encode(
-      Event event, String receiver, String privkey) async {
+      Event event, String receiver, {String? privkey, int? kind}) async {
+    // random key default
+    privkey ??= Keychain.generate().private;
     Event sealedGossipEvent =
         await encodeSealedGossip(event, receiver, privkey);
-    return Nip59.encode(sealedGossipEvent, receiver, privkey);
+    return Nip59.encode(sealedGossipEvent, receiver, privkey, kind: kind.toString());
   }
 
   static Future<Event> encodeSealedGossip(
