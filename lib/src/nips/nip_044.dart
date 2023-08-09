@@ -16,7 +16,8 @@ import 'package:pointycastle/digests/sha256.dart';
 /// }
 class Nip44 {
   /// Returns the EDMessage Encrypted Direct Message event (kind=44)
-  static Future<EDMessage> decode(Event event, String pubkey, String privkey) async {
+  static Future<EDMessage> decode(
+      Event event, String pubkey, String privkey) async {
     if (event.kind == 44) {
       return await _toEDMessage(event, pubkey, privkey);
     }
@@ -24,7 +25,8 @@ class Nip44 {
   }
 
   /// Returns EDMessage from event
-  static Future<EDMessage> _toEDMessage(Event event, String receiver, String privkey) async {
+  static Future<EDMessage> _toEDMessage(
+      Event event, String receiver, String privkey) async {
     String sender = event.pubkey;
     int createdAt = event.createdAt;
     String receiver = "";
@@ -47,20 +49,22 @@ class Nip44 {
     return EDMessage(sender, receiver, createdAt, content, replyId);
   }
 
-  static Future<String> decryptContent(String content, String privkey, String pubkey) async {
+  static Future<String> decryptContent(
+      String content, String privkey, String pubkey) async {
     try {
       Map map = jsonDecode(content);
       final cipherText = base64Decode(map["ciphertext"]);
       final nonce = base64Decode(map["nonce"]);
       final v = map["v"];
-      if(v == 1){
+      if (v == 1) {
         final algorithm = Xchacha20(macAlgorithm: MacAlgorithm.empty);
-        final secretKey = shareSecret(privkey, '02$pubkey');
-        SecretBox secretBox = SecretBox(cipherText, nonce: nonce, mac: Mac.empty);
-        final result = await algorithm.decrypt(secretBox, secretKey: secretKey);
+        final secretKey = shareSecret(privkey, pubkey);
+        SecretBox secretBox =
+            SecretBox(cipherText, nonce: nonce, mac: Mac.empty);
+        final result =
+            await algorithm.decrypt(secretBox, secretKey: SecretKey(secretKey));
         return utf8.decode(result);
-      }
-      else{
+      } else {
         print("nip44: decryptContent error: unknown algorithm version: $v");
         return "";
       }
@@ -81,7 +85,7 @@ class Nip44 {
 
   static Future<String> encryptContent(
       String content, String privkey, String pubkey) async {
-    return await encrypt(privkey, '02$pubkey', content);
+    return await encrypt(privkey, pubkey, content);
   }
 
   static List<List<String>> toTags(String p, String e) {
@@ -101,19 +105,22 @@ class Nip44 {
     // Encrypt
     final secretBox = await algorithm.encrypt(
       uintInputText,
-      secretKey: secretKey,
+      secretKey: SecretKey(secretKey),
       nonce: nonce,
     );
 
-    final result = {"ciphertext": base64Encode(secretBox.cipherText), "nonce": base64Encode(nonce), "v": 1};
+    final result = {
+      "ciphertext": base64Encode(secretBox.cipherText),
+      "nonce": base64Encode(nonce),
+      "v": 1
+    };
     return jsonEncode(result);
   }
 
-  static SecretKey shareSecret(String privateString, String publicString) {
-    final secretIV = Kepler.byteSecret(privateString, publicString);
+  static Uint8List shareSecret(String privateString, String publicString) {
+    final secretIV = Kepler.byteSecret(privateString, '02$publicString');
     final key = Uint8List.fromList(secretIV[0]);
-    Uint8List hashSecret = SHA256Digest().process(key);
-    return SecretKey(hashSecret);
+    return SHA256Digest().process(key);
   }
 
   static List<int> generate24RandomBytes() {

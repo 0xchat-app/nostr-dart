@@ -8,11 +8,11 @@ Future<void> main() async {
 
   print(realEvent.toJson());
 
-  Event wrapEvent = await Nip24.encode(realEvent, receiver.public, random.private);
+  Event wrapEvent = await Nip24.encodeSealedGossip(realEvent, receiver.public, random.private);
 
   print(wrapEvent.toJson());
 
-  Event decodeEvent = await Nip24.decode(wrapEvent, receiver.private);
+  Event decodeEvent = await Nip24.decodeSealedGossip(wrapEvent, receiver.private);
 
   print('decodeEvent: ${decodeEvent.toJson()}' );
 

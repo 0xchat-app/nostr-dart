@@ -1,197 +1,107 @@
 /// nip 101 - alias exchange
 ///
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:convert/convert.dart';
-import 'package:kepler/kepler.dart';
 import 'package:nostr_core_dart/nostr.dart';
-import 'package:pointycastle/digests/sha256.dart';
-import 'package:bip340/bip340.dart' as bip340;
 
 class Nip101 {
-  static String generateId(List data) {
-    String serializedEvent = json.encode(data);
-    Uint8List hash = SHA256Digest()
-        .process(Uint8List.fromList(utf8.encode(serializedEvent)));
-    return hex.encode(hash);
-  }
-
-  static String getSig(List data, String privateKey) {
-    String aux = generate64RandomHexChars();
-    return bip340.sign(privateKey, generateId(data), aux);
-  }
-
-  static Uint8List getSharedSecret(String privateString, String publicString) {
-    List<List<int>> byteSecret =
-    Kepler.byteSecret(privateString, '02$publicString');
-    final secretIV = byteSecret;
-    return Uint8List.fromList(secretIV[0]);
-  }
-
-  static bool isValid(String verifyId, String pubkey, String sig) {
-    if (bip340.verify(pubkey, verifyId, sig)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  static String encryptContent(
-      int createdAt,
-      String fromPubkey,
-      String fromPrivkey,
-      String fromAliasPrivkey,
-      String toPubkey,
-      String content) {
-    String sig = getSig([createdAt, fromPubkey, content], fromPrivkey);
-    Map<String, dynamic> map = {
-      'p': fromPubkey,
-      'content': content,
-      'sig': sig,
-    };
-    String encodeContent = jsonEncode(map);
-    String enContent =
-        Nip4.encryptContent(encodeContent, fromAliasPrivkey, toPubkey);
-    return enContent;
-  }
-
-  static Map<String, dynamic> decryptContent(
-      int createdAt, String enContent, String privkey, String sender) {
-    String content = Nip4.decryptContent(enContent, privkey, sender);
-    Map map = jsonDecode(content);
-    String id = generateId([createdAt, map['p'], map['content']]);
-    if (isValid(id, map['p'], map['sig'])) {
-      return jsonDecode(content);
-    }
-    throw Exception('not valid sig in content!');
-  }
-
-  static String aliasPrivkey(String toPubkey, String privkey) {
-    final secretIV = Kepler.byteSecret(privkey, '02$toPubkey');
-    Uint8List tweak = Uint8List.fromList(secretIV[0]);
-    Uint8List aliasPrivateKey = tweakAdd(hexToBytes(privkey), tweak);
-    return bytesToHex(aliasPrivateKey);
-  }
-
-  /// encrypt share secret = (fromAliasPrivkey, toPubkey)
-  /// decrypt share secret = (fromPrivkey, toAliasPubkey)
-  /// send request then listen event: p = fromAliasPubkey
-  static Event request(
-      String fromPubkey,
-      String fromPrivkey,
-      String fromAliasPubkey,
-      String fromAliasPrivkey,
-      String toPubkey,
-      String requestContent) {
-    int createdAt = currentUnixTimestampSeconds();
+  static Event request(String myAliasPubkey, String toPubkey, String privkey) {
     return Event.from(
-        createdAt: createdAt,
         kind: 10100,
         tags: [
           ['p', toPubkey]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toPubkey, requestContent),
-        privkey: fromAliasPrivkey);
+        content: myAliasPubkey,
+        privkey: privkey);
   }
 
-  /// encrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  /// decrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  static Event accept(String fromPubkey, String fromPrivkey,
-      String fromAliasPubkey, String fromAliasPrivkey, String toAliasPubkey) {
-    int createdAt = currentUnixTimestampSeconds();
+  static Event accept(
+      String myAliasPubkey, String toPubkey, String sessionId, String privkey) {
     return Event.from(
-        createdAt: createdAt,
         kind: 10101,
         tags: [
-          ['p', toAliasPubkey]
+          ['p', toPubkey],
+          ['e', sessionId]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toAliasPubkey, "accept"),
-        privkey: fromAliasPrivkey);
+        content: myAliasPubkey,
+        privkey: privkey);
   }
 
-  /// encrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  /// decrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  static Event reject(String fromPubkey, String fromPrivkey,
-      String fromAliasPubkey, String fromAliasPrivkey, String toAliasPubkey) {
-    int createdAt = currentUnixTimestampSeconds();
+  static Event reject(String toPubkey, String sessionId, String privkey) {
     return Event.from(
-        createdAt: createdAt,
         kind: 10102,
         tags: [
-          ['p', toAliasPubkey]
+          ['p', toPubkey],
+          ['e', sessionId]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toAliasPubkey, "reject"),
-        privkey: fromAliasPrivkey);
+        content: '',
+        privkey: privkey);
   }
 
-  /// encrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  /// decrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  static Event remove(String fromPubkey, String fromPrivkey,
-      String fromAliasPubkey, String fromAliasPrivkey, String toAliasPubkey) {
-    int createdAt = currentUnixTimestampSeconds();
+  static Event close(String toPubkey, String sessionId, String privkey) {
     return Event.from(
-        createdAt: createdAt,
         kind: 10103,
         tags: [
-          ['p', toAliasPubkey]
+          ['p', toPubkey],
+          ['e', sessionId]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toAliasPubkey, "remove"),
-        privkey: fromAliasPrivkey);
+        content: '',
+        privkey: privkey);
   }
 
-  static String getP(Event event) {
-    if (event.tags[0].length > 1 && event.tags[0][0] == 'p') {
-      return event.tags[0][1];
+  static String getP(List<List<String>> tags) {
+    for (var tag in tags) {
+      if (tag[0] == 'p') {
+        return tag[1];
+      }
     }
     return '';
   }
 
-  static Alias getRequest(Event event, String pubkey, String privkey) {
-    Map<String, dynamic> map =
-        decryptContent(event.createdAt, event.content, privkey, event.pubkey);
-    return Alias(
-        pubkey, "", map['p'], event.pubkey, map['content'], event.kind, event.createdAt);
+  static String getE(List<List<String>> tags) {
+    for (var tag in tags) {
+      if (tag[0] == 'e') {
+        return tag[1];
+      }
+    }
+    return '';
   }
 
-  static Alias getAccept(
-      Event event, String pubkey, String aliasPubkey, String aliasPrikey) {
-    Map<String, dynamic> map = decryptContent(
-        event.createdAt, event.content, aliasPrikey, event.pubkey);
-    return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
+  static Alias getRequest(Event event) {
+    return Alias(event.pubkey, event.content, getP(event.tags), '', event.id,
         event.kind, event.createdAt);
   }
 
-  static Alias getReject(
-      Event event, String pubkey, String aliasPubkey, String aliasPrikey) {
-    Map<String, dynamic> map = decryptContent(
-        event.createdAt, event.content, aliasPrikey, event.pubkey);
-    return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
+  static Alias getAccept(Event event) {
+    return Alias(getP(event.tags), '', event.pubkey, event.content,
+        getE(event.tags), event.kind, event.createdAt);
+  }
+
+  static Alias getReject(Event event) {
+    return Alias(getP(event.tags), '', event.pubkey, '', getE(event.tags),
         event.kind, event.createdAt);
   }
 
-  static Alias getRemove(
-      Event event, String pubkey, String aliasPubkey, String aliasPrikey) {
-    Map<String, dynamic> map = decryptContent(
-        event.createdAt, event.content, aliasPrikey, event.pubkey);
-    return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
-        event.kind, event.createdAt);
+  static Alias getRemove(Event event, String creator) {
+    if (creator == event.pubkey) {
+      return Alias(event.pubkey, '', getP(event.tags), '', event.id, event.kind,
+          event.createdAt);
+    } else {
+      return Alias(getP(event.tags), '', event.pubkey, '', getE(event.tags),
+          event.kind, event.createdAt);
+    }
   }
 }
 
 class Alias {
-  String fromPubkey;
+  String sessionId;
+
+  String fromPubkey; // session creator
   String fromAliasPubkey;
-  String toPubkey;
+  String toPubkey; // session counterparty
   String toAliasPubkey;
 
-  String content;
   int kind;
   int createTime;
 
   Alias(this.fromPubkey, this.fromAliasPubkey, this.toPubkey,
-      this.toAliasPubkey, this.content, this.kind, this.createTime);
+      this.toAliasPubkey, this.sessionId, this.kind, this.createTime);
 }

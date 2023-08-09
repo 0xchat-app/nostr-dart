@@ -6,21 +6,29 @@ import 'package:nostr_core_dart/nostr.dart';
 class Nip24 {
   static Future<Event> encode(
       Event event, String receiver, String privkey) async {
+    Event sealedGossipEvent =
+        await encodeSealedGossip(event, receiver, privkey);
+    return Nip59.encode(sealedGossipEvent, receiver, privkey);
+  }
+
+  static Future<Event> encodeSealedGossip(
+      Event event, String receiver, String privkey) async {
     event.sig = '';
     String encodedEvent = jsonEncode(event);
     String content =
-    await Nip44.encryptContent(encodedEvent, privkey, receiver);
-    return Event.from(
-        kind: 13,
-        tags: [],
-        content: content,
-        privkey: privkey);
+        await Nip44.encryptContent(encodedEvent, privkey, receiver);
+    return Event.from(kind: 13, tags: [], content: content, privkey: privkey);
   }
 
   static Future<Event> decode(Event event, String privkey) async {
+    Event sealedGossipEvent = await Nip59.decode(event, privkey);
+    return decodeSealedGossip(sealedGossipEvent, privkey);
+  }
+
+  static Future<Event> decodeSealedGossip(Event event, String privkey) async {
     if (event.kind == 13) {
       String content =
-      await Nip44.decryptContent(event.content, privkey, event.pubkey);
+          await Nip44.decryptContent(event.content, privkey, event.pubkey);
       Map map = jsonDecode(content);
       List<dynamic> dynamicTags = map['tags'];
       List<List<String>> tags = dynamicTags.map<List<String>>((e) {
@@ -31,7 +39,8 @@ class Nip24 {
         }
       }).toList();
       return Event(map['id'], map['pubkey'], map['created_at'], map['kind'],
-          tags, map['content'], map['sig'] ?? '', verify: false);
+          tags, map['content'], map['sig'] ?? '',
+          verify: false);
     }
     throw Exception("${event.kind} is not nip24 compatible");
   }
