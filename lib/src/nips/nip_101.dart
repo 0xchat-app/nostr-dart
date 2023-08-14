@@ -86,13 +86,8 @@ class Nip101 {
     return '';
   }
 
-  static int getExpiration(List<List<String>> tags) {
-    for (var tag in tags) {
-      if (tag[0] == 'expiration') {
-        return int.parse(tag[1]);
-      }
-    }
-    return 0;
+  static int getExpiration(Event event) {
+    return Nip40.getExpiration(event);
   }
 
   static Alias getRequest(Event event) {
@@ -104,7 +99,7 @@ class Nip101 {
         event.id,
         event.kind,
         event.createdAt,
-        getExpiration(event.tags),
+        getExpiration(event),
         getRelay(event.tags));
   }
 
@@ -117,7 +112,7 @@ class Nip101 {
         getE(event.tags),
         event.kind,
         event.createdAt,
-        getExpiration(event.tags),
+        getExpiration(event),
         getRelay(event.tags));
   }
 
@@ -130,7 +125,7 @@ class Nip101 {
         getE(event.tags),
         event.kind,
         event.createdAt,
-        getExpiration(event.tags),
+        getExpiration(event),
         getRelay(event.tags));
   }
 
@@ -144,7 +139,7 @@ class Nip101 {
           event.id,
           event.kind,
           event.createdAt,
-          getExpiration(event.tags),
+          getExpiration(event),
           getRelay(event.tags));
     } else {
       return Alias(
@@ -155,7 +150,7 @@ class Nip101 {
           getE(event.tags),
           event.kind,
           event.createdAt,
-          getExpiration(event.tags),
+          getExpiration(event),
           getRelay(event.tags));
     }
   }
@@ -163,7 +158,7 @@ class Nip101 {
   static Alias getClose(Event event, String creator) {
     if (creator == event.pubkey) {
       return Alias(event.pubkey, '', getP(event.tags), '', event.id, event.kind,
-          event.createdAt, getExpiration(event.tags), getRelay(event.tags));
+          event.createdAt, getExpiration(event), getRelay(event.tags));
     } else {
       return Alias(
           getP(event.tags),
@@ -173,7 +168,7 @@ class Nip101 {
           getE(event.tags),
           event.kind,
           event.createdAt,
-          getExpiration(event.tags),
+          getExpiration(event),
           getRelay(event.tags));
     }
   }
