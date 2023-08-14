@@ -36,9 +36,21 @@ class Nip101 {
         privkey: privkey);
   }
 
-  static Event close(String toPubkey, String sessionId, String privkey) {
+  static Event update(String myNewAliasPubkey, String toPubkey,
+      String sessionId, String privkey) {
     return Event.from(
         kind: 10103,
+        tags: [
+          ['p', toPubkey],
+          ['e', sessionId]
+        ],
+        content: myNewAliasPubkey,
+        privkey: privkey);
+  }
+
+  static Event close(String toPubkey, String sessionId, String privkey) {
+    return Event.from(
+        kind: 10104,
         tags: [
           ['p', toPubkey],
           ['e', sessionId]
@@ -65,28 +77,104 @@ class Nip101 {
     return '';
   }
 
+  static String getRelay(List<List<String>> tags) {
+    for (var tag in tags) {
+      if (tag[0] == 'r') {
+        return tag[1];
+      }
+    }
+    return '';
+  }
+
+  static int getExpiration(List<List<String>> tags) {
+    for (var tag in tags) {
+      if (tag[0] == 'expiration') {
+        return int.parse(tag[1]);
+      }
+    }
+    return 0;
+  }
+
   static Alias getRequest(Event event) {
-    return Alias(event.pubkey, event.content, getP(event.tags), '', event.id,
-        event.kind, event.createdAt);
+    return Alias(
+        event.pubkey,
+        event.content,
+        getP(event.tags),
+        '',
+        event.id,
+        event.kind,
+        event.createdAt,
+        getExpiration(event.tags),
+        getRelay(event.tags));
   }
 
   static Alias getAccept(Event event) {
-    return Alias(getP(event.tags), '', event.pubkey, event.content,
-        getE(event.tags), event.kind, event.createdAt);
+    return Alias(
+        getP(event.tags),
+        '',
+        event.pubkey,
+        event.content,
+        getE(event.tags),
+        event.kind,
+        event.createdAt,
+        getExpiration(event.tags),
+        getRelay(event.tags));
   }
 
   static Alias getReject(Event event) {
-    return Alias(getP(event.tags), '', event.pubkey, '', getE(event.tags),
-        event.kind, event.createdAt);
+    return Alias(
+        getP(event.tags),
+        '',
+        event.pubkey,
+        '',
+        getE(event.tags),
+        event.kind,
+        event.createdAt,
+        getExpiration(event.tags),
+        getRelay(event.tags));
+  }
+
+  static Alias getUpdate(Event event, String creator) {
+    if (creator == event.pubkey) {
+      return Alias(
+          event.pubkey,
+          event.content,
+          getP(event.tags),
+          '',
+          event.id,
+          event.kind,
+          event.createdAt,
+          getExpiration(event.tags),
+          getRelay(event.tags));
+    } else {
+      return Alias(
+          getP(event.tags),
+          '',
+          event.pubkey,
+          event.content,
+          getE(event.tags),
+          event.kind,
+          event.createdAt,
+          getExpiration(event.tags),
+          getRelay(event.tags));
+    }
   }
 
   static Alias getClose(Event event, String creator) {
     if (creator == event.pubkey) {
       return Alias(event.pubkey, '', getP(event.tags), '', event.id, event.kind,
-          event.createdAt);
+          event.createdAt, getExpiration(event.tags), getRelay(event.tags));
     } else {
-      return Alias(getP(event.tags), '', event.pubkey, '', getE(event.tags),
-          event.kind, event.createdAt);
+      return Alias(
+          getP(event.tags),
+          '',
+          event.pubkey,
+          '',
+          getE(event.tags),
+          event.kind,
+          event.createdAt,
+          getExpiration(event.tags),
+          getRelay(event.tags));
     }
   }
 }
@@ -102,6 +190,17 @@ class Alias {
   int kind;
   int createTime;
 
-  Alias(this.fromPubkey, this.fromAliasPubkey, this.toPubkey,
-      this.toAliasPubkey, this.sessionId, this.kind, this.createTime);
+  int expiration;
+  String relay;
+
+  Alias(
+      this.fromPubkey,
+      this.fromAliasPubkey,
+      this.toPubkey,
+      this.toAliasPubkey,
+      this.sessionId,
+      this.kind,
+      this.createTime,
+      this.expiration,
+      this.relay);
 }
