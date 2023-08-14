@@ -6,7 +6,7 @@ import 'package:nostr_core_dart/nostr.dart';
 /// https://github.com/v0l/nips/blob/59/59.md
 class Nip59 {
   static Future<Event> encode(Event event, String receiver, String privkey,
-      {String? kind}) async {
+      {String? kind, int? expiration}) async {
     String encodedEvent = jsonEncode(event);
     String content =
         await Nip44.encryptContent(encodedEvent, privkey, receiver);
@@ -14,6 +14,7 @@ class Nip59 {
       ["p", receiver]
     ];
     if (kind != null) tags.add(['k', kind]);
+    if (expiration != null) tags.add(['expiration', '$expiration']);
     return Event.from(
         kind: 1059, tags: tags, content: content, privkey: privkey);
   }
