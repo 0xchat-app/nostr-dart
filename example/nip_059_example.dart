@@ -1,11 +1,10 @@
-import 'package:cryptography/cryptography.dart';
 import 'package:nostr_core_dart/nostr.dart';
 
 Future<void> main() async {
   var sender = Keychain.generate();
   var receiver = Keychain.generate();
   var random = Keychain.generate();
-  Event realEvent = await Nip44.encode(receiver.public, "sljdk哈哈", '', sender.private);
+  Event realEvent = await Nip44.encode(receiver.public, "sljdk", '', sender.private);
 
   print(realEvent.toJson());
 

@@ -48,7 +48,7 @@ class Event {
 
   /// Default constructor
   ///
-  /// verify: ensure your event isValid() –> id, signature, timestamp…
+  /// verify: ensure your event isValid() –> id, signature, timestamp
   ///
   ///```dart
   /// String id =
@@ -91,7 +91,7 @@ class Event {
 
   /// Partial constructor, you have to fill the fields yourself
   ///
-  /// verify: ensure your event isValid() –> id, signature, timestamp…
+  /// verify: ensure your event isValid() –> id, signature, timestamp
   ///
   /// ```dart
   /// var partialEvent = Event.partial();
