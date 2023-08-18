@@ -17,9 +17,9 @@ import 'package:pointycastle/digests/sha256.dart';
 class Nip44 {
   /// Returns the EDMessage Encrypted Direct Message event (kind=44)
   static Future<EDMessage> decode(
-      Event event, String pubkey, String privkey) async {
-    if (event.kind == 44) {
-      return await _toEDMessage(event, pubkey, privkey);
+      Event event, String receiver, String privkey) async {
+    if (event.kind == 44 || event.kind == 14) {
+      return await _toEDMessage(event, receiver, privkey);
     }
     throw Exception("${event.kind} is not nip44 compatible");
   }

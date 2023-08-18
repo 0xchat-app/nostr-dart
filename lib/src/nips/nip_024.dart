@@ -47,4 +47,12 @@ class Nip24 {
     }
     throw Exception("${event.kind} is not nip24 compatible");
   }
+
+  static Future<EDMessage> decodeSealedGossipDM(
+      Event event, String receiver, String privkey) async {
+    if (event.kind == 14) {
+      return await Nip44.decode(event, receiver, privkey);
+    }
+    throw Exception("${event.kind} is not nip24 compatible");
+  }
 }
