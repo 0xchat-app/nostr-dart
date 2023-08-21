@@ -1,15 +1,26 @@
 /// nip 101 - alias exchange
 ///
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:nostr_core_dart/nostr.dart';
 
 class Nip101 {
-  static Event request(String myAliasPubkey, String toPubkey, String privkey) {
+  static Event request(String myAliasPubkey, String toPubkey, String privkey,
+      {int? expiration, int? interval, String? relay}) {
+    Map map = {};
+    String content = '';
+    if (expiration != null && expiration > 0) map["expiration"] = expiration;
+    if (interval != null && interval > 0) map["interval"] = interval;
+    if (relay != null && relay.isNotEmpty) map["r"] = relay;
+    if (map.isNotEmpty) content = jsonEncode(map);
+
     return Event.from(
         kind: 10100,
         tags: [
-          ['p', toPubkey]
+          ['p', toPubkey, myAliasPubkey]
         ],
-        content: myAliasPubkey,
+        content: content,
         privkey: privkey);
   }
 
@@ -18,10 +29,10 @@ class Nip101 {
     return Event.from(
         kind: 10101,
         tags: [
-          ['p', toPubkey],
+          ['p', toPubkey, myAliasPubkey],
           ['e', sessionId]
         ],
-        content: myAliasPubkey,
+        content: '',
         privkey: privkey);
   }
 
@@ -41,10 +52,10 @@ class Nip101 {
     return Event.from(
         kind: 10103,
         tags: [
-          ['p', toPubkey],
+          ['p', toPubkey, myNewAliasPubkey],
           ['e', sessionId]
         ],
-        content: myNewAliasPubkey,
+        content: '',
         privkey: privkey);
   }
 
@@ -90,8 +101,8 @@ class Nip101 {
     return Nip40.getExpiration(event);
   }
 
-  static Alias getRequest(Event event) {
-    return Alias(
+  static KeyExchangeSession getRequest(Event event) {
+    return KeyExchangeSession(
         event.pubkey,
         event.content,
         getP(event.tags),
@@ -103,8 +114,8 @@ class Nip101 {
         getRelay(event.tags));
   }
 
-  static Alias getAccept(Event event) {
-    return Alias(
+  static KeyExchangeSession getAccept(Event event) {
+    return KeyExchangeSession(
         getP(event.tags),
         '',
         event.pubkey,
@@ -116,8 +127,8 @@ class Nip101 {
         getRelay(event.tags));
   }
 
-  static Alias getReject(Event event) {
-    return Alias(
+  static KeyExchangeSession getReject(Event event) {
+    return KeyExchangeSession(
         getP(event.tags),
         '',
         event.pubkey,
@@ -129,9 +140,9 @@ class Nip101 {
         getRelay(event.tags));
   }
 
-  static Alias getUpdate(Event event, String creator) {
+  static KeyExchangeSession getUpdate(Event event, String creator) {
     if (creator == event.pubkey) {
-      return Alias(
+      return KeyExchangeSession(
           event.pubkey,
           event.content,
           getP(event.tags),
@@ -142,7 +153,7 @@ class Nip101 {
           getExpiration(event),
           getRelay(event.tags));
     } else {
-      return Alias(
+      return KeyExchangeSession(
           getP(event.tags),
           '',
           event.pubkey,
@@ -155,12 +166,12 @@ class Nip101 {
     }
   }
 
-  static Alias getClose(Event event, String creator) {
+  static KeyExchangeSession getClose(Event event, String creator) {
     if (creator == event.pubkey) {
-      return Alias(event.pubkey, '', getP(event.tags), '', event.id, event.kind,
+      return KeyExchangeSession(event.pubkey, '', getP(event.tags), '', event.id, event.kind,
           event.createdAt, getExpiration(event), getRelay(event.tags));
     } else {
-      return Alias(
+      return KeyExchangeSession(
           getP(event.tags),
           '',
           event.pubkey,
@@ -174,12 +185,12 @@ class Nip101 {
   }
 }
 
-class Alias {
+class KeyExchangeSession {
   String sessionId;
 
-  String fromPubkey; // session creator
+  String fromPubkey; // sender
   String fromAliasPubkey;
-  String toPubkey; // session counterparty
+  String toPubkey; // receiver
   String toAliasPubkey;
 
   int kind;
@@ -188,7 +199,7 @@ class Alias {
   int expiration;
   String relay;
 
-  Alias(
+  KeyExchangeSession(
       this.fromPubkey,
       this.fromAliasPubkey,
       this.toPubkey,
