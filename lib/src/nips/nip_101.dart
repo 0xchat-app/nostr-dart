@@ -1,8 +1,5 @@
-/// nip 101 - alias exchange
-///
+/// nip 101 - Key exchange
 import 'dart:convert';
-import 'dart:math';
-
 import 'package:nostr_core_dart/nostr.dart';
 
 class Nip101 {
@@ -47,21 +44,9 @@ class Nip101 {
         privkey: privkey);
   }
 
-  static Event update(String myNewAliasPubkey, String toPubkey,
-      String sessionId, String privkey) {
-    return Event.from(
-        kind: 10103,
-        tags: [
-          ['p', toPubkey, myNewAliasPubkey],
-          ['e', sessionId]
-        ],
-        content: '',
-        privkey: privkey);
-  }
-
   static Event close(String toPubkey, String sessionId, String privkey) {
     return Event.from(
-        kind: 10104,
+        kind: 10103,
         tags: [
           ['p', toPubkey],
           ['e', sessionId]
@@ -70,143 +55,103 @@ class Nip101 {
         privkey: privkey);
   }
 
-  static String getP(List<List<String>> tags) {
-    for (var tag in tags) {
+  static Event update(String myNewAliasPubkey, String toPubkey,
+      String sessionId, String privkey) {
+    return Event.from(
+        kind: 10104,
+        tags: [
+          ['p', toPubkey, myNewAliasPubkey],
+          ['e', sessionId]
+        ],
+        content: '',
+        privkey: privkey);
+  }
+
+  static KeyExchangeSession decode(Event event) {
+    late String fromAliasPubkey, toPubkey, sessionId;
+    for (var tag in event.tags) {
       if (tag[0] == 'p') {
-        return tag[1];
+        toPubkey = tag[1];
+        fromAliasPubkey = tag[2];
       }
-    }
-    return '';
-  }
-
-  static String getE(List<List<String>> tags) {
-    for (var tag in tags) {
       if (tag[0] == 'e') {
-        return tag[1];
+        sessionId = tag[1];
       }
     }
-    return '';
-  }
-
-  static String getRelay(List<List<String>> tags) {
-    for (var tag in tags) {
-      if (tag[0] == 'r') {
-        return tag[1];
+    if (event.kind == 10100) {
+      sessionId = event.id;
+    }
+    int? expiration, interval;
+    String? relay;
+    if (event.content.isNotEmpty) {
+      Map map = jsonDecode(event.content);
+      if (map.isNotEmpty) {
+        expiration = map["expiration"];
+        interval = map["interval"];
+        relay = map["relay"].toString();
       }
     }
-    return '';
-  }
-
-  static int getExpiration(Event event) {
-    return Nip40.getExpiration(event);
+    return KeyExchangeSession(event.pubkey, fromAliasPubkey, toPubkey,
+        sessionId, event.kind, event.createdAt, expiration, interval, relay);
   }
 
   static KeyExchangeSession getRequest(Event event) {
-    return KeyExchangeSession(
-        event.pubkey,
-        event.content,
-        getP(event.tags),
-        '',
-        event.id,
-        event.kind,
-        event.createdAt,
-        getExpiration(event),
-        getRelay(event.tags));
+    if (event.kind == 10100) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 
   static KeyExchangeSession getAccept(Event event) {
-    return KeyExchangeSession(
-        getP(event.tags),
-        '',
-        event.pubkey,
-        event.content,
-        getE(event.tags),
-        event.kind,
-        event.createdAt,
-        getExpiration(event),
-        getRelay(event.tags));
+    if (event.kind == 10101) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 
   static KeyExchangeSession getReject(Event event) {
-    return KeyExchangeSession(
-        getP(event.tags),
-        '',
-        event.pubkey,
-        '',
-        getE(event.tags),
-        event.kind,
-        event.createdAt,
-        getExpiration(event),
-        getRelay(event.tags));
+    if (event.kind == 10102) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 
-  static KeyExchangeSession getUpdate(Event event, String creator) {
-    if (creator == event.pubkey) {
-      return KeyExchangeSession(
-          event.pubkey,
-          event.content,
-          getP(event.tags),
-          '',
-          event.id,
-          event.kind,
-          event.createdAt,
-          getExpiration(event),
-          getRelay(event.tags));
-    } else {
-      return KeyExchangeSession(
-          getP(event.tags),
-          '',
-          event.pubkey,
-          event.content,
-          getE(event.tags),
-          event.kind,
-          event.createdAt,
-          getExpiration(event),
-          getRelay(event.tags));
+  static KeyExchangeSession getClose(Event event) {
+    if (event.kind == 10103) {
+      return decode(event);
     }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 
-  static KeyExchangeSession getClose(Event event, String creator) {
-    if (creator == event.pubkey) {
-      return KeyExchangeSession(event.pubkey, '', getP(event.tags), '', event.id, event.kind,
-          event.createdAt, getExpiration(event), getRelay(event.tags));
-    } else {
-      return KeyExchangeSession(
-          getP(event.tags),
-          '',
-          event.pubkey,
-          '',
-          getE(event.tags),
-          event.kind,
-          event.createdAt,
-          getExpiration(event),
-          getRelay(event.tags));
+  static KeyExchangeSession getUpdate(Event event) {
+    if (event.kind == 10104) {
+      return decode(event);
     }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 }
 
 class KeyExchangeSession {
   String sessionId;
+  int kind;
+  int createTime;
 
   String fromPubkey; // sender
   String fromAliasPubkey;
   String toPubkey; // receiver
-  String toAliasPubkey;
 
-  int kind;
-  int createTime;
-
-  int expiration;
-  String relay;
+  int? expiration;
+  int? interval;
+  String? relay;
 
   KeyExchangeSession(
       this.fromPubkey,
       this.fromAliasPubkey,
       this.toPubkey,
-      this.toAliasPubkey,
       this.sessionId,
       this.kind,
       this.createTime,
       this.expiration,
+      this.interval,
       this.relay);
 }
