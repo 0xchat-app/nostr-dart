@@ -18,6 +18,9 @@ class Filter {
   /// a list of identifiers that are referenced in a "d" tag
   List<String>? d;
 
+  /// a list of bolt11 in a "bolt11" tag
+  List<String>? bolt11;
+
   /// a timestamp, events must be newer than this to pass
   int? since;
 
@@ -35,6 +38,7 @@ class Filter {
       this.e,
       this.p,
       this.d,
+      this.bolt11,
       this.since,
       this.until,
       this.limit});
@@ -48,6 +52,8 @@ class Filter {
     e = json['#e'] == null ? null : List<String>.from(json['#e']);
     p = json['#p'] == null ? null : List<String>.from(json['#p']);
     d = json['#d'] == null ? null : List<String>.from(json['#d']);
+    bolt11 =
+        json['#bolt11'] == null ? null : List<String>.from(json['#bolt11']);
 
     since = json['since'];
     until = json['until'];
@@ -74,6 +80,9 @@ class Filter {
     }
     if (d != null) {
       data['#d'] = d;
+    }
+    if (bolt11 != null) {
+      data['#bolt11'] = bolt11;
     }
     if (since != null) {
       data['since'] = since;
