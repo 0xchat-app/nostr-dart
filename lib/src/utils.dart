@@ -144,7 +144,7 @@ Uint8List encodeBigInt(BigInt number) {
   return result;
 }
 
-Uint8List tweakAdd(Uint8List privateKey, Uint8List tweak) {
+Uint8List tweakAdd(Uint8List privateKey, Uint8List tweak, {int? salt}) {
   // Load the secp256k1 curve parameters
   ECDomainParameters params = ECCurve_secp256k1();
   BigInt n = params.n;
@@ -152,6 +152,9 @@ Uint8List tweakAdd(Uint8List privateKey, Uint8List tweak) {
   // Convert the private key and tweak to BigInt
   BigInt privateKeyBigInt = decodeBigInt(privateKey);
   BigInt tweakBigInt = decodeBigInt(tweak);
+  if (salt != null) {
+    tweakBigInt += BigInt.from(salt);
+  }
 
   // Add the private key and tweak (mod n)
   BigInt derivedPrivateKeyBigInt = (privateKeyBigInt + tweakBigInt) % n;
