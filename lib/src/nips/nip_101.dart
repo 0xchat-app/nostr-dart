@@ -1,197 +1,157 @@
-/// nip 101 - alias exchange
-///
+/// nip 101 - Key exchange
 import 'dart:convert';
-import 'dart:typed_data';
-import 'package:convert/convert.dart';
-import 'package:kepler/kepler.dart';
 import 'package:nostr_core_dart/nostr.dart';
-import 'package:pointycastle/digests/sha256.dart';
-import 'package:bip340/bip340.dart' as bip340;
 
 class Nip101 {
-  static String generateId(List data) {
-    String serializedEvent = json.encode(data);
-    Uint8List hash = SHA256Digest()
-        .process(Uint8List.fromList(utf8.encode(serializedEvent)));
-    return hex.encode(hash);
-  }
+  static Event request(String myAliasPubkey, String toPubkey, String privkey,
+      {int? expiration, int? interval, String? relay}) {
+    Map map = {};
+    String content = '';
+    if (expiration != null && expiration > 0) map["expiration"] = expiration;
+    if (interval != null && interval > 0) map["interval"] = interval;
+    if (relay != null && relay.isNotEmpty) map["r"] = relay;
+    if (map.isNotEmpty) content = jsonEncode(map);
 
-  static String getSig(List data, String privateKey) {
-    String aux = generate64RandomHexChars();
-    return bip340.sign(privateKey, generateId(data), aux);
-  }
-
-  static Uint8List getSharedSecret(String privateString, String publicString) {
-    List<List<int>> byteSecret =
-    Kepler.byteSecret(privateString, '02$publicString');
-    final secretIV = byteSecret;
-    return Uint8List.fromList(secretIV[0]);
-  }
-
-  static bool isValid(String verifyId, String pubkey, String sig) {
-    if (bip340.verify(pubkey, verifyId, sig)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  static String encryptContent(
-      int createdAt,
-      String fromPubkey,
-      String fromPrivkey,
-      String fromAliasPrivkey,
-      String toPubkey,
-      String content) {
-    String sig = getSig([createdAt, fromPubkey, content], fromPrivkey);
-    Map<String, dynamic> map = {
-      'p': fromPubkey,
-      'content': content,
-      'sig': sig,
-    };
-    String encodeContent = jsonEncode(map);
-    String enContent =
-        Nip4.encryptContent(encodeContent, fromAliasPrivkey, toPubkey);
-    return enContent;
-  }
-
-  static Map<String, dynamic> decryptContent(
-      int createdAt, String enContent, String privkey, String sender) {
-    String content = Nip4.decryptContent(enContent, privkey, sender);
-    Map map = jsonDecode(content);
-    String id = generateId([createdAt, map['p'], map['content']]);
-    if (isValid(id, map['p'], map['sig'])) {
-      return jsonDecode(content);
-    }
-    throw Exception('not valid sig in content!');
-  }
-
-  static String aliasPrivkey(String toPubkey, String privkey) {
-    final secretIV = Kepler.byteSecret(privkey, '02$toPubkey');
-    Uint8List tweak = Uint8List.fromList(secretIV[0]);
-    Uint8List aliasPrivateKey = tweakAdd(hexToBytes(privkey), tweak);
-    return bytesToHex(aliasPrivateKey);
-  }
-
-  /// encrypt share secret = (fromAliasPrivkey, toPubkey)
-  /// decrypt share secret = (fromPrivkey, toAliasPubkey)
-  /// send request then listen event: p = fromAliasPubkey
-  static Event request(
-      String fromPubkey,
-      String fromPrivkey,
-      String fromAliasPubkey,
-      String fromAliasPrivkey,
-      String toPubkey,
-      String requestContent) {
-    int createdAt = currentUnixTimestampSeconds();
     return Event.from(
-        createdAt: createdAt,
         kind: 10100,
         tags: [
-          ['p', toPubkey]
+          ['p', toPubkey, myAliasPubkey]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toPubkey, requestContent),
-        privkey: fromAliasPrivkey);
+        content: content,
+        privkey: privkey);
   }
 
-  /// encrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  /// decrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  static Event accept(String fromPubkey, String fromPrivkey,
-      String fromAliasPubkey, String fromAliasPrivkey, String toAliasPubkey) {
-    int createdAt = currentUnixTimestampSeconds();
+  static Event accept(
+      String myAliasPubkey, String toPubkey, String sessionId, String privkey) {
     return Event.from(
-        createdAt: createdAt,
         kind: 10101,
         tags: [
-          ['p', toAliasPubkey]
+          ['p', toPubkey, myAliasPubkey],
+          ['e', sessionId]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toAliasPubkey, "accept"),
-        privkey: fromAliasPrivkey);
+        content: '',
+        privkey: privkey);
   }
 
-  /// encrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  /// decrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  static Event reject(String fromPubkey, String fromPrivkey,
-      String fromAliasPubkey, String fromAliasPrivkey, String toAliasPubkey) {
-    int createdAt = currentUnixTimestampSeconds();
+  static Event reject(String toPubkey, String sessionId, String privkey) {
     return Event.from(
-        createdAt: createdAt,
         kind: 10102,
         tags: [
-          ['p', toAliasPubkey]
+          ['p', toPubkey],
+          ['e', sessionId]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toAliasPubkey, "reject"),
-        privkey: fromAliasPrivkey);
+        content: '',
+        privkey: privkey);
   }
 
-  /// encrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  /// decrypt share secret = (fromAliasPrivkey, toAliasPubkey)
-  static Event remove(String fromPubkey, String fromPrivkey,
-      String fromAliasPubkey, String fromAliasPrivkey, String toAliasPubkey) {
-    int createdAt = currentUnixTimestampSeconds();
+  static Event close(String toPubkey, String sessionId, String privkey) {
     return Event.from(
-        createdAt: createdAt,
         kind: 10103,
         tags: [
-          ['p', toAliasPubkey]
+          ['p', toPubkey],
+          ['e', sessionId]
         ],
-        content: encryptContent(createdAt, fromPubkey, fromPrivkey,
-            fromAliasPrivkey, toAliasPubkey, "remove"),
-        privkey: fromAliasPrivkey);
+        content: '',
+        privkey: privkey);
   }
 
-  static String getP(Event event) {
-    if (event.tags[0].length > 1 && event.tags[0][0] == 'p') {
-      return event.tags[0][1];
+  static Event update(String myNewAliasPubkey, String toPubkey,
+      String sessionId, String privkey) {
+    return Event.from(
+        kind: 10104,
+        tags: [
+          ['p', toPubkey, myNewAliasPubkey],
+          ['e', sessionId]
+        ],
+        content: '',
+        privkey: privkey);
+  }
+
+  static KeyExchangeSession decode(Event event) {
+    late String fromAliasPubkey, toPubkey, sessionId;
+    for (var tag in event.tags) {
+      if (tag[0] == 'p') {
+        toPubkey = tag[1];
+        fromAliasPubkey = tag[2];
+      }
+      if (tag[0] == 'e') {
+        sessionId = tag[1];
+      }
     }
-    return '';
+    if (event.kind == 10100) {
+      sessionId = event.id;
+    }
+    int? expiration, interval;
+    String? relay;
+    if (event.content.isNotEmpty) {
+      Map map = jsonDecode(event.content);
+      if (map.isNotEmpty) {
+        expiration = map["expiration"];
+        interval = map["interval"];
+        relay = map["relay"].toString();
+      }
+    }
+    return KeyExchangeSession(event.pubkey, fromAliasPubkey, toPubkey,
+        sessionId, event.kind, event.createdAt, expiration, interval, relay);
   }
 
-  static Alias getRequest(Event event, String pubkey, String privkey) {
-    Map<String, dynamic> map =
-        decryptContent(event.createdAt, event.content, privkey, event.pubkey);
-    return Alias(
-        pubkey, "", map['p'], event.pubkey, map['content'], event.kind, event.createdAt);
+  static KeyExchangeSession getRequest(Event event) {
+    if (event.kind == 10100) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 
-  static Alias getAccept(
-      Event event, String pubkey, String aliasPubkey, String aliasPrikey) {
-    Map<String, dynamic> map = decryptContent(
-        event.createdAt, event.content, aliasPrikey, event.pubkey);
-    return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
-        event.kind, event.createdAt);
+  static KeyExchangeSession getAccept(Event event) {
+    if (event.kind == 10101) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 
-  static Alias getReject(
-      Event event, String pubkey, String aliasPubkey, String aliasPrikey) {
-    Map<String, dynamic> map = decryptContent(
-        event.createdAt, event.content, aliasPrikey, event.pubkey);
-    return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
-        event.kind, event.createdAt);
+  static KeyExchangeSession getReject(Event event) {
+    if (event.kind == 10102) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 
-  static Alias getRemove(
-      Event event, String pubkey, String aliasPubkey, String aliasPrikey) {
-    Map<String, dynamic> map = decryptContent(
-        event.createdAt, event.content, aliasPrikey, event.pubkey);
-    return Alias(pubkey, aliasPubkey, map['p'], event.pubkey, map['content'],
-        event.kind, event.createdAt);
+  static KeyExchangeSession getClose(Event event) {
+    if (event.kind == 10103) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
+  }
+
+  static KeyExchangeSession getUpdate(Event event) {
+    if (event.kind == 10104) {
+      return decode(event);
+    }
+    throw Exception("${event.kind} is not nip101 compatible");
   }
 }
 
-class Alias {
-  String fromPubkey;
-  String fromAliasPubkey;
-  String toPubkey;
-  String toAliasPubkey;
-
-  String content;
+class KeyExchangeSession {
+  String sessionId;
   int kind;
   int createTime;
 
-  Alias(this.fromPubkey, this.fromAliasPubkey, this.toPubkey,
-      this.toAliasPubkey, this.content, this.kind, this.createTime);
+  String fromPubkey; // sender
+  String fromAliasPubkey;
+  String toPubkey; // receiver
+
+  int? expiration;
+  int? interval;
+  String? relay;
+
+  KeyExchangeSession(
+      this.fromPubkey,
+      this.fromAliasPubkey,
+      this.toPubkey,
+      this.sessionId,
+      this.kind,
+      this.createTime,
+      this.expiration,
+      this.interval,
+      this.relay);
 }
