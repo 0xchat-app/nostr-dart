@@ -5,7 +5,7 @@ import 'package:nostr_core_dart/nostr.dart';
 
 class Nip57 {
   static Future<ZapReceipt> getZapReceipt(Event event, String privkey) async {
-    if (event.kind == 9735 && event.content.isEmpty) {
+    if (event.kind == 9735) {
       String? bolt11,
           preimage,
           description,
