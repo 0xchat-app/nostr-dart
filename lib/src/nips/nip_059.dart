@@ -23,17 +23,8 @@ class Nip59 {
     if (event.kind == 1059) {
       String content =
           await Nip44.decryptContent(event.content, privkey, event.pubkey);
-      Map map = jsonDecode(content);
-      List<dynamic> dynamicTags = map['tags'];
-      List<List<String>> tags = dynamicTags.map<List<String>>((e) {
-        if (e is List) {
-          return e.map<String>((e) => e.toString()).toList();
-        } else {
-          throw Exception('Unexpected element in list: $e');
-        }
-      }).toList();
-      return Event(map['id'], map['pubkey'], map['created_at'], map['kind'],
-          tags, map['content'], map['sig']);
+      Map<String, dynamic> map = jsonDecode(content);
+      return Event.fromJson(map);
     }
     throw Exception("${event.kind} is not nip59 compatible");
   }
