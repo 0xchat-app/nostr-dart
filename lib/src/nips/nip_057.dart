@@ -84,7 +84,7 @@ class Nip57 {
       String derivedPrivkey = generateKeyPair(recipient, createAt, privkey);
       String privreq = await privateRequest(recipient, privkey, derivedPrivkey,
           eventId: eventId, coordinate: coordinate, content: content);
-      tags.add(['anon', jsonEncode(privreq)]);
+      // tags.add(['anon', bech32Encode('pzap', privreq, maxLength: 5000)]);
     }
 
     return Event.from(
