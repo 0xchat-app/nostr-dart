@@ -68,7 +68,7 @@ class Nip101 {
   }
 
   static KeyExchangeSession decode(Event event) {
-    late String fromAliasPubkey, toPubkey, sessionId;
+    String fromAliasPubkey = '', toPubkey = '', sessionId = '';
     for (var tag in event.tags) {
       if (tag[0] == 'p' && tag.length > 2) {
         toPubkey = tag[1];
@@ -81,9 +81,7 @@ class Nip101 {
     if (event.kind == 10100) {
       sessionId = event.id;
     }
-    else if(event.kind == 10103){
-      fromAliasPubkey = '';
-    }
+
     int? expiration, interval;
     String? relay;
     if (event.content.isNotEmpty) {
