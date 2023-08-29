@@ -81,6 +81,9 @@ class Nip101 {
     if (event.kind == 10100) {
       sessionId = event.id;
     }
+    else if(event.kind == 10103){
+      fromAliasPubkey = '';
+    }
     int? expiration, interval;
     String? relay;
     if (event.content.isNotEmpty) {
