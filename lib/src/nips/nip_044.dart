@@ -45,10 +45,18 @@ class Nip44 {
   }
 
   static Future<String> decryptContent(
-      String content, String privkey, String pubkey) async {
+      String content, String privkey, String pubkey,
+      {String encodeType = 'base64', String? prefix}) async {
     try {
-      final decodeContent = base64Decode(content);
-      final v = decodeContent[0];
+      Uint8List? decodeContent;
+      if (encodeType == 'base64') {
+        decodeContent = base64Decode(content);
+      } else if (encodeType == 'bech32') {
+        Map map = bech32Decode(content, maxLength: content.length);
+        assert(map['prefix'] == prefix);
+        decodeContent = hexToBytes(map['data']);
+      }
+      final v = decodeContent![0];
       final nonce = decodeContent.sublist(1, 25);
       final cipherText = decodeContent.sublist(25);
       if (v == 1) {
@@ -91,7 +99,8 @@ class Nip44 {
   }
 
   static Future<String> encrypt(
-      String privateString, String publicString, String content) async {
+      String privateString, String publicString, String content,
+      {String encodeType = 'base64', String? prefix}) async {
     final algorithm = Xchacha20(macAlgorithm: MacAlgorithm.empty);
     final secretKey = shareSecret(privateString, publicString);
     // Generate a random 96-bit nonce.
@@ -108,8 +117,15 @@ class Nip44 {
     result.add(1);
     result.addAll(nonce);
     result.addAll(secretBox.cipherText);
-
-    return base64Encode(result);
+    if (encodeType == 'base64') {
+      return base64Encode(result);
+    } else if (encodeType == 'bech32' && prefix != null) {
+      String hexData = result
+          .map((int value) => value.toRadixString(16).padLeft(2, '0'))
+          .join();
+      return bech32Encode(prefix, hexData, maxLength: hexData.length);
+    }
+    return '';
   }
 
   static Uint8List shareSecret(String privateString, String publicString) {

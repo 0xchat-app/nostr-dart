@@ -34,8 +34,9 @@ class Nip57 {
 
       if (anon != null && anon.isNotEmpty) {
         /// recipient decrypt
-        String eventString =
-            await Nip44.decryptContent(anon, privkey, event.pubkey);
+        String eventString = await Nip44.decryptContent(
+            anon, privkey, event.pubkey,
+            encodeType: 'bech32', prefix: 'pzap');
 
         /// try to use sender decrypt
         if (eventString.isEmpty) {
@@ -84,7 +85,7 @@ class Nip57 {
       String derivedPrivkey = generateKeyPair(recipient, createAt, privkey);
       String privreq = await privateRequest(recipient, privkey, derivedPrivkey,
           eventId: eventId, coordinate: coordinate, content: content);
-      // tags.add(['anon', bech32Encode('pzap', privreq, maxLength: 5000)]);
+      tags.add(['anon', privreq]);
     }
 
     return Event.from(
@@ -118,7 +119,8 @@ class Nip57 {
         kind: 9733, tags: tags, content: content ?? '', privkey: privkey);
 
     String eventString = jsonEncode(event);
-    return await Nip44.encryptContent(eventString, privkey, recipient);
+    return await Nip44.encrypt(privkey, recipient, eventString,
+        encodeType: 'bech32', prefix: 'pzap');
   }
 }
 
