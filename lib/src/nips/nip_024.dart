@@ -32,18 +32,8 @@ class Nip24 {
     if (event.kind == 13) {
       String content =
           await Nip44.decryptContent(event.content, privkey, event.pubkey);
-      Map map = jsonDecode(content);
-      List<dynamic> dynamicTags = map['tags'];
-      List<List<String>> tags = dynamicTags.map<List<String>>((e) {
-        if (e is List) {
-          return e.map<String>((e) => e.toString()).toList();
-        } else {
-          throw Exception('Unexpected element in list: $e');
-        }
-      }).toList();
-      return Event(map['id'], map['pubkey'], map['created_at'], map['kind'],
-          tags, map['content'], map['sig'] ?? '',
-          verify: false);
+      Map<String, dynamic> map = jsonDecode(content);
+      return Event.fromJson(map, verify: false);
     }
     throw Exception("${event.kind} is not nip24 compatible");
   }
