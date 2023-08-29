@@ -89,7 +89,7 @@ class Nip101 {
       if (map.isNotEmpty) {
         expiration = map["expiration"];
         interval = map["interval"];
-        relay = map["relay"].toString();
+        relay = map["r"].toString();
       }
     }
     return KeyExchangeSession(event.pubkey, fromAliasPubkey, toPubkey,
