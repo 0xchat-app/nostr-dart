@@ -11,7 +11,7 @@ class Nip24 {
     Event sealedGossipEvent =
         await encodeSealedGossip(event, receiver, privkey);
     return Nip59.encode(sealedGossipEvent, receiver, privkey,
-        kind: kind.toString(), expiration: expiration);
+        kind: kind?.toString(), expiration: expiration);
   }
 
   static Future<Event> encodeSealedGossip(
