@@ -70,11 +70,11 @@ class Nip101 {
   static KeyExchangeSession decode(Event event) {
     late String fromAliasPubkey, toPubkey, sessionId;
     for (var tag in event.tags) {
-      if (tag[0] == 'p') {
+      if (tag[0] == 'p' && tag.length > 2) {
         toPubkey = tag[1];
         fromAliasPubkey = tag[2];
       }
-      if (tag[0] == 'e') {
+      if (tag[0] == 'e' && tag.length > 1) {
         sessionId = tag[1];
       }
     }
