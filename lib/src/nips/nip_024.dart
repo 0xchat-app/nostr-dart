@@ -36,9 +36,9 @@ class Nip24 {
         sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver);
   }
 
-  static Future<Event?> decode(Event event, String privkey) async {
+  static Future<Event?> decode(Event event, String privkey, {String? sealedPrivkey}) async {
     try {
-      Event sealedGossipEvent = await Nip59.decode(event, privkey);
+      Event sealedGossipEvent = await Nip59.decode(event, sealedPrivkey ?? privkey);
       Event decodeEvent = await _decodeSealedGossip(sealedGossipEvent, privkey);
       return decodeEvent;
     } catch (e) {
