@@ -8,7 +8,7 @@ Future<void> main() async {
 
   print(realEvent.toJson());
 
-  Event wrapEvent = await Nip59.encode(realEvent, receiver.public, random.private);
+  Event wrapEvent = await Nip59.encode(realEvent, receiver.public);
 
   print(wrapEvent.toJson());
 

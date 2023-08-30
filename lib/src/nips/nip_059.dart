@@ -5,9 +5,10 @@ import 'package:nostr_core_dart/nostr.dart';
 /// Gift Wrap
 /// https://github.com/v0l/nips/blob/59/59.md
 class Nip59 {
-  static Future<Event> encode(Event event, String receiver, String privkey,
-      {String? kind, int? expiration}) async {
+  static Future<Event> encode(Event event, String receiver,
+      {String? privkey, String? kind, int? expiration}) async {
     String encodedEvent = jsonEncode(event);
+    privkey ??= Keychain.generate().private;
     String content =
         await Nip44.encryptContent(encodedEvent, privkey, receiver);
     List<List<String>> tags = [
