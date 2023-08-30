@@ -36,21 +36,31 @@ class Nip24 {
         sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver);
   }
 
-  static Future<Event> decode(Event event, String privkey) async {
-    Event sealedGossipEvent = await Nip59.decode(event, privkey);
-    return _decodeSealedGossip(sealedGossipEvent, privkey);
+  static Future<Event?> decode(Event event, String privkey) async {
+    try {
+      Event sealedGossipEvent = await Nip59.decode(event, privkey);
+      Event decodeEvent = await _decodeSealedGossip(sealedGossipEvent, privkey);
+      return decodeEvent;
+    } catch (e) {
+      print('decode error: ${e.toString()}');
+      return null;
+    }
   }
 
   static Future<Event> _decodeSealedGossip(Event event, String privkey) async {
     if (event.kind == 13) {
-      String content =
-          await Nip44.decryptContent(event.content, privkey, event.pubkey);
-      Map<String, dynamic> map = jsonDecode(content);
-      Event innerEvent = Event.fromJson(map, verify: false);
-      if (innerEvent.pubkey == event.pubkey) {
-        return innerEvent;
-      } else {
-        throw Exception("${innerEvent.pubkey} not valid pubkey");
+      try {
+        String content =
+            await Nip44.decryptContent(event.content, privkey, event.pubkey);
+        Map<String, dynamic> map = jsonDecode(content);
+        Event innerEvent = Event.fromJson(map, verify: false);
+        if (innerEvent.pubkey == event.pubkey) {
+          return innerEvent;
+        } else {
+          throw Exception("${innerEvent.pubkey} not valid pubkey");
+        }
+      } catch (e) {
+        throw Exception("${event.id} is not nip24 compatible");
       }
     }
     throw Exception("${event.kind} is not nip24 compatible");
