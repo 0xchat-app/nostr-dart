@@ -5,11 +5,16 @@ import 'package:nostr_core_dart/nostr.dart';
 /// https://github.com/vitorpamplona/nips/blob/sealed-dms/24.md
 class Nip24 {
   static Future<Event> encode(Event event, String receiver, String privkey,
-      {int? kind, int? expiration}) async {
+      {int? kind,
+      int? expiration,
+      String? sealedPrivkey,
+      String? sealedReceiver}) async {
     Event sealedGossipEvent =
         await _encodeSealedGossip(event, receiver, privkey);
-    return Nip59.encode(sealedGossipEvent, receiver,
-        kind: kind?.toString(), expiration: expiration);
+    return Nip59.encode(sealedGossipEvent, sealedReceiver ?? receiver,
+        kind: kind?.toString(),
+        expiration: expiration,
+        sealedPrivkey: sealedPrivkey);
   }
 
   static Future<Event> _encodeSealedGossip(
@@ -22,11 +27,13 @@ class Nip24 {
   }
 
   static Future<Event> encodeSealedGossipDM(
-      String receiver, String content, String replyId, String privkey) async {
+      String receiver, String content, String replyId, String privkey,
+      {String? sealedPrivkey, String? sealedReceiver}) async {
     List<List<String>> tags = Nip4.toTags(receiver, replyId);
     Event event =
         Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
-    return await encode(event, receiver, privkey);
+    return await encode(event, receiver, privkey,
+        sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver);
   }
 
   static Future<Event> decode(Event event, String privkey) async {
@@ -40,10 +47,9 @@ class Nip24 {
           await Nip44.decryptContent(event.content, privkey, event.pubkey);
       Map<String, dynamic> map = jsonDecode(content);
       Event innerEvent = Event.fromJson(map, verify: false);
-      if(innerEvent.pubkey == event.pubkey){
+      if (innerEvent.pubkey == event.pubkey) {
         return innerEvent;
-      }
-      else{
+      } else {
         throw Exception("${innerEvent.pubkey} not valid pubkey");
       }
     }
