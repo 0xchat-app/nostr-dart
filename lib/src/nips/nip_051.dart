@@ -26,8 +26,8 @@ class Nip51 {
     return result;
   }
 
-  static String peoplesToContent(
-      List<People> items, String privkey, String pubkey) {
+  static Future<String> peoplesToContent(
+      List<People> items, String privkey, String pubkey) async {
     var list = [];
     for (People item in items) {
       list.add([
@@ -39,32 +39,37 @@ class Nip51 {
       ]);
     }
     String content = jsonEncode(list);
-    return encrypt(privkey, '02$pubkey', content);
+    return await Nip44.encryptContent(content, privkey, pubkey);
   }
 
-  static String bookmarksToContent(
-      List<String> items, String privkey, String pubkey) {
+  static Future<String> bookmarksToContent(
+      List<String> items, String privkey, String pubkey) async {
     var list = [];
     for (String item in items) {
       list.add(['e', item]);
     }
     String content = jsonEncode(list);
-    return encrypt(privkey, '02$pubkey', content);
+    return await Nip44.encryptContent(content, privkey, pubkey);
   }
 
-  static Map<String, List>? fromContent(
-      String content, String privkey, String pubkey) {
+  static Future<Map<String, List>?> fromContent(
+      String content, String privkey, String pubkey) async {
     List<People> people = [];
     List<String> bookmarks = [];
     int ivIndex = content.indexOf("?iv=");
+    String deContent = '';
     if (ivIndex <= 0) {
-      print("Invalid content, could not get ivIndex: $content");
-      return null;
+      /// try nip44 decrypted
+      deContent = await Nip44.decryptContent(content, privkey, pubkey);
     }
-    String iv = content.substring(ivIndex + "?iv=".length, content.length);
-    String encString = content.substring(0, ivIndex);
-    String deContent =
-        decrypt(privkey, "02$pubkey", encString, iv);
+    else{
+      /// try nip4 decrypted
+      String iv = content.substring(ivIndex + "?iv=".length, content.length);
+      String encString = content.substring(0, ivIndex);
+      deContent =
+      decrypt(privkey, "02$pubkey", encString, iv);
+    }
+
     for (List tag in jsonDecode(deContent)) {
       if (tag[0] == "p") {
         people.add(People(tag[1], tag.length > 2 ? tag[2] : "",
@@ -77,29 +82,31 @@ class Nip51 {
     return {"people": people, "bookmarks": bookmarks};
   }
 
-  static Event createMutePeople(List<People> items, List<People> encryptedItems,
-      String privkey, String pubkey) {
+  static Future<Event> createMutePeople(List<People> items, List<People> encryptedItems,
+      String privkey, String pubkey) async {
+    String content = await peoplesToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 10000,
         tags: peoplesToTags(items),
-        content: peoplesToContent(encryptedItems, privkey, pubkey),
+        content: content,
         privkey: privkey);
   }
 
-  static createPinEvent(List<String> items, List<String> encryptedItems,
-      String privkey, String pubkey) {
+  static Future<Event> createPinEvent(List<String> items, List<String> encryptedItems,
+      String privkey, String pubkey) async {
+    String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 10001,
         tags: bookmarksToTags(items),
-        content: bookmarksToContent(encryptedItems, privkey, pubkey),
+        content: content,
         privkey: privkey);
   }
 
-  static Event createCategorizedPeople(String identifier, List<People> items,
-      List<People> encryptedItems, String privkey, String pubkey) {
+  static Future<Event> createCategorizedPeople(String identifier, List<People> items,
+      List<People> encryptedItems, String privkey, String pubkey) async {
     List<List<String>> tags = peoplesToTags(items);
     tags.add(["d", identifier]);
-    String content = peoplesToContent(encryptedItems, privkey, pubkey);
+    String content = await peoplesToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 30000,
         tags: tags,
@@ -107,11 +114,11 @@ class Nip51 {
         privkey: privkey);
   }
 
-  static createCategorizedBookmarks(String identifier, List<String> items,
-      List<String> encryptedItems, String privkey, String pubkey) {
+  static Future<Event> createCategorizedBookmarks(String identifier, List<String> items,
+      List<String> encryptedItems, String privkey, String pubkey) async {
     List<List<String>> tags = bookmarksToTags(items);
     tags.add(["d", identifier]);
-    String content = bookmarksToContent(encryptedItems, privkey, pubkey);
+    String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 30001,
         tags: tags,
@@ -119,7 +126,7 @@ class Nip51 {
         privkey: privkey);
   }
 
-  static Lists getLists(Event event, String privkey) {
+  static Future<Lists> getLists(Event event, String privkey) async {
     if (event.kind != 10000 &&
         event.kind != 10001 &&
         event.kind != 30000 &&
@@ -140,7 +147,7 @@ class Nip51 {
       if (tag[0] == "d") identifier = tag[1];
     }
     String pubkey = bip340.getPublicKey(privkey);
-    Map? content = Nip51.fromContent(event.content, privkey, pubkey);
+    Map? content = await Nip51.fromContent(event.content, privkey, pubkey);
     if(content != null){
       people.addAll(content["people"]);
       bookmarks.addAll(content["bookmarks"]);
