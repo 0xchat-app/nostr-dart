@@ -70,15 +70,18 @@ class Nip51 {
       decrypt(privkey, "02$pubkey", encString, iv);
     }
 
-    for (List tag in jsonDecode(deContent)) {
-      if (tag[0] == "p") {
-        people.add(People(tag[1], tag.length > 2 ? tag[2] : "",
-            tag.length > 3 ? tag[3] : "", tag.length > 4 ? tag[4] : ""));
-      } else if (tag[0] == "e") {
-        // bookmark
-        bookmarks.add(tag[1]);
+    if(deContent.isNotEmpty){
+      for (List tag in jsonDecode(deContent)) {
+        if (tag[0] == "p") {
+          people.add(People(tag[1], tag.length > 2 ? tag[2] : "",
+              tag.length > 3 ? tag[3] : "", tag.length > 4 ? tag[4] : ""));
+        } else if (tag[0] == "e") {
+          // bookmark
+          bookmarks.add(tag[1]);
+        }
       }
     }
+
     return {"people": people, "bookmarks": bookmarks};
   }
 
