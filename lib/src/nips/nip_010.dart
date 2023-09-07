@@ -17,7 +17,7 @@ class Nip10 {
     List<ETag> etags = [];
     List<PTag> ptags = [];
     for (var tag in tags) {
-      if (tag[0] == "p") ptags.add(PTag(tag[1], tag[2]));
+      if (tag[0] == "p") ptags.add(PTag(tag[1], tag.length > 2 ? tag[2] : ''));
       if (tag[0] == "e") {
         if (tag[3] == 'root') {
           root = ETag(tag[1], tag[2], tag[3]);
@@ -37,12 +37,12 @@ class Nip10 {
     List<List<String>> result = [];
     result.add(
         ["e", thread.root.eventId, thread.root.relayURL, thread.root.marker]);
-    if(thread.etags != null){
+    if (thread.etags != null) {
       for (var etag in thread.etags!) {
         result.add(["e", etag.eventId, etag.relayURL, etag.marker]);
       }
     }
-    if(thread.ptags != null){
+    if (thread.ptags != null) {
       for (var ptag in thread.ptags!) {
         result.add(["p", ptag.pubkey, ptag.relayURL]);
       }
