@@ -19,10 +19,10 @@ class Nip10 {
     for (var tag in tags) {
       if (tag[0] == "p") ptags.add(PTag(tag[1], tag.length > 2 ? tag[2] : ''));
       if (tag[0] == "e") {
-        if (tag[3] == 'root') {
+        if (tag.length > 3 && tag[3] == 'root') {
           root = ETag(tag[1], tag[2], tag[3]);
         } else {
-          etags.add(ETag(tag[1], tag[2], tag[3]));
+          etags.add(ETag(tag[1], '', 'root'));
         }
       }
     }
