@@ -7,7 +7,7 @@ import 'package:nostr_core_dart/nostr.dart';
 /// https://github.com/v0l/nips/blob/59/59.md
 class Nip59 {
   static Future<Event> encode(Event event, String receiver,
-      {String? sealedPrivkey, String? kind, int? expiration}) async {
+      {String? sealedPrivkey, String? kind, int? expiration, int? createAt}) async {
     String encodedEvent = jsonEncode(event);
     sealedPrivkey ??= Keychain.generate().private;
     String content =
@@ -17,10 +17,8 @@ class Nip59 {
     ];
     if (kind != null) tags.add(['k', kind]);
     if (expiration != null) tags.add(['expiration', '$expiration']);
-    var intValue = Random().nextInt(24*60*60*7);
-    int createAt = currentUnixTimestampSeconds() - intValue;
     return Event.from(
-        kind: 1059, tags: tags, content: content, privkey: sealedPrivkey, createdAt: createAt);
+        kind: 1059, tags: tags, content: content, privkey: sealedPrivkey, createdAt: createAt ?? 0);
   }
 
   static Future<Event> decode(Event event, String privkey) async {

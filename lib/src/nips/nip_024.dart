@@ -8,13 +8,13 @@ class Nip24 {
       {int? kind,
       int? expiration,
       String? sealedPrivkey,
-      String? sealedReceiver}) async {
+      String? sealedReceiver, int? createAt}) async {
     Event sealedGossipEvent =
         await _encodeSealedGossip(event, receiver, privkey);
     return Nip59.encode(sealedGossipEvent, sealedReceiver ?? receiver,
         kind: kind?.toString(),
         expiration: expiration,
-        sealedPrivkey: sealedPrivkey);
+        sealedPrivkey: sealedPrivkey, createAt: createAt);
   }
 
   static Future<Event> _encodeSealedGossip(
@@ -28,12 +28,12 @@ class Nip24 {
 
   static Future<Event> encodeSealedGossipDM(
       String receiver, String content, String replyId, String privkey,
-      {String? sealedPrivkey, String? sealedReceiver}) async {
+      {String? sealedPrivkey, String? sealedReceiver, int? createAt}) async {
     List<List<String>> tags = Nip4.toTags(receiver, replyId);
     Event event =
         Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
     return await encode(event, receiver, privkey,
-        sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver);
+        sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver, createAt: createAt);
   }
 
   static Future<Event?> decode(Event event, String privkey, {String? sealedPrivkey}) async {
