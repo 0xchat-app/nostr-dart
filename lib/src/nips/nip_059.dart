@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:nostr_core_dart/nostr.dart';
 
@@ -16,8 +17,10 @@ class Nip59 {
     ];
     if (kind != null) tags.add(['k', kind]);
     if (expiration != null) tags.add(['expiration', '$expiration']);
+    var intValue = Random().nextInt(24*60*60*7);
+    int createAt = currentUnixTimestampSeconds() - intValue;
     return Event.from(
-        kind: 1059, tags: tags, content: content, privkey: sealedPrivkey);
+        kind: 1059, tags: tags, content: content, privkey: sealedPrivkey, createdAt: createAt);
   }
 
   static Future<Event> decode(Event event, String privkey) async {

@@ -49,18 +49,18 @@ class Nip24 {
 
   static Future<Event> _decodeSealedGossip(Event event, String privkey) async {
     if (event.kind == 13) {
-      try {
+      try{
         String content =
-            await Nip44.decryptContent(event.content, privkey, event.pubkey);
+        await Nip44.decryptContent(event.content, privkey, event.pubkey);
         Map<String, dynamic> map = jsonDecode(content);
+        map['sig'] = '';
         Event innerEvent = Event.fromJson(map, verify: false);
         if (innerEvent.pubkey == event.pubkey) {
           return innerEvent;
-        } else {
-          throw Exception("${innerEvent.pubkey} not valid pubkey");
         }
-      } catch (e) {
-        throw Exception("${event.id} is not nip24 compatible");
+      }
+      catch(e){
+        throw Exception(e);
       }
     }
     throw Exception("${event.kind} is not nip24 compatible");
@@ -69,14 +69,19 @@ class Nip24 {
   static Future<EDMessage> decodeSealedGossipDM(
       Event dmEvent, String receiver, String privkey) async {
     if (dmEvent.kind == 14) {
-      String receiver = "";
+      List<String> receivers = [];
       String replyId = "";
       for (var tag in dmEvent.tags) {
-        if (tag[0] == "p") receiver = tag[1];
+        if (tag[0] == "p") receivers.add(tag[1]);
         if (tag[0] == "e") replyId = tag[1];
       }
-      return EDMessage(dmEvent.pubkey, receiver, dmEvent.createdAt,
+      if(receivers.contains(receiver)) {
+        return EDMessage(dmEvent.pubkey, receiver, dmEvent.createdAt,
           dmEvent.content, replyId);
+      }
+      else{
+        throw Exception("no available receiver");
+      }
     }
     throw Exception("${dmEvent.kind} is not kind14 compatible");
   }

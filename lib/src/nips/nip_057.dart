@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:nostr_core_dart/nostr.dart';
+import 'package:pointycastle/digests/sha256.dart';
 
 class Nip57 {
   static Future<ZapReceipt> getZapReceipt(Event event, String privkey) async {
@@ -99,7 +100,8 @@ class Nip57 {
   static String generateKeyPair(String receiver, int createAt, String privkey) {
     Uint8List derivedPrivateKey =
         tweakAdd(hexToBytes(privkey), hexToBytes(receiver), salt: createAt);
-    return bytesToHex(derivedPrivateKey);
+    Uint8List sha256Key = SHA256Digest().process(derivedPrivateKey);
+    return bytesToHex(sha256Key);
   }
 
   static Future<String> privateRequest(
