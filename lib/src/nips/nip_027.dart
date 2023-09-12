@@ -30,7 +30,7 @@ class Nip27 {
     int offset = 0;
     for (ProfileMention mention in mentions) {
       String encodeProfile = Nip21.encode(Nip19.encodeShareableEntity(
-          'nprofile', mention.pubkey, mention.relays, null));
+          'nprofile', mention.pubkey, mention.relays, null, null));
       String subString =
           content.substring(mention.start + offset, mention.end + offset);
       content = content.replaceFirst(

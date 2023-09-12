@@ -13,9 +13,11 @@ void main() {
   //
   // Map map = bech32Decode('bech32Decode');
 
-  String encodeShareableEntity = Nip19.encodeShareableEntity('nprofile', '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d', ["wss://r.x.com", "wss://djbas.sadkb.com"], null);
+  String encodeShareableEntity = Nip19.encodeShareableEntity('nprofile', '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d', ["wss://r.x.com", "wss://djbas.sadkb.com"], '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d', 30000);
   print(encodeShareableEntity);
 
-  Map decodeShareableEntity = Nip19.decodeShareableEntity(encodeShareableEntity);
+  Map decodeShareableEntity = Nip19.decodeShareableEntity('nevent1qqsypdgw7ljus0sjkyrwghzxg6s8cu3wppnkg4wddeuku7hpeq4vtagpqqpzq7km2gxr437tdhyz2dggmuxwrkt4mfylaldfkhy4vaz2qjwjxzkwpkrupu');
   print(decodeShareableEntity);
+
+
 }

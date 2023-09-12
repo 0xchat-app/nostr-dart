@@ -61,7 +61,7 @@ class Nip19 {
   // for naddr, the 32-bit unsigned integer of the kind, big-endian
   // for nevent, optionally, the 32-bit unsigned integer of the kind, big-endian
   static String encodeShareableEntity(String prefix, String special,
-      List<String>? relays, String? author) {
+      List<String>? relays, String? author, int? kind) {
     // 0:special
     String result =
         '00${hexToBytes(special).length.toRadixString(16).padLeft(2, '0')}$special';
@@ -82,7 +82,20 @@ class Nip19 {
       result =
           '$result${hexToBytes(author).length.toRadixString(16).padLeft(2, '0')}$author';
     }
-    // TODO: 3:kind
+    // 3: kind
+    if (kind != null) {
+      result = '${result}03';
+      final byteData = ByteData(4);
+      byteData.setUint32(0, kind, Endian.big);
+      final value = List.generate(
+              byteData.lengthInBytes,
+              (index) =>
+                  byteData.getUint8(index).toRadixString(16).padLeft(2, '0'))
+          .join();
+      result =
+          '$result${hexToBytes(value).length.toRadixString(16).padLeft(2, '0')}$value';
+    }
+
     return bech32Encode(prefix, result, maxLength: result.length);
   }
 
@@ -91,6 +104,7 @@ class Nip19 {
     String special = '';
     List<String> relays = [];
     String? author;
+    int? kind;
     Map<String, String> decodedMap =
         bech32Decode(shareableEntity, maxLength: shareableEntity.length);
     prefix = decodedMap['prefix']!;
@@ -111,7 +125,8 @@ class Nip19 {
       } else if (type == 2) {
         author = bytesToHex(value);
       } else if (type == 3) {
-        // TODO: kind
+        final byteData = ByteData.sublistView(value);
+        kind = byteData.getUint32(0, Endian.big);
       }
     }
 
@@ -119,7 +134,8 @@ class Nip19 {
       'prefix': prefix,
       'special': special,
       'relays': relays,
-      'author': author
+      'author': author,
+      'kind': kind
     };
   }
 }
