@@ -83,7 +83,7 @@ class Nip57 {
 
     String derivedPrivkey = privkey;
     if (privateZap) {
-      String derivedPrivkey = generateKeyPair(recipient, createAt, privkey);
+      derivedPrivkey = generateKeyPair(recipient, createAt, privkey);
       String privreq = await privateRequest(recipient, privkey, derivedPrivkey,
           eventId: eventId, coordinate: coordinate, content: content);
       tags.add(['anon', privreq]);
