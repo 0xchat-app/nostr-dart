@@ -165,7 +165,8 @@ class Nip28 {
         root,
         replyMessage == null
             ? null
-            : [ETag(replyMessage, replyMessageRelay ?? '', 'reply')],
+            : ETag(replyMessage, replyMessageRelay ?? '', 'reply'),
+        null,
         replyUser == null ? null : [PTag(replyUser, replyUserRelay ?? '')]);
     tags = Nip10.toTags(thread);
     Event event =

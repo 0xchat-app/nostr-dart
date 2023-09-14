@@ -14,19 +14,23 @@ class Nip10 {
   /// }
   static Thread fromTags(List<List<String>> tags) {
     ETag root = ETag('', '', '');
-    List<ETag> etags = [];
+    ETag reply = ETag('', '', '');
+    List<ETag> mention = [];
     List<PTag> ptags = [];
     for (var tag in tags) {
       if (tag[0] == "p") ptags.add(PTag(tag[1], tag.length > 2 ? tag[2] : ''));
       if (tag[0] == "e") {
         if (tag.length > 3 && tag[3] == 'root') {
           root = ETag(tag[1], tag[2], tag[3]);
-        } else {
-          etags.add(ETag(tag[1], '', 'root'));
+        } else if(tag.length > 3 && tag[3] == 'reply'){
+          reply = ETag(tag[1], tag[2], tag[3]);
+        }
+        else {
+          mention.add(ETag(tag[1], '', 'mention'));
         }
       }
     }
-    return Thread(root, etags, ptags);
+    return Thread(root, reply, mention, ptags);
   }
 
   static ETag rootTag(String eventId, String relay) {
@@ -37,8 +41,11 @@ class Nip10 {
     List<List<String>> result = [];
     result.add(
         ["e", thread.root.eventId, thread.root.relayURL, thread.root.marker]);
-    if (thread.etags != null) {
-      for (var etag in thread.etags!) {
+    if(thread.reply != null){
+      result.add(["e", thread.reply!.eventId, thread.reply!.relayURL, thread.reply!.marker]);
+    }
+    if (thread.mentions != null) {
+      for (var etag in thread.mentions!) {
         result.add(["e", etag.eventId, etag.relayURL, etag.marker]);
       }
     }
@@ -68,7 +75,8 @@ class PTag {
 
 class Thread {
   ETag root;
-  List<ETag>? etags;
+  ETag? reply;
+  List<ETag>? mentions;
   List<PTag>? ptags;
-  Thread(this.root, this.etags, this.ptags);
+  Thread(this.root, this.reply, this.mentions, this.ptags);
 }
