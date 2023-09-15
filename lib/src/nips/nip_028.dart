@@ -55,6 +55,9 @@ class Nip28 {
     try {
       if (event.kind == 42) {
         var content = event.content;
+        for (var tag in event.tags) {
+          if (tag[0] == "subContent") content = tag[1];
+        }
         Thread thread = Nip10.fromTags(event.tags);
         String channelId = thread.root.eventId;
         return ChannelMessage(
@@ -157,7 +160,8 @@ class Nip28 {
       String? replyMessage,
       String? replyMessageRelay,
       String? replyUser,
-      String? replyUserRelay}) {
+      String? replyUserRelay,
+      String? subContent}) {
     List<List<String>> tags = [];
     ETag root = Nip10.rootTag(channelId, channelRelay ?? '');
 
@@ -169,6 +173,9 @@ class Nip28 {
         null,
         replyUser == null ? null : [PTag(replyUser, replyUserRelay ?? '')]);
     tags = Nip10.toTags(thread);
+    if (subContent != null && subContent.isNotEmpty) {
+      tags.add(['subContent', subContent]);
+    }
     Event event =
         Event.from(kind: 42, tags: tags, content: content, privkey: privkey);
     return event;

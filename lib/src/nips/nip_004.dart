@@ -32,16 +32,18 @@ class Nip4 {
     String receiver = "";
     String replyId = "";
     String content = "";
+    String subContent = event.content;
 
     for (var tag in event.tags) {
       if (tag[0] == "p") receiver = tag[1];
       if (tag[0] == "e") replyId = tag[1];
+      if (tag[0] == "subContent") subContent = tag[1];
     }
 
     if (receiver.isNotEmpty && receiver.compareTo(pubkey) == 0) {
-      content = decryptContent(event.content, privkey, sender);
+      content = decryptContent(subContent, privkey, sender);
     } else if (receiver.isNotEmpty && sender.compareTo(pubkey) == 0) {
-      content = decryptContent(event.content, privkey, receiver);
+      content = decryptContent(subContent, privkey, receiver);
     } else {
       throw Exception("not correct receiver, is not nip4 compatible");
     }
@@ -65,9 +67,13 @@ class Nip4 {
   }
 
   static Event encode(
-      String receiver, String content, String replyId, String privkey) {
+      String receiver, String content, String replyId, String privkey, {String? subContent}) {
     String enContent = encryptContent(content, privkey, receiver);
     List<List<String>> tags = toTags(receiver, replyId);
+    if(subContent != null && subContent.isNotEmpty){
+      String enSubContent = encryptContent(subContent, privkey, receiver);
+      tags.add(['subContent', enSubContent]);
+    }
     Event event =
         Event.from(kind: 4, tags: tags, content: enContent, privkey: privkey);
     return event;

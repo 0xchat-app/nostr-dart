@@ -28,8 +28,11 @@ class Nip24 {
 
   static Future<Event> encodeSealedGossipDM(
       String receiver, String content, String replyId, String privkey,
-      {String? sealedPrivkey, String? sealedReceiver, int? createAt}) async {
+      {String? sealedPrivkey, String? sealedReceiver, int? createAt, String? subContent}) async {
     List<List<String>> tags = Nip4.toTags(receiver, replyId);
+    if(subContent != null && subContent.isNotEmpty){
+      tags.add(['subContent', subContent]);
+    }
     Event event =
         Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
     return await encode(event, receiver, privkey,
@@ -71,13 +74,15 @@ class Nip24 {
     if (dmEvent.kind == 14) {
       List<String> receivers = [];
       String replyId = "";
+      String subContent = dmEvent.content;
       for (var tag in dmEvent.tags) {
         if (tag[0] == "p") receivers.add(tag[1]);
         if (tag[0] == "e") replyId = tag[1];
+        if (tag[0] == "subContent") subContent = tag[1];
       }
       if(receivers.contains(receiver)) {
         return EDMessage(dmEvent.pubkey, receiver, dmEvent.createdAt,
-          dmEvent.content, replyId);
+            subContent, replyId);
       }
       else{
         throw Exception("no available receiver");
