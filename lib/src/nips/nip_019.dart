@@ -95,8 +95,7 @@ class Nip19 {
       result =
           '$result${hexToBytes(value).length.toRadixString(16).padLeft(2, '0')}$value';
     }
-
-    return bech32Encode(prefix, result, maxLength: result.length);
+    return bech32Encode(prefix, result, maxLength: result.length + 90);
   }
 
   static Map<String, dynamic> decodeShareableEntity(String shareableEntity) {
