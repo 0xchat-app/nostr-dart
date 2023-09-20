@@ -9,11 +9,27 @@ class Nip1 {
     return Event.from(kind: 0, tags: [], content: content, privkey: privkey);
   }
 
-  static Event textNote(String content, String privkey) {
-    return Event.from(kind: 1, tags: [], content: content, privkey: privkey);
+  static Event encodeNote(String content, Thread thread, String privkey) {
+    return Event.from(kind: 1, tags: Nip10.toTags(thread), content: content, privkey: privkey);
+  }
+
+  static Note decodeNote(Event event) {
+    if(event.kind == 1){
+      return Note(event.pubkey, event.createdAt, Nip10.fromTags(event.tags), event.content);
+    }
+    throw Exception("${event.kind} is not nip1 compatible");
   }
 
   static Event recommendServer(String content, String privkey) {
     return Event.from(kind: 2, tags: [], content: content, privkey: privkey);
   }
+}
+
+class Note {
+  String pubkey;
+  int createAt;
+  Thread thread;
+  String content;
+
+  Note(this.pubkey, this.createAt, this.thread, this.content);
 }
