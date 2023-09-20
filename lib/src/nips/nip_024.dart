@@ -69,7 +69,7 @@ class Nip24 {
     throw Exception("${event.kind} is not nip24 compatible");
   }
 
-  static Future<EDMessage> decodeSealedGossipDM(
+  static Future<EDMessage?> decodeSealedGossipDM(
       Event dmEvent, String receiver, String privkey) async {
     if (dmEvent.kind == 14) {
       List<String> receivers = [];
@@ -85,9 +85,9 @@ class Nip24 {
             subContent, replyId);
       }
       else{
-        throw Exception("no available receiver");
+        return null;
       }
     }
-    throw Exception("${dmEvent.kind} is not kind14 compatible");
+    return null;
   }
 }

@@ -18,11 +18,11 @@ class Nip4 {
   ///
   ///  EDMessage eDMessage = Nip4.decode(event);
   ///```
-  static EDMessage decode(Event event, String pubkey, String privkey) {
+  static EDMessage? decode(Event event, String pubkey, String privkey) {
     if (event.kind == 4) {
       return _toEDMessage(event, pubkey, privkey);
     }
-    throw Exception("${event.kind} is not nip4 compatible");
+    return null;
   }
 
   /// Returns EDMessage from event
