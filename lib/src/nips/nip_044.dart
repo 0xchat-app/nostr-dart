@@ -73,8 +73,8 @@ class Nip44 {
         print("nip44: decryptContent error: unknown algorithm version: $v");
         return "";
       }
-    } catch (e) {
-      print("nip44: decryptContent error: $e");
+    } catch (e, stack) {
+      print("nip44: decryptContent error: $e, $stack");
       return "";
     }
   }

@@ -28,6 +28,11 @@ Future<void> main() async {
   var plaintext = 'a';
   String test = await testencrypt(sharedkey, hexToBytes(nonce), plaintext);
   print(test);
+
+
+  String nzap = await Nip44.encrypt(sender.private, receiver.public, 'content', encodeType: 'bech32', prefix: 'pzap');
+  String decodezap = await Nip44.decryptContent(nzap, receiver.private, sender.public, encodeType: 'bech32', prefix: 'pzap');
+  print(decodezap);
 }
 
 Future<String> testencrypt(

@@ -15,36 +15,41 @@ class Nip57 {
           content,
           sender,
           anon;
+      int createAt = 0;
       for (var tag in event.tags) {
         if (tag[0] == 'bolt11') bolt11 = tag[1];
         if (tag[0] == 'preimage') preimage = tag[1];
         if (tag[0] == 'description') description = tag[1];
         if (tag[0] == 'p') recipient = tag[1];
         if (tag[0] == 'e') eventId = tag[1];
-        if (tag[0] == 'anon') anon = tag[1];
       }
       if (description != null) {
         try {
-          Map map = jsonDecode(description);
-          content = map['content'];
-          sender = map['pubkey'];
+          Map<String, dynamic> map = jsonDecode(description);
+          Event e = Event.fromJson(map);
+          content = e.content;
+          sender = e.pubkey;
+          createAt = e.createdAt;
+          for(var tag in e.tags){
+            if(tag[0] == 'anon') anon = tag[1];
+          }
         } catch (_) {
           content = '';
         }
       }
 
-      if (anon != null && anon.isNotEmpty) {
+      if (anon != null && anon.isNotEmpty && sender != null) {
         /// recipient decrypt
         String eventString = await Nip44.decryptContent(
-            anon, privkey, event.pubkey,
+            anon, privkey, sender,
             encodeType: 'bech32', prefix: 'pzap');
 
         /// try to use sender decrypt
         if (eventString.isEmpty) {
           String derivedPrivkey =
-              generateKeyPair(recipient!, event.createdAt, privkey);
+              generateKeyPair(recipient!, createAt, privkey);
           eventString =
-              await Nip44.decryptContent(anon, derivedPrivkey, recipient);
+              await Nip44.decryptContent(anon, derivedPrivkey, recipient, encodeType: 'bech32', prefix: 'pzap');
         }
         if (eventString.isNotEmpty) {
           Event privEvent = Event.fromJson(jsonDecode(eventString));

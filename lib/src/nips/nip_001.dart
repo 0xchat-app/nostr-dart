@@ -15,7 +15,7 @@ class Nip1 {
 
   static Note decodeNote(Event event) {
     if(event.kind == 1){
-      return Note(event.pubkey, event.createdAt, Nip10.fromTags(event.tags), event.content);
+      return Note(event.id, event.pubkey, event.createdAt, Nip10.fromTags(event.tags), event.content);
     }
     throw Exception("${event.kind} is not nip1 compatible");
   }
@@ -26,10 +26,11 @@ class Nip1 {
 }
 
 class Note {
+  String id;
   String pubkey;
   int createAt;
   Thread thread;
   String content;
 
-  Note(this.pubkey, this.createAt, this.thread, this.content);
+  Note(this.id, this.pubkey, this.createAt, this.thread, this.content);
 }
