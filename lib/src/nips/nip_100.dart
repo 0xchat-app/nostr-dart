@@ -26,10 +26,7 @@ class Nip100 {
     tags.add(['type', 'disconnect']);
     tags.add(['p', friend]);
     return Event.from(
-        kind: 25050,
-        tags: tags,
-        content: Nip4.encryptContent(content, privkey, friend),
-        privkey: privkey);
+        kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
   static Event offer(String friend, String content, String privkey) {
@@ -37,10 +34,7 @@ class Nip100 {
     tags.add(['type', 'offer']);
     tags.add(['p', friend]);
     return Event.from(
-        kind: 25050,
-        tags: tags,
-        content: Nip4.encryptContent(content, privkey, friend),
-        privkey: privkey);
+        kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
   static Event answer(String friend, String content, String privkey) {
@@ -48,10 +42,7 @@ class Nip100 {
     tags.add(['type', 'answer']);
     tags.add(['p', friend]);
     return Event.from(
-        kind: 25050,
-        tags: tags,
-        content: Nip4.encryptContent(content, privkey, friend),
-        privkey: privkey);
+        kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
   static Event candidate(String friend, String content, String privkey) {
@@ -59,10 +50,7 @@ class Nip100 {
     tags.add(['type', 'candidate']);
     tags.add(['p', friend]);
     return Event.from(
-        kind: 25050,
-        tags: tags,
-        content: Nip4.encryptContent(content, privkey, friend),
-        privkey: privkey);
+        kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
   static Signaling decode(Event event, String privkey) {
@@ -75,10 +63,7 @@ class Nip100 {
       if (friend != null && friend == bip340.getPublicKey(privkey)) {
         try {
           return Signaling(
-              event.pubkey,
-              friend,
-              Nip4.decryptContent(event.content, privkey, event.pubkey),
-              typeToState(type!));
+              event.pubkey, friend, event.content, typeToState(type!));
         } catch (e) {
           throw Exception(e);
         }
