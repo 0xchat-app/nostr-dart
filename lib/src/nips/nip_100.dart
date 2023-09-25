@@ -16,15 +16,18 @@ class Signaling {
   String receiver;
   String content;
   SignalingState state;
+  String? offerId;
 
-  Signaling(this.sender, this.receiver, this.content, this.state);
+  Signaling(this.sender, this.receiver, this.content, this.state, this.offerId);
 }
 
 class Nip100 {
-  static Event close(String friend, String content, String privkey) {
+  static Event close(
+      String friend, String content, String offerId, String privkey) {
     List<List<String>> tags = [];
     tags.add(['type', 'disconnect']);
     tags.add(['p', friend]);
+    tags.add(['e', offerId]);
     return Event.from(
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
@@ -37,33 +40,38 @@ class Nip100 {
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
-  static Event answer(String friend, String content, String privkey) {
+  static Event answer(
+      String friend, String content, String offerId, String privkey) {
     List<List<String>> tags = [];
     tags.add(['type', 'answer']);
     tags.add(['p', friend]);
+    tags.add(['e', offerId]);
     return Event.from(
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
-  static Event candidate(String friend, String content, String privkey) {
+  static Event candidate(
+      String friend, String content, String offerId, String privkey) {
     List<List<String>> tags = [];
     tags.add(['type', 'candidate']);
     tags.add(['p', friend]);
+    tags.add(['e', offerId]);
     return Event.from(
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
   static Signaling decode(Event event, String privkey) {
     if (event.kind == 25050) {
-      String? type, friend;
+      String? type, friend, offerId;
       for (var tag in event.tags) {
         if (tag[0] == "p") friend = tag[1];
         if (tag[0] == "type") type = tag[1];
+        if (tag[0] == "e") offerId = tag[1];
       }
       if (friend != null && friend == bip340.getPublicKey(privkey)) {
         try {
           return Signaling(
-              event.pubkey, friend, event.content, typeToState(type!));
+              event.pubkey, friend, event.content, typeToState(type!), offerId);
         } catch (e) {
           throw Exception(e);
         }
