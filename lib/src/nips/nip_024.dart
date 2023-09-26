@@ -70,7 +70,7 @@ class Nip24 {
   }
 
   static Future<EDMessage?> decodeSealedGossipDM(
-      Event dmEvent, String receiver, String privkey) async {
+      Event dmEvent, String receiver) async {
     if (dmEvent.kind == 14) {
       List<String> receivers = [];
       String replyId = "";
