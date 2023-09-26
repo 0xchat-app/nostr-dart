@@ -79,6 +79,7 @@ class Nip100 {
         if (tag[0] == "type") type = tag[1];
         if (tag[0] == "e") offerId = tag[1];
       }
+      offerId ??= event.id;
       if (friend != null && friend == bip340.getPublicKey(privkey)) {
         try {
           return Signaling(
