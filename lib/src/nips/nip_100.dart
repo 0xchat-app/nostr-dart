@@ -9,6 +9,7 @@ enum SignalingState {
   offer,
   answer,
   candidate,
+  reject,
 }
 
 class Signaling {
@@ -26,6 +27,16 @@ class Nip100 {
       String friend, String content, String offerId, String privkey) {
     List<List<String>> tags = [];
     tags.add(['type', 'disconnect']);
+    tags.add(['p', friend]);
+    tags.add(['e', offerId]);
+    return Event.from(
+        kind: 25050, tags: tags, content: content, privkey: privkey);
+  }
+
+  static Event reject(
+      String friend, String content, String offerId, String privkey) {
+    List<List<String>> tags = [];
+    tags.add(['type', 'reject']);
     tags.add(['p', friend]);
     tags.add(['e', offerId]);
     return Event.from(
@@ -92,6 +103,8 @@ class Nip100 {
         return SignalingState.answer;
       case 'candidate':
         return SignalingState.candidate;
+      case 'reject':
+        return SignalingState.reject;
       default:
         throw Exception('not valid type');
     }
