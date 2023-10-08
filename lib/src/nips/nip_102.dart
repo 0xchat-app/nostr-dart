@@ -91,16 +91,21 @@ class Nip102 {
         String name = map['name'] ?? '';
         String? description = map['description'];
         String? image = map['image'];
-        List<String>? pinned = map['pinned'];
+        List<String>? pinned =
+            (map['pinned'] as List).map((item) => item.toString()).toList();
 
         String? groupKey, owner;
         List<String> members = [];
         List<String> relays = [];
         for (var tag in event.tags) {
           if (tag[0] == "p") groupKey = tag[1];
-          if (tag[0] == "r") relays.add(tag[1]);
+          if (tag[0] == "r" && tag.length > 1) {
+            for (var i = 1; i < tag.length; ++i) {
+              relays.add(tag[i]);
+            }
+          }
           if (tag[0] == "m") {
-            if (tag.length > 2 && tag[2] == 'owner') owner = tag[2];
+            if (tag.length > 2 && tag[2] == 'owner') owner = tag[1];
             members.add(tag[1]);
           }
         }
