@@ -81,7 +81,7 @@ class Nip102 {
   static Event message(
       String groupKey, String content, String replyId, String privkey) {
     List<List<String>> tags = Nip4.toTags(groupKey, replyId);
-    return Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
+    return Event.from(kind: 482, tags: tags, content: content, privkey: privkey);
   }
 
   static GroupMetadata getMetadata(Event event) {
@@ -145,7 +145,7 @@ class Nip102 {
   }
 
   static EDMessage getMessage(Event event) {
-    if (event.kind == 14) {
+    if (event.kind == 482) {
       String groupKey = '';
       String replyId = "";
       String subContent = event.content;
