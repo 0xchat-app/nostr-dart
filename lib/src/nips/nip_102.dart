@@ -17,7 +17,7 @@ class Nip102 {
   static List<List<String>> _toTags(String groupKey, String owner,
       List<String> members, List<String>? relays) {
     List<List<String>> result = [];
-    result.add(['p', groupKey]);
+    result.add(['g', groupKey]);
     result.add(['m', owner, 'owner']);
     for (var m in members) {
       result.add(["m", m]);
@@ -45,11 +45,22 @@ class Nip102 {
         privkey: privkey);
   }
 
+  static Event invite(String groupKey, String content, String privkey) {
+    return Event.from(
+        kind: 481,
+        tags: [
+          ['g', groupKey],
+          ['type', 'invite']
+        ],
+        content: content,
+        privkey: privkey);
+  }
+
   static Event request(String groupKey, String content, String privkey) {
     return Event.from(
         kind: 481,
         tags: [
-          ['p', groupKey],
+          ['g', groupKey],
           ['type', 'request']
         ],
         content: content,
@@ -60,8 +71,19 @@ class Nip102 {
     return Event.from(
         kind: 481,
         tags: [
-          ['p', groupKey],
+          ['g', groupKey],
           ['type', 'join']
+        ],
+        content: content,
+        privkey: privkey);
+  }
+
+  static Event add(String groupKey, String content, String privkey) {
+    return Event.from(
+        kind: 481,
+        tags: [
+          ['g', groupKey],
+          ['type', 'add']
         ],
         content: content,
         privkey: privkey);
@@ -71,8 +93,19 @@ class Nip102 {
     return Event.from(
         kind: 481,
         tags: [
-          ['p', groupKey],
+          ['g', groupKey],
           ['type', 'leave']
+        ],
+        content: content,
+        privkey: privkey);
+  }
+
+  static Event remove(String groupKey, String content, String privkey) {
+    return Event.from(
+        kind: 481,
+        tags: [
+          ['g', groupKey],
+          ['type', 'remove']
         ],
         content: content,
         privkey: privkey);
@@ -81,7 +114,7 @@ class Nip102 {
   static Event message(
       String groupKey, String content, String replyId, String privkey) {
     List<List<String>> tags = Nip4.toTags(groupKey, replyId);
-    return Event.from(kind: 482, tags: tags, content: content, privkey: privkey);
+    return Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
   }
 
   static GroupMetadata getMetadata(Event event) {
@@ -98,7 +131,7 @@ class Nip102 {
         List<String> members = [];
         List<String> relays = [];
         for (var tag in event.tags) {
-          if (tag[0] == "p") groupKey = tag[1];
+          if (tag[0] == "g") groupKey = tag[1];
           if (tag[0] == "r" && tag.length > 1) {
             for (var i = 1; i < tag.length; ++i) {
               relays.add(tag[i]);
@@ -120,12 +153,18 @@ class Nip102 {
 
   static GroupActionsType _typeToActions(String type) {
     switch (type) {
+      case 'invite':
+        return GroupActionsType.invite;
       case 'request':
         return GroupActionsType.request;
       case 'join':
         return GroupActionsType.join;
+      case 'add':
+        return GroupActionsType.add;
       case 'leave':
         return GroupActionsType.leave;
+      case 'remove':
+        return GroupActionsType.remove;
       default:
         return GroupActionsType.request;
     }
@@ -135,7 +174,7 @@ class Nip102 {
     if (event.kind == 481) {
       String? groupKey, type;
       for (var tag in event.tags) {
-        if (tag[0] == "p") groupKey = tag[1];
+        if (tag[0] == "g") groupKey = tag[1];
         if (tag[0] == "type") type = tag[1];
       }
       return GroupActions(groupKey ?? '', event.pubkey,
@@ -145,12 +184,12 @@ class Nip102 {
   }
 
   static EDMessage getMessage(Event event) {
-    if (event.kind == 482) {
+    if (event.kind == 14) {
       String groupKey = '';
       String replyId = "";
       String subContent = event.content;
       for (var tag in event.tags) {
-        if (tag[0] == "p") groupKey = tag[1];
+        if (tag[0] == "g") groupKey = tag[1];
         if (tag[0] == "e") replyId = tag[1];
         if (tag[0] == "subContent") subContent = tag[1];
       }
@@ -176,11 +215,7 @@ class GroupMetadata {
       this.members, this.description, this.image, this.pinned, this.relays);
 }
 
-enum GroupActionsType {
-  request,
-  join,
-  leave,
-}
+enum GroupActionsType { invite, request, join, add, leave, remove }
 
 class GroupActions {
   String groupKey;
