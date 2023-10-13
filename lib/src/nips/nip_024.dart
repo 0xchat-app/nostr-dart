@@ -74,15 +74,17 @@ class Nip24 {
     if (dmEvent.kind == 14) {
       List<String> receivers = [];
       String replyId = "";
+      String? groupId;
       String subContent = dmEvent.content;
       for (var tag in dmEvent.tags) {
         if (tag[0] == "p") receivers.add(tag[1]);
         if (tag[0] == "e") replyId = tag[1];
         if (tag[0] == "subContent") subContent = tag[1];
+        if (tag[0] == "g") groupId = tag[1];
       }
       if(receivers.contains(receiver)) {
         return EDMessage(dmEvent.pubkey, receiver, dmEvent.createdAt,
-            subContent, replyId);
+            subContent, replyId, groupId);
       }
       else{
         return null;

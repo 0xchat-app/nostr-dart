@@ -43,7 +43,7 @@ class Nip44 {
       throw Exception("not correct receiver, is not nip44 compatible");
     }
 
-    return EDMessage(sender, receiver, createdAt, content, replyId);
+    return EDMessage(sender, receiver, createdAt, content, replyId, null);
   }
 
   static Future<String> decryptContent(

@@ -48,7 +48,7 @@ class Nip4 {
       throw Exception("not correct receiver, is not nip4 compatible");
     }
 
-    return EDMessage(sender, receiver, createdAt, content, replyId);
+    return EDMessage(sender, receiver, createdAt, content, replyId, null);
   }
 
   static String decryptContent(String content, String privkey, String pubkey) {
@@ -103,7 +103,9 @@ class EDMessage {
 
   String replyId;
 
+  String? groupId;
+
   /// Default constructor
   EDMessage(
-      this.sender, this.receiver, this.createdAt, this.content, this.replyId);
+      this.sender, this.receiver, this.createdAt, this.content, this.replyId, this.groupId);
 }
