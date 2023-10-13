@@ -41,7 +41,7 @@ class Nip10 {
     List<List<String>> result = [];
     result.add(
         ["e", thread.root.eventId, thread.root.relayURL, thread.root.marker]);
-    if(thread.reply != null){
+    if(thread.reply != null && thread.reply!.eventId.isNotEmpty){
       result.add(["e", thread.reply!.eventId, thread.reply!.relayURL, thread.reply!.marker]);
     }
     if (thread.mentions != null) {
