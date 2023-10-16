@@ -12,8 +12,11 @@ class Nip28 {
         String? name = additional.remove("name");
         String? about = additional.remove("about");
         String? picture = additional.remove("picture");
-        return Channel(
-            event.id, name!, about!, picture!, event.pubkey, additional);
+        List<String>? pinned = (additional.remove("pinned") as List)
+            .map((item) => item.toString())
+            .toList();
+        return Channel(event.id, name!, about!, picture!, pinned, event.pubkey,
+            null, null, additional);
       } else {
         throw Exception("${event.kind} is not nip28 compatible");
       }
@@ -31,17 +34,24 @@ class Nip28 {
         String? name = additional.remove("name");
         String? about = additional.remove("about");
         String? picture = additional.remove("picture");
+        List<String>? pinned = (additional.remove("pinned") as List)
+            .map((item) => item.toString())
+            .toList();
         String? channelId;
         String? relay;
+        String owner = event.pubkey;
+        List<String> members = [];
         for (var tag in event.tags) {
           if (tag[0] == "e") {
             channelId = tag[1];
             relay = tag[2];
           }
+          if (tag[0] == "p") {
+            members.add(tag[1]);
+          }
         }
-        Channel result = Channel(
-            channelId!, name!, about!, picture!, event.pubkey, additional);
-        result.relay = relay;
+        Channel result = Channel(channelId!, name!, about!, picture!, pinned,
+            owner, relay, members, additional);
         return result;
       } else {
         throw Exception("${event.kind} is not nip28 compatible");
@@ -55,13 +65,15 @@ class Nip28 {
     try {
       if (event.kind == 42) {
         var content = event.content;
+        GroupActionsType actionsType = GroupActionsType.message;
         for (var tag in event.tags) {
           if (tag[0] == "subContent") content = tag[1];
+          if (tag[0] == "type") actionsType = _typeToActions(tag[1]);
         }
         Thread thread = Nip10.fromTags(event.tags);
         String channelId = thread.root.eventId;
         return ChannelMessage(
-            channelId, event.pubkey, content, thread, event.createdAt);
+            channelId, event.pubkey, content, thread, event.createdAt, actionsType);
       }
       throw Exception("${event.kind} is not nip28 compatible");
     } catch (e) {
@@ -136,6 +148,8 @@ class Nip28 {
       String name,
       String about,
       String picture,
+      List<String>? pinned,
+      List<String>? members,
       Map<String, String>? additional,
       String channelId,
       String relayURL,
@@ -145,10 +159,16 @@ class Nip28 {
       'about': about,
       'picture': picture,
     };
+    if (pinned != null) map['pinned'] = pinned;
     if (additional != null) map.addAll(additional);
     String content = jsonEncode(map);
     List<List<String>> tags = [];
     tags.add(["e", channelId, relayURL]);
+    if (members != null) {
+      for (var p in members) {
+        tags.add(['p', p]);
+      }
+    }
     Event event =
         Event.from(kind: 41, tags: tags, content: content, privkey: privkey);
     return event;
@@ -161,7 +181,8 @@ class Nip28 {
       String? replyMessageRelay,
       String? replyUser,
       String? replyUserRelay,
-      String? subContent}) {
+      String? subContent,
+      String? actionsType}) {
     List<List<String>> tags = [];
     ETag root = Nip10.rootTag(channelId, channelRelay ?? '');
 
@@ -175,6 +196,9 @@ class Nip28 {
     tags = Nip10.toTags(thread);
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
+    }
+    if (actionsType != null && actionsType != 'message') {
+      tags.add(['type', actionsType]);
     }
     Event event =
         Event.from(kind: 42, tags: tags, content: content, privkey: privkey);
@@ -205,6 +229,25 @@ class Nip28 {
         Event.from(kind: 44, tags: tags, content: content, privkey: privkey);
     return event;
   }
+
+  static GroupActionsType _typeToActions(String type) {
+    switch (type) {
+      case 'invite':
+        return GroupActionsType.invite;
+      case 'request':
+        return GroupActionsType.request;
+      case 'join':
+        return GroupActionsType.join;
+      case 'add':
+        return GroupActionsType.add;
+      case 'leave':
+        return GroupActionsType.leave;
+      case 'remove':
+        return GroupActionsType.remove;
+      default:
+        return GroupActionsType.request;
+    }
+  }
 }
 
 /// channel info
@@ -218,16 +261,20 @@ class Channel {
 
   String picture;
 
+  List<String>? pinned;
+
   String owner;
 
   String? relay;
+
+  List<String>? members;
 
   /// Clients MAY add additional metadata fields.
   Map<String, String> additional;
 
   /// Default constructor
-  Channel(this.channelId, this.name, this.about, this.picture, this.owner,
-      this.additional);
+  Channel(this.channelId, this.name, this.about, this.picture, this.pinned,
+      this.owner, this.relay, this.members, this.additional);
 }
 
 /// messages in channel
@@ -237,9 +284,10 @@ class ChannelMessage {
   String content;
   Thread thread;
   int createTime;
+  GroupActionsType? state;
 
   ChannelMessage(
-      this.channelId, this.sender, this.content, this.thread, this.createTime);
+      this.channelId, this.sender, this.content, this.thread, this.createTime, this.state);
 }
 
 class ChannelMessageHidden {
@@ -261,3 +309,7 @@ class ChannelUserMuted {
   ChannelUserMuted(
       this.operator, this.userPubkey, this.reason, this.createTime);
 }
+
+/// group actions
+enum GroupActionsType { message, invite, request, join, add, leave, remove }
+
