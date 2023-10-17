@@ -281,10 +281,10 @@ class ChannelMessage {
   String content;
   Thread thread;
   int createTime;
-  GroupActionsType? state;
+  GroupActionsType? actionsType;
 
   ChannelMessage(this.channelId, this.sender, this.content, this.thread,
-      this.createTime, this.state);
+      this.createTime, this.actionsType);
 }
 
 class ChannelMessageHidden {
