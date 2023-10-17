@@ -241,6 +241,10 @@ class Nip28 {
         return GroupActionsType.leave;
       case 'remove':
         return GroupActionsType.remove;
+      case 'updateName':
+        return GroupActionsType.updateName;
+      case 'updatePinned':
+        return GroupActionsType.updatePinned;
       default:
         return GroupActionsType.request;
     }
@@ -308,4 +312,14 @@ class ChannelUserMuted {
 }
 
 /// group actions
-enum GroupActionsType { message, invite, request, join, add, leave, remove }
+enum GroupActionsType {
+  message,
+  invite,
+  request,
+  join,
+  add,
+  leave,
+  remove,
+  updateName,
+  updatePinned
+}
