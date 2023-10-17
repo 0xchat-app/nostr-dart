@@ -5,23 +5,22 @@ import 'package:nostr_core_dart/nostr.dart';
 class Nip28 {
   static Channel getChannelCreation(Event event) {
     try {
-      Map content = jsonDecode(event.content);
       if (event.kind == 40) {
         // create channel
-        Map<String, String> additional = Map.from(content);
+        Map content = jsonDecode(event.content);
+        Map<String, String> additional = Map.from(content)
+            .map((key, value) => MapEntry(key, value.toString()));
         String? name = additional.remove("name");
         String? about = additional.remove("about");
         String? picture = additional.remove("picture");
-        List<String>? pinned = (additional.remove("pinned") as List)
-            .map((item) => item.toString())
-            .toList();
-        return Channel(event.id, name!, about!, picture!, pinned, event.pubkey,
-            null, null, additional);
+        String? pinned = additional.remove("pinned");
+        return Channel(event.id, name ?? '', about ?? '', picture ?? '', pinned,
+            event.pubkey, null, null, additional);
       } else {
         throw Exception("${event.kind} is not nip28 compatible");
       }
-    } catch (e) {
-      throw Exception(e.toString());
+    } catch (e, s) {
+      throw Exception(s);
     }
   }
 
@@ -34,9 +33,7 @@ class Nip28 {
         String? name = additional.remove("name");
         String? about = additional.remove("about");
         String? picture = additional.remove("picture");
-        List<String>? pinned = (additional.remove("pinned") as List)
-            .map((item) => item.toString())
-            .toList();
+        String? pinned = additional.remove("pinned");
         String? channelId;
         String? relay;
         String owner = event.pubkey;
@@ -72,8 +69,8 @@ class Nip28 {
         }
         Thread thread = Nip10.fromTags(event.tags);
         String channelId = thread.root.eventId;
-        return ChannelMessage(
-            channelId, event.pubkey, content, thread, event.createdAt, actionsType);
+        return ChannelMessage(channelId, event.pubkey, content, thread,
+            event.createdAt, actionsType);
       }
       throw Exception("${event.kind} is not nip28 compatible");
     } catch (e) {
@@ -261,7 +258,7 @@ class Channel {
 
   String picture;
 
-  List<String>? pinned;
+  String? pinned;
 
   String owner;
 
@@ -286,8 +283,8 @@ class ChannelMessage {
   int createTime;
   GroupActionsType? state;
 
-  ChannelMessage(
-      this.channelId, this.sender, this.content, this.thread, this.createTime, this.state);
+  ChannelMessage(this.channelId, this.sender, this.content, this.thread,
+      this.createTime, this.state);
 }
 
 class ChannelMessageHidden {
@@ -312,4 +309,3 @@ class ChannelUserMuted {
 
 /// group actions
 enum GroupActionsType { message, invite, request, join, add, leave, remove }
-
