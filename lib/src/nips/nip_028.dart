@@ -249,6 +249,29 @@ class Nip28 {
         return GroupActionsType.request;
     }
   }
+
+  static String actionToType(GroupActionsType action) {
+    switch (action) {
+      case GroupActionsType.invite:
+        return 'invite';
+      case GroupActionsType.request:
+        return 'request';
+      case GroupActionsType.join:
+        return 'join';
+      case GroupActionsType.add:
+        return 'add';
+      case GroupActionsType.leave:
+        return 'leave';
+      case GroupActionsType.remove:
+        return 'remove';
+      case GroupActionsType.updateName:
+        return 'updateName';
+      case GroupActionsType.updatePinned:
+        return 'updatePinned';
+      default:
+        return 'request';
+    }
+  }
 }
 
 /// channel info
