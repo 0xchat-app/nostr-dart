@@ -11,7 +11,7 @@ class Nip24 {
       String? sealedReceiver, int? createAt}) async {
     Event sealedGossipEvent =
         await _encodeSealedGossip(event, receiver, privkey);
-    return Nip59.encode(sealedGossipEvent, sealedReceiver ?? receiver,
+    return await Nip59.encode(sealedGossipEvent, sealedReceiver ?? receiver,
         kind: kind?.toString(),
         expiration: expiration,
         sealedPrivkey: sealedPrivkey, createAt: createAt);
