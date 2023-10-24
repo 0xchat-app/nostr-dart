@@ -156,7 +156,7 @@ class Nip28 {
       'about': about,
       'picture': picture,
     };
-    if (pinned != null) map['pinned'] = pinned;
+    if (pinned != null && pinned.isNotEmpty) map['pinned'] = pinned[0];
     if (additional != null) map.addAll(additional);
     String content = jsonEncode(map);
     List<List<String>> tags = [];
