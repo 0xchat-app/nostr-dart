@@ -29,11 +29,11 @@ class Nip28 {
       Map content = jsonDecode(event.content);
       if (event.kind == 41) {
         // create channel
-        Map<String, String> additional = Map.from(content);
-        String? name = additional.remove("name");
-        String? about = additional.remove("about");
-        String? picture = additional.remove("picture");
-        String? pinned = additional.remove("pinned");
+        Map<String, dynamic> additional = Map.from(content);
+        String? name = additional.remove("name")?.toString();
+        String? about = additional.remove("about")?.toString();
+        String? picture = additional.remove("picture")?.toString();
+        String? pinned = additional.remove("pinned")?.toString();
         String? channelId;
         String? relay;
         String owner = event.pubkey;
@@ -53,8 +53,8 @@ class Nip28 {
       } else {
         throw Exception("${event.kind} is not nip28 compatible");
       }
-    } catch (e) {
-      throw Exception(e.toString());
+    } catch (e, s) {
+      throw Exception(s);
     }
   }
 
@@ -294,7 +294,7 @@ class Channel {
   List<String>? members;
 
   /// Clients MAY add additional metadata fields.
-  Map<String, String> additional;
+  Map<String, dynamic> additional;
 
   /// Default constructor
   Channel(this.channelId, this.name, this.about, this.picture, this.pinned,
