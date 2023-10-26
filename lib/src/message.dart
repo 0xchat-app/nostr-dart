@@ -24,6 +24,9 @@ class Message {
       case "CLOSE":
         message = Close.deserialize(data);
         break;
+      case "AUTH":
+        message = Auth.deserialize(data);
+        break;
       default:
         message = jsonEncode(data.sublist(1));
         break;
