@@ -269,7 +269,7 @@ class Nip28 {
       case GroupActionsType.updatePinned:
         return 'updatePinned';
       default:
-        return 'request';
+        return '';
     }
   }
 }
