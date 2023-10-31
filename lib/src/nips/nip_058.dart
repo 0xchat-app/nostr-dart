@@ -61,7 +61,7 @@ class Nip58 {
       List<People> users = [];
       for (var tag in event.tags) {
         if (tag[0] == 'a') coordinates = Nip33.getEventCoordinates(tag);
-        if (tag[0] == 'p') users.add(People(tag[1], tag[2], null, null));
+        if (tag[0] == 'p') users.add(People(tag[1], tag.length > 2 ? tag[2] : null, null, null));
       }
       if (coordinates != null &&
           coordinates.kind == 30009 &&
