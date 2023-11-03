@@ -3,7 +3,7 @@ import 'package:nostr_core_dart/nostr.dart';
 //Text Note References
 class Nip27 {
   static List<ProfileMention> decodeProfileMention(String content) {
-    RegExp regex = RegExp(r'nostr:(npub|nsec|note|nprofile|nevent|nrelay|naddr)[0-9a-zA-Z]{8,}(?=\s|$)');
+    RegExp regex = RegExp(r'nostr:(nprofile)[0-9a-zA-Z]{8,}(?=\s|$)');
     Iterable<Match> matches = regex.allMatches(content);
     List<ProfileMention> mentions = [];
     for (Match match in matches) {

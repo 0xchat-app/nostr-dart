@@ -14,7 +14,7 @@ class Nip42 {
         ],
         content: "",
         privkey: privkey);
-    var auth = ["AUTH", jsonEncode(event)];
+    var auth = ["AUTH", event.toJson()];
     return jsonEncode(auth);
   }
 }
