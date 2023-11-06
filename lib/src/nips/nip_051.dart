@@ -39,7 +39,7 @@ class Nip51 {
       ]);
     }
     String content = jsonEncode(list);
-    return await Nip44.encryptContent(content, privkey, pubkey);
+    return Nip4.encryptContent(content, privkey, pubkey);
   }
 
   static Future<String> bookmarksToContent(
@@ -49,7 +49,7 @@ class Nip51 {
       list.add(['e', item]);
     }
     String content = jsonEncode(list);
-    return await Nip44.encryptContent(content, privkey, pubkey);
+    return Nip4.encryptContent(content, privkey, pubkey);
   }
 
   static Future<Map<String, List>?> fromContent(
