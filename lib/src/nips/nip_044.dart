@@ -80,9 +80,9 @@ class Nip44 {
   }
 
   static Future<Event> encode(
-      String receiver, String content, String replyId, String privkey, {String? subContent}) async {
+      String receiver, String content, String replyId, String privkey, {String? subContent, int? expiration}) async {
     String enContent = await encryptContent(content, privkey, receiver);
-    List<List<String>> tags = toTags(receiver, replyId);
+    List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration);
     if(subContent != null && subContent.isNotEmpty){
       String enSubContent = await encryptContent(subContent, privkey, receiver);
       tags.add(['subContent', enSubContent]);

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Encrypted Direct Message
@@ -67,9 +69,9 @@ class Nip4 {
   }
 
   static Event encode(
-      String receiver, String content, String replyId, String privkey, {String? subContent}) {
+      String receiver, String content, String replyId, String privkey, {String? subContent, int? expiration}) {
     String enContent = encryptContent(content, privkey, receiver);
-    List<List<String>> tags = toTags(receiver, replyId);
+    List<List<String>> tags = toTags(receiver, replyId, expiration);
     if(subContent != null && subContent.isNotEmpty){
       String enSubContent = encryptContent(subContent, privkey, receiver);
       tags.add(['subContent', enSubContent]);
@@ -83,10 +85,11 @@ class Nip4 {
     return encrypt(privkey, '02$pubkey', content);
   }
 
-  static List<List<String>> toTags(String p, String e) {
+  static List<List<String>> toTags(String p, String e, int? expiration) {
     List<List<String>> result = [];
     result.add(["p", p]);
     if (e.isNotEmpty) result.add(["e", e, '', 'reply']);
+    if (expiration != null) result.add(['expiration', expiration.toString()]);
     return result;
   }
 }

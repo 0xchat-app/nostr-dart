@@ -28,8 +28,8 @@ class Nip24 {
 
   static Future<Event> encodeSealedGossipDM(
       String receiver, String content, String replyId, String privkey,
-      {String? sealedPrivkey, String? sealedReceiver, int? createAt, String? subContent}) async {
-    List<List<String>> tags = Nip4.toTags(receiver, replyId);
+      {String? sealedPrivkey, String? sealedReceiver, int? createAt, String? subContent, int? expiration}) async {
+    List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration);
     if(subContent != null && subContent.isNotEmpty){
       tags.add(['subContent', subContent]);
     }
