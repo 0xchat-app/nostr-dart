@@ -80,8 +80,8 @@ class Nip24 {
         if (tag[0] == "e") replyId = tag[1];
         if (tag[0] == "subContent") subContent = tag[1];
       }
-      if(receivers.contains(receiver)) {
-        return EDMessage(dmEvent.pubkey, receiver, dmEvent.createdAt,
+      if(receivers.length == 1) {
+        return EDMessage(dmEvent.pubkey, receivers.first, dmEvent.createdAt,
             subContent, replyId);
       }
       else{
