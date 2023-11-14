@@ -36,7 +36,7 @@ class Nip24 {
     Event event =
         Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
     return await encode(event, receiver, privkey,
-        sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver, createAt: createAt);
+        sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver, createAt: createAt, expiration: expiration);
   }
 
   static Future<Event?> decode(Event event, String privkey, {String? sealedPrivkey}) async {
