@@ -151,7 +151,7 @@ class Event {
     if (createdAt == 0) createdAt = currentUnixTimestampSeconds();
     final pubkey = bip340.getPublicKey(privkey).toLowerCase();
 
-    final id = _processEventId(
+    final id = processEventId(
       pubkey,
       createdAt,
       kind,
@@ -195,7 +195,7 @@ class Event {
       json['kind'],
       tags,
       json['content'],
-      json['sig'],
+      json['sig'] ?? '',
       verify: verify,
     );
   }
@@ -284,7 +284,7 @@ class Event {
   ///]
   String getEventId() {
     // Included for minimum breaking changes
-    return _processEventId(
+    return processEventId(
       pubkey,
       createdAt,
       kind,
@@ -294,7 +294,7 @@ class Event {
   }
 
   // Support for [getEventId]
-  static String _processEventId(
+  static String processEventId(
     String pubkey,
     int createdAt,
     int kind,
