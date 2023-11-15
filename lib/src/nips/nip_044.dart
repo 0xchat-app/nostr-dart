@@ -28,11 +28,12 @@ class Nip44 {
     String replyId = "";
     String content = "";
     String subContent = event.content;
-
+    String? expiration;
     for (var tag in event.tags) {
       if (tag[0] == "p") receiver = tag[1];
       if (tag[0] == "e") replyId = tag[1];
       if (tag[0] == "subContent") subContent = tag[1];
+      if (tag[0] == "expiration") expiration = tag[1];
     }
 
     if (receiver.isNotEmpty && receiver.compareTo(receiver) == 0) {
@@ -43,7 +44,7 @@ class Nip44 {
       throw Exception("not correct receiver, is not nip44 compatible");
     }
 
-    return EDMessage(sender, receiver, createdAt, content, replyId);
+    return EDMessage(sender, receiver, createdAt, content, replyId, expiration);
   }
 
   static Future<String> decryptContent(

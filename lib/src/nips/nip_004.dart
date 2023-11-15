@@ -35,11 +35,12 @@ class Nip4 {
     String replyId = "";
     String content = "";
     String subContent = event.content;
-
+    String? expiration;
     for (var tag in event.tags) {
       if (tag[0] == "p") receiver = tag[1];
       if (tag[0] == "e") replyId = tag[1];
       if (tag[0] == "subContent") subContent = tag[1];
+      if (tag[0] == "expiration") expiration = tag[1];
     }
 
     if (receiver.isNotEmpty && receiver.compareTo(pubkey) == 0) {
@@ -50,7 +51,7 @@ class Nip4 {
       throw Exception("not correct receiver, is not nip4 compatible");
     }
 
-    return EDMessage(sender, receiver, createdAt, content, replyId);
+    return EDMessage(sender, receiver, createdAt, content, replyId, expiration);
   }
 
   static String decryptContent(String content, String privkey, String pubkey) {
@@ -106,7 +107,9 @@ class EDMessage {
 
   String replyId;
 
+  String? expiration;
+
   /// Default constructor
   EDMessage(
-      this.sender, this.receiver, this.createdAt, this.content, this.replyId);
+      this.sender, this.receiver, this.createdAt, this.content, this.replyId, this.expiration);
 }

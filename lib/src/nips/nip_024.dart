@@ -75,14 +75,16 @@ class Nip24 {
       List<String> receivers = [];
       String replyId = "";
       String subContent = dmEvent.content;
+      String? expiration;
       for (var tag in dmEvent.tags) {
         if (tag[0] == "p") receivers.add(tag[1]);
         if (tag[0] == "e") replyId = tag[1];
         if (tag[0] == "subContent") subContent = tag[1];
+        if (tag[0] == "expiration") expiration = tag[1];
       }
       if(receivers.length == 1) {
         return EDMessage(dmEvent.pubkey, receivers.first, dmEvent.createdAt,
-            subContent, replyId);
+            subContent, replyId, expiration);
       }
       else{
         return null;
