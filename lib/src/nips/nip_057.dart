@@ -117,7 +117,7 @@ class Nip57 {
       tags.add(['a', coordinate]);
     }
 
-    Event event = Event.from(
+    Event event = await Event.from(
         kind: 9733, tags: tags, content: content ?? '', privkey: privkey);
 
     String eventString = jsonEncode(event);

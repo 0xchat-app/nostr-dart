@@ -20,15 +20,17 @@ class Nip4 {
   ///
   ///  EDMessage eDMessage = Nip4.decode(event);
   ///```
-  static EDMessage? decode(Event event, String pubkey, String privkey) {
+  static Future<EDMessage?> decode(
+      Event event, String myPubkey, String privkey) async {
     if (event.kind == 4) {
-      return _toEDMessage(event, pubkey, privkey);
+      return await _toEDMessage(event, myPubkey, privkey);
     }
     return null;
   }
 
   /// Returns EDMessage from event
-  static EDMessage _toEDMessage(Event event, String pubkey, String privkey) {
+  static Future<EDMessage> _toEDMessage(
+      Event event, String myPubkey, String privkey) async {
     String sender = event.pubkey;
     int createdAt = event.createdAt;
     String receiver = "";
@@ -42,11 +44,11 @@ class Nip4 {
       if (tag[0] == "subContent") subContent = tag[1];
       if (tag[0] == "expiration") expiration = tag[1];
     }
-
-    if (receiver.isNotEmpty && receiver.compareTo(pubkey) == 0) {
-      content = decryptContent(subContent, privkey, sender);
-    } else if (receiver.isNotEmpty && sender.compareTo(pubkey) == 0) {
-      content = decryptContent(subContent, privkey, receiver);
+    print('_toEDMessage: sender: $sender, receiver: $receiver, peerPubkey: $myPubkey');
+    if (receiver.compareTo(myPubkey) == 0) {
+      content = await decryptContent(subContent, sender, myPubkey, privkey);
+    } else if (sender.compareTo(myPubkey) == 0) {
+      content = await decryptContent(subContent, receiver, myPubkey, privkey);
     } else {
       throw Exception("not correct receiver, is not nip4 compatible");
     }
@@ -54,7 +56,8 @@ class Nip4 {
     return EDMessage(sender, receiver, createdAt, content, replyId, expiration);
   }
 
-  static String decryptContent(String content, String privkey, String pubkey) {
+  static Future<String> decryptContent(String content, String peerPubkey,
+      String myPubkey, String privkey) async {
     int ivIndex = content.indexOf("?iv=");
     if (ivIndex <= 0) {
       print("Invalid content for dm, could not get ivIndex: $content");
@@ -63,27 +66,38 @@ class Nip4 {
     String iv = content.substring(ivIndex + "?iv=".length, content.length);
     String encString = content.substring(0, ivIndex);
     try {
-      return decrypt(privkey, '02$pubkey', encString, iv);
+      if (SignerHelper.needSigner(privkey)) {
+        return await SignerHelper.decryptNip04(content, peerPubkey, myPubkey);
+      } else {
+        return decrypt(privkey, '02$peerPubkey', encString, iv);
+      }
     } catch (e) {
       return "";
     }
   }
 
-  static Event encode(
-      String receiver, String content, String replyId, String privkey, {String? subContent, int? expiration}) {
-    String enContent = encryptContent(content, privkey, receiver);
+  static Future<Event> encode(String sender, String receiver, String content,
+      String replyId, String privkey,
+      {String? subContent, int? expiration}) async {
+    String enContent = await encryptContent(content, receiver, sender, privkey);
     List<List<String>> tags = toTags(receiver, replyId, expiration);
-    if(subContent != null && subContent.isNotEmpty){
-      String enSubContent = encryptContent(subContent, privkey, receiver);
+    if (subContent != null && subContent.isNotEmpty) {
+      String enSubContent =
+          await encryptContent(subContent, receiver, sender, privkey);
       tags.add(['subContent', enSubContent]);
     }
-    Event event =
-        Event.from(kind: 4, tags: tags, content: enContent, privkey: privkey);
+    Event event = await Event.from(
+        kind: 4, tags: tags, content: enContent, privkey: privkey);
     return event;
   }
 
-  static String encryptContent(String content, String privkey, String pubkey) {
-    return encrypt(privkey, '02$pubkey', content);
+  static Future<String> encryptContent(String plainText, String peerPubkey,
+      String myPubkey, String privkey) async {
+    if (SignerHelper.needSigner(privkey)) {
+      return await SignerHelper.encryptNip04(plainText, peerPubkey, myPubkey);
+    } else {
+      return encrypt(privkey, '02$peerPubkey', plainText);
+    }
   }
 
   static List<List<String>> toTags(String p, String e, int? expiration) {
@@ -110,6 +124,6 @@ class EDMessage {
   String? expiration;
 
   /// Default constructor
-  EDMessage(
-      this.sender, this.receiver, this.createdAt, this.content, this.replyId, this.expiration);
+  EDMessage(this.sender, this.receiver, this.createdAt, this.content,
+      this.replyId, this.expiration);
 }

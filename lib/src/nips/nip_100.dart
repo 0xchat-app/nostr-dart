@@ -22,41 +22,41 @@ class Signaling {
 }
 
 class Nip100 {
-  static Event close(
-      String friend, String content, String offerId, String privkey) {
+  static Future<Event> close(
+      String friend, String content, String offerId, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['type', 'disconnect']);
     tags.add(['p', friend]);
     tags.add(['e', offerId]);
-    return Event.from(
+    return await Event.from(
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
-  static Event offer(String friend, String content, String privkey) {
+  static Future<Event> offer(String friend, String content, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['type', 'offer']);
     tags.add(['p', friend]);
-    return Event.from(
+    return await Event.from(
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
-  static Event answer(
-      String friend, String content, String offerId, String privkey) {
+  static Future<Event> answer(
+      String friend, String content, String offerId, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['type', 'answer']);
     tags.add(['p', friend]);
     tags.add(['e', offerId]);
-    return Event.from(
+    return await Event.from(
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 
-  static Event candidate(
-      String friend, String content, String offerId, String privkey) {
+  static Future<Event> candidate(
+      String friend, String content, String offerId, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['type', 'candidate']);
     tags.add(['p', friend]);
     tags.add(['e', offerId]);
-    return Event.from(
+    return await Event.from(
         kind: 25050, tags: tags, content: content, privkey: privkey);
   }
 

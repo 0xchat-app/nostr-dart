@@ -10,8 +10,8 @@ class Nip9 {
     return result;
   }
 
-  static Event encode(List<String> events, String content, String privkey) {
-    return Event.from(
+  static Future<Event> encode(List<String> events, String content, String privkey) async {
+    return await Event.from(
         kind: 5, tags: toTags(events), content: content, privkey: privkey);
   }
 

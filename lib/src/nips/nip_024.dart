@@ -34,7 +34,7 @@ class Nip24 {
       tags.add(['subContent', subContent]);
     }
     Event event =
-        Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
+        await Event.from(kind: 14, tags: tags, content: content, privkey: privkey);
     return await encode(event, receiver, privkey,
         sealedPrivkey: sealedPrivkey, sealedReceiver: sealedReceiver, createAt: createAt, expiration: expiration);
   }

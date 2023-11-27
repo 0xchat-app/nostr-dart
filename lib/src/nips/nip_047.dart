@@ -4,13 +4,15 @@ import 'package:nostr_core_dart/nostr.dart';
 /// Nostr Wallet Connect
 /// https://github.com/nostr-protocol/nips/blob/master/47.md
 class Nip47 {
-  static Event request(String invoice, String receiver, String privkey) {
+  static Future<Event> request(
+      String invoice, String sender, String receiver, String privkey) async {
     Map request = {
       'method': 'pay_invoice',
       'params': {'invoice': invoice}
     };
     String content = jsonEncode(request);
-    String enContent = Nip4.encryptContent(content, privkey, receiver);
+    String enContent =
+        await Nip4.encryptContent(content, receiver, sender, privkey);
     return Event.from(
         kind: 23194,
         tags: [
@@ -20,8 +22,8 @@ class Nip47 {
         privkey: privkey);
   }
 
-  static PayInvoiceResult? response(
-      Event event, String receiver, String privkey) {
+  static Future<PayInvoiceResult?> response(
+      Event event, String sender, String receiver, String privkey) async {
     if (event.kind == 23195) {
       String? requestId, p;
       for (var tag in event.tags) {
@@ -29,7 +31,8 @@ class Nip47 {
         if (tag[0] == "e") requestId = tag[1];
       }
       if (requestId == null || p != receiver) return null;
-      String content = Nip4.decryptContent(event.content, privkey, receiver);
+      String content =
+          await Nip4.decryptContent(event.content, receiver, sender, privkey);
       Map map = jsonDecode(content);
       String? preimage = map['result']?['preimage'];
       String? code = map['error']?['code'];

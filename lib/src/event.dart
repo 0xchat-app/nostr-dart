@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:convert/convert.dart';
 import 'package:pointycastle/export.dart';
 import 'package:bip340/bip340.dart' as bip340;
-import 'package:nostr_core_dart/src/utils.dart';
+import 'package:nostr_core_dart/nostr.dart';
 
 /// The only object type that exists is the event, which has the following format on the wire:
 ///
@@ -139,7 +139,7 @@ class Event {
   ///      "5ee1c8000ab28edd64d74a7d951ac2dd559814887b1b9e1ac7c5f89e96125c12",
   ///);
   ///```
-  factory Event.from({
+  static Future<Event> from({
     int createdAt = 0,
     required int kind,
     required List<List<String>> tags,
@@ -147,7 +147,7 @@ class Event {
     required String privkey,
     String? subscriptionId,
     bool verify = false,
-  }) {
+  }) async {
     if (createdAt == 0) createdAt = currentUnixTimestampSeconds();
     final pubkey = bip340.getPublicKey(privkey).toLowerCase();
 
@@ -164,7 +164,7 @@ class Event {
       id,
     );
 
-    return Event(
+    Event event = Event(
       id,
       pubkey,
       createdAt,
@@ -175,6 +175,11 @@ class Event {
       subscriptionId: subscriptionId,
       verify: verify,
     );
+
+    if (SignerHelper.needSigner(privkey)) {
+      return await SignerHelper.signEvent(event);
+    }
+    return event;
   }
 
   /// Deserialize an event from a JSON
@@ -319,6 +324,8 @@ class Event {
     String privateKey,
     String id,
   ) {
+    if (SignerHelper.needSigner(privateKey)) return '';
+
     /// aux must be 32-bytes random bytes, generated at signature time.
     /// https://github.com/nbd-wtf/dart-bip340/blob/master/lib/src/bip340.dart#L10
     String aux = generate64RandomHexChars();

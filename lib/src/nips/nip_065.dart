@@ -2,8 +2,8 @@ import 'package:nostr_core_dart/nostr.dart';
 
 /// Relay List Metadata
 class Nip65 {
-  static Event encode(List<Relay> relays, String privkey) {
-    return Event.from(
+  static Future<Event> encode(List<Relay> relays, String privkey) async {
+    return await Event.from(
         kind: 10002, tags: toTags(relays), content: '', privkey: privkey);
   }
 

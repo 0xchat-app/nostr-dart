@@ -89,7 +89,7 @@ class Nip44 {
       tags.add(['subContent', enSubContent]);
     }
     Event event =
-        Event.from(kind: 44, tags: tags, content: enContent, privkey: privkey);
+        await Event.from(kind: 44, tags: tags, content: enContent, privkey: privkey);
     return event;
   }
 

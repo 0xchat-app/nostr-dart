@@ -33,15 +33,15 @@ class Nip58 {
     }
   }
 
-  static Event setBadgeDefinition(String identifies, String name,
-      String description, BadgeImage image, BadgeImage thumb, String privkey) {
+  static Future<Event> setBadgeDefinition(String identifies, String name,
+      String description, BadgeImage image, BadgeImage thumb, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['d', identifies]);
     tags.add(['name', name]);
     tags.add(['description', description]);
     tags.add(['image', image.url, image.size]);
     tags.add(['thumb', thumb.url, thumb.size]);
-    return Event.from(kind: 30009, tags: tags, content: '', privkey: privkey);
+    return await Event.from(kind: 30009, tags: tags, content: '', privkey: privkey);
   }
 
   // {
@@ -119,8 +119,8 @@ class Nip58 {
     return null;
   }
 
-  static Event setProfileBadges(List<BadgeAward> badgeAwards, String privkey) {
-    return Event.from(
+  static Future<Event> setProfileBadges(List<BadgeAward> badgeAwards, String privkey) async {
+    return await Event.from(
         kind: 30008,
         tags: badgeAwardsToTags(badgeAwards),
         content: '',

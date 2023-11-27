@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:nostr_core_dart/nostr.dart';
 
 class Nip101 {
-  static Event request(String myAliasPubkey, String toPubkey, String privkey,
-      {int? expiration, int? interval, String? relay}) {
+  static Future<Event> request(
+      String myAliasPubkey, String toPubkey, String privkey,
+      {int? expiration, int? interval, String? relay}) async {
     Map map = {};
     String content = '';
     if (expiration != null && expiration > 0) map["expiration"] = expiration;
@@ -12,7 +13,7 @@ class Nip101 {
     if (relay != null && relay.isNotEmpty) map["r"] = relay;
     if (map.isNotEmpty) content = jsonEncode(map);
 
-    return Event.from(
+    return await Event.from(
         kind: 10100,
         tags: [
           ['p', toPubkey, myAliasPubkey]
@@ -21,9 +22,9 @@ class Nip101 {
         privkey: privkey);
   }
 
-  static Event accept(
-      String myAliasPubkey, String toPubkey, String sessionId, String privkey) {
-    return Event.from(
+  static Future<Event> accept(String myAliasPubkey, String toPubkey,
+      String sessionId, String privkey) async {
+    return await Event.from(
         kind: 10101,
         tags: [
           ['p', toPubkey, myAliasPubkey],
@@ -33,8 +34,9 @@ class Nip101 {
         privkey: privkey);
   }
 
-  static Event reject(String toPubkey, String sessionId, String privkey) {
-    return Event.from(
+  static Future<Event> reject(
+      String toPubkey, String sessionId, String privkey) async {
+    return await Event.from(
         kind: 10102,
         tags: [
           ['p', toPubkey],
@@ -44,8 +46,9 @@ class Nip101 {
         privkey: privkey);
   }
 
-  static Event close(String toPubkey, String sessionId, String privkey) {
-    return Event.from(
+  static Future<Event> close(
+      String toPubkey, String sessionId, String privkey) async {
+    return await Event.from(
         kind: 10103,
         tags: [
           ['p', toPubkey],
@@ -55,9 +58,9 @@ class Nip101 {
         privkey: privkey);
   }
 
-  static Event update(String myNewAliasPubkey, String toPubkey,
-      String sessionId, String privkey) {
-    return Event.from(
+  static Future<Event> update(String myNewAliasPubkey, String toPubkey,
+      String sessionId, String privkey) async {
+    return await Event.from(
         kind: 10104,
         tags: [
           ['p', toPubkey, myNewAliasPubkey],

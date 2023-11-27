@@ -5,12 +5,12 @@ import 'package:nostr_core_dart/nostr.dart';
 /// 1: text_note: the content is set to the plaintext content of a note (anything the user wants to say). Do not use Markdown! Clients should not have to guess how to interpret content like [](). Use different event kinds for parsable content.
 /// 2: recommend_server: the content is set to the URL (e.g., wss://somerelay.com) of a relay the event creator wants to recommend to its followers.
 class Nip1 {
-  static Event setMetadata(String content, String privkey) {
-    return Event.from(kind: 0, tags: [], content: content, privkey: privkey);
+  static Future<Event> setMetadata(String content, String privkey) async {
+    return await Event.from(kind: 0, tags: [], content: content, privkey: privkey);
   }
 
-  static Event encodeNote(String content, Thread thread, String privkey) {
-    return Event.from(kind: 1, tags: Nip10.toTags(thread), content: content, privkey: privkey);
+  static Future<Event> encodeNote(String content, Thread thread, String privkey) async {
+    return await Event.from(kind: 1, tags: Nip10.toTags(thread), content: content, privkey: privkey);
   }
 
   static Note decodeNote(Event event) {
@@ -20,8 +20,8 @@ class Nip1 {
     throw Exception("${event.kind} is not nip1 compatible");
   }
 
-  static Event recommendServer(String content, String privkey) {
-    return Event.from(kind: 2, tags: [], content: content, privkey: privkey);
+  static Future<Event> recommendServer(String content, String privkey) async {
+    return await Event.from(kind: 2, tags: [], content: content, privkey: privkey);
   }
 }
 
