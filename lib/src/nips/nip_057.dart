@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
+import 'package:bip340/bip340.dart' as bip340;
 import 'package:nostr_core_dart/nostr.dart';
 import 'package:pointycastle/digests/sha256.dart';
 
 class Nip57 {
-  static Future<ZapReceipt> getZapReceipt(Event event, String privkey) async {
+  static Future<ZapReceipt> getZapReceipt(
+      Event event, String myPubkey, String privkey) async {
     if (event.kind == 9735) {
       String? bolt11,
           preimage,
@@ -35,16 +36,23 @@ class Nip57 {
 
       if (anon != null && anon.isNotEmpty) {
         /// recipient decrypt
-        String eventString = await Nip44.decryptContent(
-            anon, privkey, event.pubkey,
-            encodeType: 'bech32', prefix: 'pzap');
+
+        List<String> splitStrings = anon.split('_');
+        String contentBech32 = splitStrings[0];
+        String ivBech32 = splitStrings[1];
+        String? encryptedContent = bech32Decode(contentBech32,
+            maxLength: contentBech32.length)['data'];
+        String? iv = bech32Decode(ivBech32, maxLength: ivBech32.length)['data'];
+
+        String eventString = await Nip4.decryptContent(
+            '$encryptedContent?iv=$iv', recipient!, myPubkey, privkey);
 
         /// try to use sender decrypt
         if (eventString.isEmpty) {
           String derivedPrivkey =
-              generateKeyPair(recipient!, event.createdAt, privkey);
-          eventString =
-              await Nip44.decryptContent(anon, derivedPrivkey, recipient);
+              generateKeyPair(recipient, event.createdAt, privkey);
+          eventString = await Nip4.decryptContent('$encryptedContent?iv=$iv',
+              recipient, bip340.getPublicKey(derivedPrivkey), derivedPrivkey);
         }
         if (eventString.isNotEmpty) {
           Event privEvent = Event.fromJson(jsonDecode(eventString));
@@ -61,9 +69,17 @@ class Nip57 {
     }
   }
 
-  static Future<Event> zapRequest(List<String> relays, String amount,
-      String lnurl, String recipient, String privkey, bool privateZap,
-      {String? eventId, String? coordinate, String? content}) async {
+  static Future<Event> zapRequest(
+      List<String> relays,
+      String amount,
+      String lnurl,
+      String recipient,
+      String myPubkey,
+      String privkey,
+      bool privateZap,
+      {String? eventId,
+      String? coordinate,
+      String? content}) async {
     List<String> r = ['relays'];
     r.addAll(relays);
     List<List<String>> tags = [
@@ -84,7 +100,8 @@ class Nip57 {
     String derivedPrivkey = privkey;
     if (privateZap) {
       derivedPrivkey = generateKeyPair(recipient, createAt, privkey);
-      String privreq = await privateRequest(recipient, privkey, derivedPrivkey,
+      String privreq = await privateRequest(
+          recipient, myPubkey, privkey, derivedPrivkey,
           eventId: eventId, coordinate: coordinate, content: content);
       tags.add(['anon', privreq]);
     }
@@ -105,7 +122,7 @@ class Nip57 {
   }
 
   static Future<String> privateRequest(
-      String recipient, String privkey, String derivedPrivkey,
+      String recipient, String myPubkey, String privkey, String derivedPrivkey,
       {String? eventId, String? coordinate, String? content}) async {
     List<List<String>> tags = [
       ['p', recipient]
@@ -121,8 +138,17 @@ class Nip57 {
         kind: 9733, tags: tags, content: content ?? '', privkey: privkey);
 
     String eventString = jsonEncode(event);
-    return await Nip44.encrypt(privkey, recipient, eventString,
-        encodeType: 'bech32', prefix: 'pzap');
+
+    String encryptedContent =
+        await Nip4.encryptContent(eventString, recipient, myPubkey, privkey);
+    int ivIndex = encryptedContent.indexOf("?iv=");
+    String iv = encryptedContent.substring(
+        ivIndex + "?iv=".length, encryptedContent.length);
+    String ivBech32 = bech32Encode('iv', iv, maxLength: iv.length);
+    String encString = encryptedContent.substring(0, ivIndex);
+    String contentBech32 =
+        bech32Encode('pzap', encString, maxLength: encString.length);
+    return '${contentBech32}_$ivBech32';
   }
 }
 

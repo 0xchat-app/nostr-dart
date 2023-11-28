@@ -44,7 +44,6 @@ class Nip4 {
       if (tag[0] == "subContent") subContent = tag[1];
       if (tag[0] == "expiration") expiration = tag[1];
     }
-    print('_toEDMessage: sender: $sender, receiver: $receiver, peerPubkey: $myPubkey');
     if (receiver.compareTo(myPubkey) == 0) {
       content = await decryptContent(subContent, sender, myPubkey, privkey);
     } else if (sender.compareTo(myPubkey) == 0) {

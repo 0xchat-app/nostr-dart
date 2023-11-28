@@ -12,16 +12,16 @@ import 'package:pointycastle/digests/sha256.dart';
 class Nip44 {
   /// Returns the EDMessage Encrypted Direct Message event (kind=44)
   static Future<EDMessage?> decode(
-      Event event, String receiver, String privkey) async {
+      Event event, String myPubkey, String privkey) async {
     if (event.kind == 44 || event.kind == 14) {
-      return await _toEDMessage(event, receiver, privkey);
+      return await _toEDMessage(event, myPubkey, privkey);
     }
     return null;
   }
 
   /// Returns EDMessage from event
   static Future<EDMessage> _toEDMessage(
-      Event event, String receiver, String privkey) async {
+      Event event, String myPubkey, String privkey) async {
     String sender = event.pubkey;
     int createdAt = event.createdAt;
     String receiver = "";
@@ -36,10 +36,10 @@ class Nip44 {
       if (tag[0] == "expiration") expiration = tag[1];
     }
 
-    if (receiver.isNotEmpty && receiver.compareTo(receiver) == 0) {
-      content = await decryptContent(subContent, privkey, sender);
-    } else if (receiver.isNotEmpty && sender.compareTo(receiver) == 0) {
-      content = await decryptContent(subContent, privkey, receiver);
+    if (receiver.compareTo(myPubkey) == 0) {
+      content = await decryptContent(subContent, sender, myPubkey, privkey);
+    } else if (sender.compareTo(myPubkey) == 0) {
+      content = await decryptContent(subContent, receiver, myPubkey, privkey);
     } else {
       throw Exception("not correct receiver, is not nip44 compatible");
     }
@@ -48,9 +48,12 @@ class Nip44 {
   }
 
   static Future<String> decryptContent(
-      String content, String privkey, String pubkey,
+      String content, String peerPubkey, String myPubkey, String privkey,
       {String encodeType = 'base64', String? prefix}) async {
     try {
+      if (SignerHelper.needSigner(privkey)) {
+        return await SignerHelper.decryptNip44(content, peerPubkey, myPubkey);
+      }
       Uint8List? decodeContent;
       if (encodeType == 'base64') {
         decodeContent = base64Decode(content);
@@ -64,7 +67,7 @@ class Nip44 {
       final cipherText = decodeContent.sublist(25);
       if (v == 1) {
         final algorithm = Xchacha20(macAlgorithm: MacAlgorithm.empty);
-        final secretKey = shareSecret(privkey, pubkey);
+        final secretKey = shareSecret(privkey, peerPubkey);
         SecretBox secretBox =
             SecretBox(cipherText, nonce: nonce, mac: Mac.empty);
         final result =
@@ -80,22 +83,28 @@ class Nip44 {
     }
   }
 
-  static Future<Event> encode(
-      String receiver, String content, String replyId, String privkey, {String? subContent, int? expiration}) async {
-    String enContent = await encryptContent(content, privkey, receiver);
+  static Future<Event> encode(String sender, String receiver, String content,
+      String replyId, String privkey,
+      {String? subContent, int? expiration}) async {
+    String enContent = await encryptContent(content, receiver, sender, privkey);
     List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration);
-    if(subContent != null && subContent.isNotEmpty){
-      String enSubContent = await encryptContent(subContent, privkey, receiver);
+    if (subContent != null && subContent.isNotEmpty) {
+      String enSubContent =
+          await encryptContent(subContent, receiver, sender, privkey);
       tags.add(['subContent', enSubContent]);
     }
-    Event event =
-        await Event.from(kind: 44, tags: tags, content: enContent, privkey: privkey);
+    Event event = await Event.from(
+        kind: 44, tags: tags, content: enContent, privkey: privkey);
     return event;
   }
 
-  static Future<String> encryptContent(
-      String content, String privkey, String pubkey) async {
-    return await encrypt(privkey, pubkey, content);
+  static Future<String> encryptContent(String plainText, String peerPubkey,
+      String myPubkey, String privkey) async {
+    if (SignerHelper.needSigner(privkey)) {
+      return await SignerHelper.encryptNip04(plainText, peerPubkey, myPubkey);
+    } else {
+      return await encrypt(privkey, peerPubkey, plainText);
+    }
   }
 
   static List<List<String>> toTags(String p, String e) {

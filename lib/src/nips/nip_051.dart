@@ -60,7 +60,7 @@ class Nip51 {
     String deContent = '';
     if (ivIndex <= 0) {
       /// try nip44 decrypted
-      deContent = await Nip44.decryptContent(content, privkey, pubkey);
+      deContent = await Nip44.decryptContent(content, pubkey, pubkey, privkey);
     } else {
       /// try nip4 decrypted
       String iv = content.substring(ivIndex + "?iv=".length, content.length);
