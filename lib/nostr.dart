@@ -36,3 +36,4 @@ export 'src/nips/nip_059.dart';
 export 'src/nips/nip_065.dart';
 export 'src/nips/nip_100.dart';
 export 'src/nips/nip_101.dart';
+export 'src/signer/external_signer_tool.dart';
