@@ -144,12 +144,13 @@ class Event {
     required int kind,
     required List<List<String>> tags,
     required String content,
+    required String pubkey,
     required String privkey,
     String? subscriptionId,
     bool verify = false,
   }) async {
     if (createdAt == 0) createdAt = currentUnixTimestampSeconds();
-    final pubkey = bip340.getPublicKey(privkey).toLowerCase();
+    pubkey = pubkey.toLowerCase();
 
     final id = processEventId(
       pubkey,
@@ -177,7 +178,7 @@ class Event {
     );
 
     if (SignerHelper.needSigner(privkey)) {
-      return await SignerHelper.signEvent(event);
+      return await SignerHelper.signEvent(event, pubkey);
     }
     return event;
   }

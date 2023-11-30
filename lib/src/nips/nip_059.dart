@@ -28,6 +28,7 @@ class Nip59 {
         kind: 1059,
         tags: tags,
         content: content,
+        pubkey: myPubkey,
         privkey: sealedPrivkey,
         createdAt: createAt ?? 0);
   }

@@ -19,6 +19,7 @@ class Nip47 {
           ['p', receiver]
         ],
         content: enContent,
+        pubkey: sender,
         privkey: privkey);
   }
 

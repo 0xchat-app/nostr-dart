@@ -33,15 +33,22 @@ class Nip58 {
     }
   }
 
-  static Future<Event> setBadgeDefinition(String identifies, String name,
-      String description, BadgeImage image, BadgeImage thumb, String privkey) async {
+  static Future<Event> setBadgeDefinition(
+      String identifies,
+      String name,
+      String description,
+      BadgeImage image,
+      BadgeImage thumb,
+      String pubkey,
+      String privkey) async {
     List<List<String>> tags = [];
     tags.add(['d', identifies]);
     tags.add(['name', name]);
     tags.add(['description', description]);
     tags.add(['image', image.url, image.size]);
     tags.add(['thumb', thumb.url, thumb.size]);
-    return await Event.from(kind: 30009, tags: tags, content: '', privkey: privkey);
+    return await Event.from(
+        kind: 30009, tags: tags, content: '', pubkey: pubkey, privkey: privkey);
   }
 
   // {
@@ -61,7 +68,8 @@ class Nip58 {
       List<People> users = [];
       for (var tag in event.tags) {
         if (tag[0] == 'a') coordinates = Nip33.getEventCoordinates(tag);
-        if (tag[0] == 'p') users.add(People(tag[1], tag.length > 2 ? tag[2] : null, null, null));
+        if (tag[0] == 'p')
+          users.add(People(tag[1], tag.length > 2 ? tag[2] : null, null, null));
       }
       if (coordinates != null &&
           coordinates.kind == 30009 &&
@@ -119,11 +127,13 @@ class Nip58 {
     return null;
   }
 
-  static Future<Event> setProfileBadges(List<BadgeAward> badgeAwards, String privkey) async {
+  static Future<Event> setProfileBadges(
+      List<BadgeAward> badgeAwards, String pubkey, String privkey) async {
     return await Event.from(
         kind: 30008,
         tags: badgeAwardsToTags(badgeAwards),
         content: '',
+        pubkey: pubkey,
         privkey: privkey);
   }
 

@@ -63,11 +63,8 @@ class Nip51 {
       deContent = await Nip44.decryptContent(content, pubkey, pubkey, privkey);
     } else {
       /// try nip4 decrypted
-      String iv = content.substring(ivIndex + "?iv=".length, content.length);
-      String encString = content.substring(0, ivIndex);
-      deContent = decrypt(privkey, "02$pubkey", encString, iv);
+      deContent = await Nip4.decryptContent(content, pubkey, pubkey, privkey);
     }
-
     if (deContent.isNotEmpty) {
       for (List tag in jsonDecode(deContent)) {
         if (tag[0] == "p") {
@@ -90,6 +87,7 @@ class Nip51 {
         kind: 10000,
         tags: peoplesToTags(items),
         content: content,
+        pubkey: pubkey,
         privkey: privkey);
   }
 
@@ -100,6 +98,7 @@ class Nip51 {
         kind: 10001,
         tags: bookmarksToTags(items),
         content: content,
+        pubkey: pubkey,
         privkey: privkey);
   }
 
@@ -113,7 +112,7 @@ class Nip51 {
     tags.add(["d", identifier]);
     String content = await peoplesToContent(encryptedItems, privkey, pubkey);
     return Event.from(
-        kind: 30000, tags: tags, content: content, privkey: privkey);
+        kind: 30000, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
   static Future<Event> createCategorizedBookmarks(
@@ -126,10 +125,10 @@ class Nip51 {
     tags.add(["d", identifier]);
     String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
     return Event.from(
-        kind: 30001, tags: tags, content: content, privkey: privkey);
+        kind: 30001, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
-  static Future<Lists> getLists(Event event, String privkey) async {
+  static Future<Lists> getLists(Event event, String pubkey, String privkey) async {
     if (event.kind != 10000 &&
         event.kind != 10001 &&
         event.kind != 30000 &&
@@ -149,7 +148,6 @@ class Nip51 {
       }
       if (tag[0] == "d") identifier = tag[1];
     }
-    String pubkey = bip340.getPublicKey(privkey);
     Map? content = await Nip51.fromContent(event.content, privkey, pubkey);
     if (content != null) {
       people.addAll(content["people"]);

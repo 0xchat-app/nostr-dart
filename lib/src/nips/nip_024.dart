@@ -27,7 +27,7 @@ class Nip24 {
     String encodedEvent = jsonEncode(event);
     String content =
         await Nip44.encryptContent(encodedEvent, receiver, myPubkey, privkey);
-    return Event.from(kind: 13, tags: [], content: content, privkey: privkey);
+    return Event.from(kind: 13, tags: [], content: content, pubkey: myPubkey, privkey: privkey);
   }
 
   static Future<Event> encodeSealedGossipDM(String receiver, String content,
@@ -42,7 +42,7 @@ class Nip24 {
       tags.add(['subContent', subContent]);
     }
     Event event = await Event.from(
-        kind: 14, tags: tags, content: content, privkey: privKey);
+        kind: 14, tags: tags, content: content, pubkey: myPubkey, privkey: privKey);
     return await encode(event, receiver, myPubkey, privKey,
         sealedPrivkey: sealedPrivkey,
         sealedReceiver: sealedReceiver,

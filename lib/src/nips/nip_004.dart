@@ -86,7 +86,7 @@ class Nip4 {
       tags.add(['subContent', enSubContent]);
     }
     Event event = await Event.from(
-        kind: 4, tags: tags, content: enContent, privkey: privkey);
+        kind: 4, tags: tags, content: enContent, pubkey: sender, privkey: privkey);
     return event;
   }
 

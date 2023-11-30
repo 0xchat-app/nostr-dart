@@ -4,7 +4,7 @@ import 'package:nostr_core_dart/nostr.dart';
 
 class Nip101 {
   static Future<Event> request(
-      String myAliasPubkey, String toPubkey, String privkey,
+      String myAliasPubkey, String toPubkey, String pubkey, String privkey,
       {int? expiration, int? interval, String? relay}) async {
     Map map = {};
     String content = '';
@@ -19,11 +19,12 @@ class Nip101 {
           ['p', toPubkey, myAliasPubkey]
         ],
         content: content,
+        pubkey: pubkey,
         privkey: privkey);
   }
 
   static Future<Event> accept(String myAliasPubkey, String toPubkey,
-      String sessionId, String privkey) async {
+      String sessionId, String pubkey, String privkey) async {
     return await Event.from(
         kind: 10101,
         tags: [
@@ -31,11 +32,12 @@ class Nip101 {
           ['e', sessionId]
         ],
         content: '',
+        pubkey: pubkey,
         privkey: privkey);
   }
 
   static Future<Event> reject(
-      String toPubkey, String sessionId, String privkey) async {
+      String toPubkey, String sessionId, String pubkey, String privkey) async {
     return await Event.from(
         kind: 10102,
         tags: [
@@ -43,11 +45,12 @@ class Nip101 {
           ['e', sessionId]
         ],
         content: '',
+        pubkey: pubkey,
         privkey: privkey);
   }
 
   static Future<Event> close(
-      String toPubkey, String sessionId, String privkey) async {
+      String toPubkey, String sessionId, String pubkey, String privkey) async {
     return await Event.from(
         kind: 10103,
         tags: [
@@ -55,11 +58,12 @@ class Nip101 {
           ['e', sessionId]
         ],
         content: '',
+        pubkey: pubkey,
         privkey: privkey);
   }
 
   static Future<Event> update(String myNewAliasPubkey, String toPubkey,
-      String sessionId, String privkey) async {
+      String sessionId, String pubkey, String privkey) async {
     return await Event.from(
         kind: 10104,
         tags: [
@@ -67,6 +71,7 @@ class Nip101 {
           ['e', sessionId]
         ],
         content: '',
+        pubkey: pubkey,
         privkey: privkey);
   }
 

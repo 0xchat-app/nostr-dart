@@ -110,6 +110,7 @@ class Nip57 {
         kind: 9734,
         tags: tags,
         content: privateZap ? '' : content ?? '',
+        pubkey: bip340.getPublicKey(derivedPrivkey),
         privkey: derivedPrivkey,
         createdAt: createAt);
   }
@@ -135,7 +136,7 @@ class Nip57 {
     }
 
     Event event = await Event.from(
-        kind: 9733, tags: tags, content: content ?? '', privkey: privkey);
+        kind: 9733, tags: tags, content: content ?? '', pubkey: myPubkey, privkey: privkey);
 
     String eventString = jsonEncode(event);
 

@@ -30,10 +30,10 @@ class Nip5 {
 
   /// encode set metadata event
   static Future<Event> encode(
-      String name, String domain, List<String> relays, String privkey) async {
+      String name, String domain, List<String> relays, String pubkey, String privkey) async {
     if (isValidName(name) && isValidDomain(domain)) {
       String content = generateContent(name, domain, relays);
-      return await Nip1.setMetadata(content, privkey);
+      return await Nip1.setMetadata(content, pubkey, privkey);
     } else {
       throw Exception("not a valid name or domain!");
     }

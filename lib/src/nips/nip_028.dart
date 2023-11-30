@@ -128,7 +128,7 @@ class Nip28 {
   }
 
   static Future<Event> createChannel(String name, String about, String picture,
-      Map<String, String> additional, String privkey) async {
+      Map<String, String> additional, String pubkey, String privkey) async {
     Map<String, dynamic> map = {
       'name': name,
       'about': about,
@@ -137,7 +137,7 @@ class Nip28 {
     map.addAll(additional);
     String content = jsonEncode(map);
     Event event = await Event.from(
-        kind: 40, tags: [], content: content, privkey: privkey);
+        kind: 40, tags: [], content: content, pubkey: pubkey, privkey: privkey);
     return event;
   }
 
@@ -150,6 +150,7 @@ class Nip28 {
       Map<String, String>? additional,
       String channelId,
       String relayURL,
+      String pubkey,
       String privkey) async {
     Map<String, dynamic> map = {
       'name': name,
@@ -167,12 +168,16 @@ class Nip28 {
       }
     }
     Event event = await Event.from(
-        kind: 41, tags: tags, content: content, privkey: privkey);
+        kind: 41,
+        tags: tags,
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
     return event;
   }
 
   static Future<Event> sendChannelMessage(
-      String channelId, String content, String privkey,
+      String channelId, String content, String pubkey, String privkey,
       {String? channelRelay,
       String? replyMessage,
       String? replyMessageRelay,
@@ -198,12 +203,16 @@ class Nip28 {
       tags.add(['type', actionsType]);
     }
     Event event = await Event.from(
-        kind: 42, tags: tags, content: content, privkey: privkey);
+        kind: 42,
+        tags: tags,
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
     return event;
   }
 
   static Future<Event> hideChannelMessage(
-      String messageId, String reason, String privkey) async {
+      String messageId, String reason, String pubkey, String privkey) async {
     Map<String, dynamic> map = {
       'reason': reason,
     };
@@ -211,12 +220,16 @@ class Nip28 {
     List<List<String>> tags = [];
     tags.add(["e", messageId]);
     Event event = await Event.from(
-        kind: 43, tags: tags, content: content, privkey: privkey);
+        kind: 43,
+        tags: tags,
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
     return event;
   }
 
   static Future<Event> muteUser(
-      String pubkey, String reason, String privkey) async {
+      String pubkey, String reason, String myPubkey, String privkey) async {
     Map<String, dynamic> map = {
       'reason': reason,
     };
@@ -224,7 +237,11 @@ class Nip28 {
     List<List<String>> tags = [];
     tags.add(["p", pubkey]);
     Event event = await Event.from(
-        kind: 44, tags: tags, content: content, privkey: privkey);
+        kind: 44,
+        tags: tags,
+        content: content,
+        pubkey: myPubkey,
+        privkey: privkey);
     return event;
   }
 

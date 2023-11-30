@@ -6,7 +6,7 @@ import 'package:nostr_core_dart/nostr.dart';
 ///Authentication of clients to relays
 class Nip42 {
   static Future<String> encode(
-      String challenge, String relay, String privkey) async {
+      String challenge, String relay, String pubkey, String privkey) async {
     Event event = await Event.from(
         kind: 22242,
         tags: [
@@ -14,6 +14,7 @@ class Nip42 {
           ["challenge", challenge]
         ],
         content: "",
+        pubkey: pubkey,
         privkey: privkey);
     var auth = ["AUTH", event.toJson()];
     return jsonEncode(auth);

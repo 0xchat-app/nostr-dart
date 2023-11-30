@@ -10,9 +10,9 @@ class Nip9 {
     return result;
   }
 
-  static Future<Event> encode(List<String> events, String content, String privkey) async {
+  static Future<Event> encode(List<String> events, String content, String pubkey, String privkey) async {
     return await Event.from(
-        kind: 5, tags: toTags(events), content: content, privkey: privkey);
+        kind: 5, tags: toTags(events), content: content, pubkey: pubkey, privkey: privkey);
   }
 
   static DeleteEvent? toDeleteEvent(Event event) {
