@@ -101,7 +101,7 @@ class Nip44 {
   static Future<String> encryptContent(String plainText, String peerPubkey,
       String myPubkey, String privkey) async {
     if (SignerHelper.needSigner(privkey)) {
-      return await SignerHelper.encryptNip04(plainText, peerPubkey, myPubkey);
+      return await SignerHelper.encryptNip44(plainText, peerPubkey, myPubkey);
     } else {
       return await encrypt(privkey, peerPubkey, plainText);
     }
