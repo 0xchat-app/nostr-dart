@@ -72,6 +72,10 @@ class ChatcorePlugin: FlutterPlugin, MethodCallHandler, ActivityAware, ActivityR
         )
       )
       intent.`package` = "com.greenart7c3.nostrsigner"
+      paramsMap["permissions"]?.let { permissions ->
+        if (permissions is String) intent.putExtra("permissions", permissions)
+      }
+
       var type: String? = paramsMap["type"] as? String ?: "get_public_key"
       intent.putExtra("type", type)
 

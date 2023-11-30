@@ -1,6 +1,7 @@
 
 
 import 'package:nostr_core_dart/src/channel/core_method_channel.dart';
+import 'package:nostr_core_dart/src/signer/signer_permission_model.dart';
 
 ///Title: external_signer_tool
 ///Description: TODO(Fill in by oneself)
@@ -16,6 +17,7 @@ class ExternalSignerTool {
       {
         'type': SignerType.GET_PUBLIC_KEY.name,
         'requestCode': SignerType.GET_PUBLIC_KEY.requestCode,
+        'permissions': SignerPermissionModel.defaultPermissions(),
       },
     );
     if (result == null) return null;
