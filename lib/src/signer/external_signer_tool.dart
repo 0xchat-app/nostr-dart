@@ -35,6 +35,7 @@ class ExternalSignerTool {
       {
         'type': SignerType.SIGN_EVENT.name,
         'id': id,
+        'pubKey': "",
         'current_user': current_user,
         'requestCode': SignerType.SIGN_EVENT.requestCode,
         'extendParse': eventJson,

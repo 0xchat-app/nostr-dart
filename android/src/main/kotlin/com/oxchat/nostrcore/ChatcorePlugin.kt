@@ -69,7 +69,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             if (paramsMap == null) {
                 return
             }
-            val resultFromCR: HashMap<String, String?>? = getDataContentResoler(paramsMap)
+            val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
             if (resultFromCR != null && resultFromCR.isNotEmpty()) {
                 mMethodChannelResult?.success(resultFromCR)
                 mMethodChannelResult = null
@@ -134,15 +134,12 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         return false
     }
 
-    fun getDataContentResoler(paramsMap: HashMap<*, *>): HashMap<String, String?>? {
+    fun getDataContentResolver(paramsMap: HashMap<*, *>): HashMap<String, String?>? {
         var type: String = paramsMap["type"] as? String ?: "get_public_key"
         var extendParse: String = paramsMap["extendParse"] as? String ?: ""
         var data = arrayOf(extendParse)
         paramsMap["pubKey"]?.let { pubKey ->
             if (pubKey is String) data += pubKey
-        }
-        paramsMap["id"]?.let { id ->
-            if (id is String) data += id
         }
         paramsMap["current_user"]?.let { currentUser ->
             if (currentUser is String) data += currentUser
