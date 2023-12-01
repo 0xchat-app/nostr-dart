@@ -141,10 +141,12 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         paramsMap["pubKey"]?.let { pubKey ->
             if (pubKey is String) data += pubKey
         }
+        paramsMap["id"]?.let { id ->
+            if (id is String) data += id
+        }
         paramsMap["current_user"]?.let { currentUser ->
             if (currentUser is String) data += currentUser
         }
-
         return getDataFromResolver(type, data, mContext.contentResolver);
     }
 

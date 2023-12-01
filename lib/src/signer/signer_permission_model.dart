@@ -16,6 +16,7 @@ class SignerPermissionModel {
   static String defaultPermissions() {
     final permissions = [
       SignerPermissionModel(type: "sign_event", kind: 22242),
+      SignerPermissionModel(type: "sign_event", kind: 22456),
       SignerPermissionModel(type: "nip04_encrypt"),
       SignerPermissionModel(type: "nip04_decrypt"),
       SignerPermissionModel(type: "nip44_encrypt"),
