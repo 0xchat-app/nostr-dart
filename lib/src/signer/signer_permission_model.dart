@@ -17,6 +17,12 @@ class SignerPermissionModel {
     final permissions = [
       SignerPermissionModel(type: "sign_event", kind: 22242),
       SignerPermissionModel(type: "sign_event", kind: 22456),
+      SignerPermissionModel(type: "sign_event", kind: 4),
+      SignerPermissionModel(type: "sign_event", kind: 13),
+      SignerPermissionModel(type: "sign_event", kind: 14),
+      SignerPermissionModel(type: "sign_event", kind: 1059),
+      SignerPermissionModel(type: "sign_event", kind: 30000),
+      SignerPermissionModel(type: "sign_event", kind: 30001),
       SignerPermissionModel(type: "nip04_encrypt"),
       SignerPermissionModel(type: "nip04_decrypt"),
       SignerPermissionModel(type: "nip44_encrypt"),
