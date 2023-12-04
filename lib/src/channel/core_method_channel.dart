@@ -7,4 +7,16 @@ import 'package:flutter/services.dart';
 ///CreateTime: 2023/11/29 17:39
 class CoreMethodChannel{
   static const MethodChannel channelChatCore = const MethodChannel('com.oxchat.nostrcore');
+
+
+  ///check an app is installed/enabled
+  static Future<bool> isAppInstalled(String packageName) async {
+    final bool result = await channelChatCore.invokeMethod(
+      'isAppInstalled',
+      {
+        'packageName': packageName,
+      },
+    );
+    return result;
+  }
 }
