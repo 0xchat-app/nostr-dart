@@ -14,7 +14,7 @@ class Nip24 {
     Event sealedGossipEvent =
         await _encodeSealedGossip(event, receiver, myPubkey, privkey);
     return await Nip59.encode(
-        sealedGossipEvent, myPubkey, sealedReceiver ?? receiver,
+        sealedGossipEvent, sealedReceiver ?? receiver,
         kind: kind?.toString(),
         expiration: expiration,
         sealedPrivkey: sealedPrivkey,

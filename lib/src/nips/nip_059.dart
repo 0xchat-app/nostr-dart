@@ -1,12 +1,12 @@
 import 'dart:convert';
-import 'dart:math';
+import 'package:bip340/bip340.dart' as bip340;
 
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Gift Wrap
 /// https://github.com/v0l/nips/blob/59/59.md
 class Nip59 {
-  static Future<Event> encode(Event event, String myPubkey, String receiver,
+  static Future<Event> encode(Event event, String receiver,
       {String? sealedPrivkey,
       String? kind,
       int? expiration,
@@ -15,8 +15,8 @@ class Nip59 {
     if (sealedPrivkey == null) {
       Keychain keychain = Keychain.generate();
       sealedPrivkey = keychain.private;
-      myPubkey = keychain.public;
     }
+    String myPubkey = bip340.getPublicKey(sealedPrivkey);
     String content = await Nip44.encryptContent(
         encodedEvent, receiver, myPubkey, sealedPrivkey);
     List<List<String>> tags = [
