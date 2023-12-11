@@ -118,7 +118,9 @@ class Nip19 {
       index += length;
 
       if (type == 0) {
-        special = bytesToHex(value);
+        special = (prefix == 'naddr')
+            ? String.fromCharCodes(value)
+            : bytesToHex(value);
       } else if (type == 1) {
         relays.add(String.fromCharCodes(value));
       } else if (type == 2) {
