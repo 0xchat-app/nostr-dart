@@ -73,7 +73,12 @@ class Nip44 {
         final result =
             await algorithm.decrypt(secretBox, secretKey: SecretKey(secretKey));
         return utf8.decode(result);
-      } else {
+      }
+      else if(v == 2){
+        Uint8List shareKey = Nip44v2.shareSecret(privkey, peerPubkey);
+        return await Nip44v2.decrypt(content, shareKey);
+      }
+      else {
         print("nip44: decryptContent error: unknown algorithm version: $v");
         return "";
       }
@@ -115,33 +120,9 @@ class Nip44 {
   }
 
   static Future<String> encrypt(
-      String privateString, String publicString, String content,
-      {String encodeType = 'base64', String? prefix}) async {
-    final algorithm = Xchacha20(macAlgorithm: MacAlgorithm.empty);
-    final secretKey = shareSecret(privateString, publicString);
-    // Generate a random 96-bit nonce.
-    final nonce = generate24RandomBytes();
-    final uintInputText = utf8.encode(content);
-    // Encrypt
-    final secretBox = await algorithm.encrypt(
-      uintInputText,
-      secretKey: SecretKey(secretKey),
-      nonce: nonce,
-    );
-
-    List<int> result = [];
-    result.add(1);
-    result.addAll(nonce);
-    result.addAll(secretBox.cipherText);
-    if (encodeType == 'base64') {
-      return base64Encode(result);
-    } else if (encodeType == 'bech32' && prefix != null) {
-      String hexData = result
-          .map((int value) => value.toRadixString(16).padLeft(2, '0'))
-          .join();
-      return bech32Encode(prefix, hexData, maxLength: hexData.length);
-    }
-    return '';
+      String privateString, String publicString, String content) async {
+    Uint8List shareKey = Nip44v2.shareSecret(privateString, publicString);
+    return await Nip44v2.encrypt(content, shareKey);
   }
 
   static Uint8List shareSecret(String privateString, String publicString) {
