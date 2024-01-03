@@ -25,7 +25,6 @@ class SignerHelper {
     if (encryptedText != null) {
       plainText = encryptedText;
     }
-    print('encryptNip04');
     return plainText;
   }
 
@@ -41,7 +40,6 @@ class SignerHelper {
     if (plainText != null) {
       encryptedText = plainText;
     }
-    // print('decryptNip04 decrypted content = $encryptedText, map: ${jsonEncode(map)}');
     return encryptedText;
   }
 
@@ -53,7 +51,6 @@ class SignerHelper {
     if (encryptedText != null) {
       plainText = encryptedText;
     }
-    print('encryptNip044');
     return plainText;
   }
 

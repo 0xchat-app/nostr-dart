@@ -1,5 +1,3 @@
-
-
 import 'package:nostr_core_dart/src/channel/core_method_channel.dart';
 import 'package:nostr_core_dart/src/signer/signer_permission_model.dart';
 

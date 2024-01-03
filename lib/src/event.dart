@@ -160,7 +160,7 @@ class Event {
       content,
     );
 
-    final sig = _processSignature(
+    final sig = processSignature(
       privkey,
       id,
     );
@@ -317,11 +317,11 @@ class Event {
   /// Each user has a keypair. Signatures, public key, and encodings are done according to the Schnorr signatures standard for the curve secp256k1
   /// 64-bytes signature of the sha256 hash of the serialized event data, which is the same as the "id" field
   String getSignature(String privateKey) {
-    return _processSignature(privateKey, id);
+    return processSignature(privateKey, id);
   }
 
   // Support for [getSignature]
-  static String _processSignature(
+  static String processSignature(
     String privateKey,
     String id,
   ) {
