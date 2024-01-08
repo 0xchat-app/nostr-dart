@@ -1,5 +1,6 @@
+import 'dart:math';
 
-class Nip13{
+class Nip13 {
   static int countLeadingZeroes(String hex) {
     int count = 0;
     for (int i = 0; i < hex.length; i++) {
@@ -7,12 +8,10 @@ class Nip13{
       if (nibble == 0) {
         count += 4;
       } else {
-        count += (nibble.toUnsigned(32).bitLength - 1).abs();
+        count += 4 - min(4, nibble.bitLength);
         break;
       }
     }
     return count;
   }
 }
-
-
