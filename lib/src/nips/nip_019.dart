@@ -99,45 +99,50 @@ class Nip19 {
   }
 
   static Map<String, dynamic> decodeShareableEntity(String shareableEntity) {
-    String prefix = '';
-    String special = '';
-    List<String> relays = [];
-    String? author;
-    int? kind;
-    Map<String, String> decodedMap =
-        bech32Decode(shareableEntity, maxLength: shareableEntity.length);
-    prefix = decodedMap['prefix']!;
-    final data = hexToBytes(decodedMap['data']!);
+    try{
+      String prefix = '';
+      String special = '';
+      List<String> relays = [];
+      String? author;
+      int? kind;
+      Map<String, String> decodedMap =
+      bech32Decode(shareableEntity, maxLength: shareableEntity.length);
+      prefix = decodedMap['prefix']!;
+      final data = hexToBytes(decodedMap['data']!);
 
-    var index = 0;
-    while (index < data.length) {
-      var type = data[index++];
-      var length = data[index++];
+      var index = 0;
+      while (index < data.length) {
+        var type = data[index++];
+        var length = data[index++];
 
-      var value = data.sublist(index, index + length);
-      index += length;
+        var value = data.sublist(index, index + length);
+        index += length;
 
-      if (type == 0) {
-        special = (prefix == 'naddr')
-            ? String.fromCharCodes(value)
-            : bytesToHex(value);
-      } else if (type == 1) {
-        relays.add(String.fromCharCodes(value));
-      } else if (type == 2) {
-        author = bytesToHex(value);
-      } else if (type == 3) {
-        final byteData = ByteData.sublistView(value);
-        kind = byteData.getUint32(0, Endian.big);
+        if (type == 0) {
+          special = (prefix == 'naddr')
+              ? String.fromCharCodes(value)
+              : bytesToHex(value);
+        } else if (type == 1) {
+          relays.add(String.fromCharCodes(value));
+        } else if (type == 2) {
+          author = bytesToHex(value);
+        } else if (type == 3) {
+          final byteData = ByteData.sublistView(value);
+          kind = byteData.getUint32(0, Endian.big);
+        }
       }
-    }
 
-    return {
-      'prefix': prefix,
-      'special': special,
-      'relays': relays,
-      'author': author,
-      'kind': kind
-    };
+      return {
+        'prefix': prefix,
+        'special': special,
+        'relays': relays,
+        'author': author,
+        'kind': kind
+      };
+    }
+    catch(_){
+      return {'prefix': ''};
+    }
   }
 }
 
