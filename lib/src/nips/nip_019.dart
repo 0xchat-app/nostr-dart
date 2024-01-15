@@ -19,10 +19,15 @@ class Nip19 {
   }
 
   static String decodePubkey(String data) {
-    Map map = bech32Decode(data);
-    if (map["prefix"] == "npub") {
-      return map["data"];
-    } else {
+    try{
+      Map map = bech32Decode(data);
+      if (map["prefix"] == "npub") {
+        return map["data"];
+      } else {
+        return "";
+      }
+    }
+    catch(_){
       return "";
     }
   }
@@ -37,12 +42,18 @@ class Nip19 {
   }
 
   static String decodeNote(String data) {
-    Map map = bech32Decode(data);
-    if (map["prefix"] == "note") {
-      return map["data"];
-    } else {
+    try{
+      Map map = bech32Decode(data);
+      if (map["prefix"] == "note") {
+        return map["data"];
+      } else {
+        return "";
+      }
+    }
+    catch(_){
       return "";
     }
+
   }
 
   // 0: special
