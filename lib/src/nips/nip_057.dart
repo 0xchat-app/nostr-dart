@@ -114,11 +114,13 @@ class Nip57 {
       tags.add(['anon', privreq]);
     }
 
-    return Event.from(
+    return await Event.from(
         kind: 9734,
         tags: tags,
         content: privateZap ? '' : content ?? '',
-        pubkey: bip340.getPublicKey(derivedPrivkey),
+        pubkey: derivedPrivkey.isEmpty
+            ? myPubkey
+            : bip340.getPublicKey(derivedPrivkey),
         privkey: derivedPrivkey,
         createdAt: createAt);
   }
