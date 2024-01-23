@@ -69,8 +69,16 @@ class Nip57 {
         } catch (_) {}
       }
 
-      ZapReceipt zapReceipt = ZapReceipt(event.createdAt, event.pubkey, bolt11!,
-          preimage!, description!, recipient!, eventId, content, sender);
+      ZapReceipt zapReceipt = ZapReceipt(
+          event.createdAt,
+          event.pubkey,
+          bolt11 ?? '',
+          preimage ?? '',
+          description ?? '',
+          recipient ?? '',
+          eventId,
+          content,
+          sender);
       return zapReceipt;
     } else {
       throw Exception("${event.kind} is not nip57 compatible");

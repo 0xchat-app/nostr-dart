@@ -51,10 +51,10 @@ class Nip28 {
             owner, relay, members, additional);
         return result;
       } else {
-        throw Exception("${event.kind} is not nip28 compatible");
+        return Channel(event.id, '', '', '', null, '', '', null, {});
       }
     } catch (e, s) {
-      throw Exception(s);
+      return Channel(event.id, '', '', '', null, '', '', null, {});
     }
   }
 
