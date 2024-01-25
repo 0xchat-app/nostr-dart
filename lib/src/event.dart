@@ -46,6 +46,9 @@ class Event {
   /// subscription_id is a random string that should be used to represent a subscription.
   String? subscriptionId;
 
+  /// innerEvent is a kind14 event in sealed DM protocol, see NIP24
+  Event? innerEvent;
+
   /// Default constructor
   ///
   /// verify: ensure your event isValid() –> id, signature, timestamp

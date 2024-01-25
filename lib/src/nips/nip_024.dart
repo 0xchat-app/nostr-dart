@@ -11,10 +11,9 @@ class Nip24 {
       String? sealedPrivkey,
       String? sealedReceiver,
       int? createAt}) async {
-    Event sealedGossipEvent =
-        await _encodeSealedGossip(event, sealedReceiver ?? receiver, myPubkey, privkey);
-    return await Nip59.encode(
-        sealedGossipEvent, sealedReceiver ?? receiver,
+    Event sealedGossipEvent = await _encodeSealedGossip(
+        event, sealedReceiver ?? receiver, myPubkey, privkey);
+    return await Nip59.encode(sealedGossipEvent, sealedReceiver ?? receiver,
         kind: kind?.toString(),
         expiration: expiration,
         sealedPrivkey: sealedPrivkey,
@@ -27,7 +26,27 @@ class Nip24 {
     String encodedEvent = jsonEncode(event);
     String content =
         await Nip44.encryptContent(encodedEvent, receiver, myPubkey, privkey);
-    return Event.from(kind: 13, tags: [], content: content, pubkey: myPubkey, privkey: privkey);
+    return Event.from(
+        kind: 13,
+        tags: [],
+        content: content,
+        pubkey: myPubkey,
+        privkey: privkey);
+  }
+
+  static Future<Event> encodeInnerEvent(String receiver, String content,
+      String replyId, String myPubkey, String privKey,
+      {String? subContent, int? expiration}) async {
+    List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration);
+    if (subContent != null && subContent.isNotEmpty) {
+      tags.add(['subContent', subContent]);
+    }
+    return await Event.from(
+        kind: 14,
+        tags: tags,
+        content: content,
+        pubkey: myPubkey,
+        privkey: privKey);
   }
 
   static Future<Event> encodeSealedGossipDM(String receiver, String content,
@@ -36,18 +55,18 @@ class Nip24 {
       String? sealedReceiver,
       int? createAt,
       String? subContent,
-      int? expiration}) async {
-    List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration);
-    if (subContent != null && subContent.isNotEmpty) {
-      tags.add(['subContent', subContent]);
-    }
-    Event event = await Event.from(
-        kind: 14, tags: tags, content: content, pubkey: myPubkey, privkey: privKey);
-    return await encode(event, receiver, myPubkey, privKey,
+      int? expiration,
+      Event? innerEvent}) async {
+    innerEvent ??= await encodeInnerEvent(
+        receiver, content, replyId, myPubkey, privKey,
+        subContent: subContent, expiration: expiration);
+    Event event = await encode(innerEvent, receiver, myPubkey, privKey,
         sealedPrivkey: sealedPrivkey,
         sealedReceiver: sealedReceiver,
         createAt: createAt,
         expiration: expiration);
+    event.innerEvent = innerEvent;
+    return event;
   }
 
   static Future<Event?> decode(Event event, String myPubkey, String privkey,
