@@ -60,7 +60,7 @@ class Nip100 {
         kind: 25050, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
-  static Signaling decode(Event event, String privkey) {
+  static Signaling decode(Event event, String pubkey) {
     if (event.kind == 25050) {
       String? type, friend, offerId;
       for (var tag in event.tags) {
@@ -69,7 +69,7 @@ class Nip100 {
         if (tag[0] == "e") offerId = tag[1];
       }
       offerId ??= event.id;
-      if (friend != null && friend == bip340.getPublicKey(privkey)) {
+      if (friend != null && friend == pubkey) {
         try {
           return Signaling(
               event.pubkey, friend, event.content, typeToState(type!), offerId);
