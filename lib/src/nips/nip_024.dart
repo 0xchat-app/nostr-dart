@@ -75,7 +75,7 @@ class Nip24 {
       Event sealedGossipEvent =
           await Nip59.decode(event, myPubkey, sealedPrivkey ?? privkey);
       Event decodeEvent =
-          await _decodeSealedGossip(sealedGossipEvent, myPubkey, privkey);
+          await _decodeSealedGossip(sealedGossipEvent, myPubkey, sealedPrivkey ?? privkey);
       return decodeEvent;
     } catch (e) {
       print('decode error: ${e.toString()}');
