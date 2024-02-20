@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:bip340/bip340.dart' as bip340;
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Lists

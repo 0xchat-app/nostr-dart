@@ -1,5 +1,4 @@
 import 'package:nostr_core_dart/nostr.dart';
-import 'package:bip340/bip340.dart' as bip340;
 
 /// This NIP defines how to do WebRTC communication over nostr.
 /// https://github.com/jacany/nips/blob/webrtc/100.md
