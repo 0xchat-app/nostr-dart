@@ -130,11 +130,9 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                     dataMap["event"] = event
                 }
                 mMethodChannelResult?.success(dataMap)
-                mMethodChannelResult = null
-            } else {
-                mMethodChannelResult?.success(null)
-                mMethodChannelResult = null
             }
+            mMethodChannelResult = null
+            return true
         }
         return false
     }
