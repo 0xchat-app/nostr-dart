@@ -64,14 +64,16 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             paramsMap = call.arguments as HashMap<*, *>
         }
         if (call.method == "getPlatformVersion") {
-            result.success("Android ${android.os.Build.VERSION.RELEASE}")
+            mMethodChannelResult?.success("Android ${android.os.Build.VERSION.RELEASE}")
+            mMethodChannelResult = null
         } else if (call.method == "isAppInstalled"){
             if (paramsMap == null) {
                 return
             }
             var packageName: String? = paramsMap["packageName"] as? String ?: return
             val isInstalled : Boolean = PackageUtils.isPackageInstalled(mContext, packageName!!)
-            result.success(isInstalled);
+            mMethodChannelResult?.success(isInstalled);
+            mMethodChannelResult = null
         } else if (call.method == "nostrsigner") {
             if (paramsMap == null) return
             val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
