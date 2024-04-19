@@ -22,10 +22,9 @@ class Nip10 {
       if (tag[0] == "e") {
         if (tag.length > 3 && tag[3] == 'root') {
           root = ETag(tag[1], tag[2], tag[3]);
-        } else if(tag.length > 3 && tag[3] == 'reply'){
+        } else if (tag.length > 3 && tag[3] == 'reply') {
           reply = ETag(tag[1], tag[2], tag[3]);
-        }
-        else {
+        } else {
           mention.add(ETag(tag[1], '', 'mention'));
         }
       }
@@ -37,12 +36,29 @@ class Nip10 {
     return ETag(eventId, relay, 'root');
   }
 
+  static ETag replyTag(String eventId, String relay) {
+    return ETag(eventId, relay, 'reply');
+  }
+
+  static List<PTag> pTags(List<String> pubkeys, List<String> relays) {
+    List<PTag> result = [];
+    for (int i = 0; i < pubkeys.length; ++i) {
+      result.add(PTag(pubkeys[i], relays[i]));
+    }
+    return result;
+  }
+
   static List<List<String>> toTags(Thread thread) {
     List<List<String>> result = [];
     result.add(
         ["e", thread.root.eventId, thread.root.relayURL, thread.root.marker]);
-    if(thread.reply != null && thread.reply!.eventId.isNotEmpty){
-      result.add(["e", thread.reply!.eventId, thread.reply!.relayURL, thread.reply!.marker]);
+    if (thread.reply != null && thread.reply!.eventId.isNotEmpty) {
+      result.add([
+        "e",
+        thread.reply!.eventId,
+        thread.reply!.relayURL,
+        thread.reply!.marker
+      ]);
     }
     if (thread.mentions != null) {
       for (var etag in thread.mentions!) {
