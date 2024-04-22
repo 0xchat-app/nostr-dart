@@ -36,6 +36,31 @@ class Nip18 {
         pubkey: pubkey,
         privkey: privkey);
   }
+
+  static QuoteReposts decodeQuoteReposts(Event event) {
+    if (event.kind == 1) {
+      String quoteRepostId = '';
+      for (var tag in event.tags) {
+        if (tag[0] == "q") quoteRepostId = tag[1];
+      }
+
+      return QuoteReposts(event.id, event.pubkey, event.createdAt,
+          event.content, quoteRepostId);
+    }
+    throw Exception("${event.kind} is not nip18 compatible");
+  }
+
+  static Future<Event> encodeQuoteReposts(
+      String quoteRepostId, String content, String pubkey, String privkey) {
+    List<List<String>> tags = [];
+    tags.add(['q', quoteRepostId]);
+    return Event.from(
+        kind: 1,
+        tags: tags,
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
+  }
 }
 
 class Reposts {
@@ -48,4 +73,15 @@ class Reposts {
 
   Reposts(this.eventId, this.pubkey, this.createAt, this.content, this.repostId,
       this.repostNote);
+}
+
+class QuoteReposts {
+  String eventId;
+  String pubkey;
+  int createAt;
+  String content;
+  String quoteRepostsId;
+
+  QuoteReposts(this.eventId, this.pubkey, this.createAt, this.content,
+      this.quoteRepostsId);
 }
