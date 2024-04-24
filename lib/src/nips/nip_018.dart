@@ -23,12 +23,11 @@ class Nip18 {
     throw Exception("${event.kind} is not nip18 compatible");
   }
 
-  static Future<Event> encodeReposts(String repostId, String repostEventRelay,
-      Event? event, String pubkey, String privkey) {
+  static Future<Event> encodeReposts(String repostId, String? repostEventRelay,
+      String? rawEvent, String pubkey, String privkey) {
     List<List<String>> tags = [];
     tags.add(['e', repostId, repostEventRelay ?? '']);
-    String content = '';
-    if (event != null) content = jsonEncode(event.toJson());
+    String content = rawEvent ?? '';
     return Event.from(
         kind: 6,
         tags: tags,
