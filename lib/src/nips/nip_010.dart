@@ -20,12 +20,20 @@ class Nip10 {
     for (var tag in tags) {
       if (tag[0] == "p") ptags.add(PTag(tag[1], tag.length > 2 ? tag[2] : ''));
       if (tag[0] == "e") {
+        //Marked "e" tags (PREFERRED)
         if (tag.length > 3 && tag[3] == 'root') {
           root = ETag(tag[1], tag[2], tag[3]);
         } else if (tag.length > 3 && tag[3] == 'reply') {
           reply = ETag(tag[1], tag[2], tag[3]);
+        } else if (tag.length > 3 && tag[3] == 'mention') {
+          mention.add(ETag(tag[1], '', tag[3]));
         } else {
-          mention.add(ETag(tag[1], '', 'mention'));
+          // Positional "e" tags (DEPRECATED)
+          if (root.eventId.isEmpty) {
+            root = ETag(tag[1], '', 'root');
+          } else {
+            reply = ETag(tag[1], '', 'reply');
+          }
         }
       }
     }
