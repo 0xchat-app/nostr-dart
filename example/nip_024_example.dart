@@ -5,12 +5,12 @@ Future<void> main() async {
   var receiver = Keychain.generate();
   var random = Keychain.generate();
 
-  Event dmEvent = await Nip24.encodeSealedGossipDM(
+  Event dmEvent = await Nip17.encodeSealedGossipDM(
       receiver.public, 'test content', '', sender.private,
       sealedReceiver: random.public, sealedPrivkey: random.private);
 
-  Event? sealEvent = await Nip24.decode(dmEvent, receiver.private, sealedPrivkey: random.private);
-  EDMessage message = await Nip24.decodeSealedGossipDM(
+  Event? sealEvent = await Nip17.decode(dmEvent, receiver.private, sealedPrivkey: random.private);
+  EDMessage message = await Nip17.decodeSealedGossipDM(
       sealEvent!, receiver.public, receiver.private);
   print(message.content);
 

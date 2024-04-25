@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:nostr_core_dart/nostr.dart';
 
-/// Sealed Gossip
-/// https://github.com/vitorpamplona/nips/blob/sealed-dms/24.md
-class Nip24 {
+/// Private Direct Messages
+/// https://github.com/nostr-protocol/nips/blob/master/17.md
+class Nip17 {
   static Future<Event> encode(
       Event event, String receiver, String myPubkey, String privkey,
       {int? kind,
