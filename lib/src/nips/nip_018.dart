@@ -36,6 +36,13 @@ class Nip18 {
         privkey: privkey);
   }
 
+  static bool hasQTag(Event event) {
+    for (var tag in event.tags) {
+      if (tag[0] == "q") return true;
+    }
+    return false;
+  }
+
   static QuoteReposts decodeQuoteReposts(Event event) {
     if (event.kind == 1) {
       String quoteRepostId = '';
