@@ -51,7 +51,7 @@ class Nip10 {
   static List<PTag> pTags(List<String> pubkeys, List<String> relays) {
     List<PTag> result = [];
     for (int i = 0; i < pubkeys.length; ++i) {
-      result.add(PTag(pubkeys[i], relays[i]));
+      result.add(PTag(pubkeys[i], relays.length > i ? relays[i] : ''));
     }
     return result;
   }
