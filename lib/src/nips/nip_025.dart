@@ -4,8 +4,8 @@ import 'package:nostr_core_dart/nostr.dart';
 class Nip25 {
   static Future<Event> encode(String reactedId, String reactedPubkey,
       String reactedKind, bool upVote, String pubkey, String privkey,
-      {String? content, String? emojiShotCode, String? emojiURL}) async {
-    content ??= upVote ? '+' : '-';
+      {String? emojiShotCode, String? emojiURL}) async {
+    String content = upVote ? '+' : '-';
     List<List<String>> tags = [];
     tags.add(["e", reactedId]);
     tags.add(["p", reactedPubkey]);
