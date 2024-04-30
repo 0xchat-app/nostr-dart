@@ -18,7 +18,7 @@ class Nip18 {
       } catch (_) {}
 
       return Reposts(event.id, event.pubkey, event.createdAt, event.content,
-          repostId, repostNote);
+          repostId, repostNote, Nip10.fromTags(event.tags));
     }
     throw Exception("${event.kind} is not nip18 compatible");
   }
@@ -52,7 +52,7 @@ class Nip18 {
       }
 
       return QuoteReposts(event.id, event.pubkey, event.createdAt,
-          event.content, quoteRepostId);
+          event.content, quoteRepostId, Nip10.fromTags(event.tags));
     }
     throw Exception("${event.kind} is not nip18 compatible");
   }
@@ -78,9 +78,10 @@ class Reposts {
   String content;
   String repostId;
   Note? repostNote;
+  Thread thread;
 
   Reposts(this.eventId, this.pubkey, this.createAt, this.content, this.repostId,
-      this.repostNote);
+      this.repostNote, this.thread);
 }
 
 class QuoteReposts {
@@ -89,7 +90,8 @@ class QuoteReposts {
   int createAt;
   String content;
   String quoteRepostsId;
+  Thread thread;
 
   QuoteReposts(this.eventId, this.pubkey, this.createAt, this.content,
-      this.quoteRepostsId);
+      this.quoteRepostsId, this.thread);
 }

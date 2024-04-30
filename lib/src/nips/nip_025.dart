@@ -42,7 +42,8 @@ class Nip25 {
           reactedEventId ?? '',
           reactedPubkey ?? '',
           reactedKind,
-          emojiReaction);
+          emojiReaction,
+          Nip10.fromTags(event.tags));
     }
     throw Exception("${event.kind} is not nip25 compatible");
   }
@@ -57,6 +58,7 @@ class Reactions {
   String reactedPubkey;
   String? reactedKind;
   EmojiReaction? emojiReaction;
+  Thread thread;
 
   Reactions(
       this.id,
@@ -66,7 +68,8 @@ class Reactions {
       this.reactedEventId,
       this.reactedPubkey,
       this.reactedKind,
-      this.emojiReaction);
+      this.emojiReaction,
+      this.thread);
 }
 
 class EmojiReaction {
