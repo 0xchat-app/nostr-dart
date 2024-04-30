@@ -17,7 +17,8 @@ class Nip1 {
       String? replyEvent,
       String? replyEventRelay,
       List<String>? replyUsers,
-      List<String>? replyUserRelays}) async {
+      List<String>? replyUserRelays,
+      List<String>? hashTags}) async {
     List<List<String>> tags = [];
     if (rootEvent != null) {
       ETag root = Nip10.rootTag(rootEvent, rootEventRelay ?? '');
@@ -27,6 +28,11 @@ class Nip1 {
       List<PTag> pTags = Nip10.pTags(replyUsers ?? [], replyUserRelays ?? []);
       Thread thread = Thread(root, reply, null, pTags);
       tags = Nip10.toTags(thread);
+    }
+    if (hashTags != null) {
+      for (var t in hashTags) {
+        tags.add(['t', t]);
+      }
     }
 
     return await Event.from(
