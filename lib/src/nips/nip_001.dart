@@ -51,10 +51,23 @@ class Nip1 {
     return hashTags;
   }
 
+  static String? quoteRepostId(List<List<String>> tags) {
+    for (var tag in tags) {
+      if (tag[0] == 'q') return tag[1];
+    }
+    return null;
+  }
+
   static Note decodeNote(Event event) {
     if (event.kind == 1) {
-      return Note(event.id, event.pubkey, event.createdAt,
-          Nip10.fromTags(event.tags), event.content, hashTags(event.tags));
+      return Note(
+          event.id,
+          event.pubkey,
+          event.createdAt,
+          Nip10.fromTags(event.tags),
+          event.content,
+          hashTags(event.tags),
+          quoteRepostId(event.tags));
     }
     throw Exception("${event.kind} is not nip1 compatible");
   }
@@ -73,7 +86,8 @@ class Note {
   Thread thread;
   String content;
   List<String>? hashTags;
+  String? quoteRepostId;
 
   Note(this.nodeId, this.pubkey, this.createAt, this.thread, this.content,
-      this.hashTags);
+      this.hashTags, this.quoteRepostId);
 }
