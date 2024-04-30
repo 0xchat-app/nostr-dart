@@ -43,10 +43,18 @@ class Nip1 {
         privkey: privkey);
   }
 
+  static List<String>? hashTags(List<List<String>> tags) {
+    List<String> hashTags = [];
+    for (var tag in tags) {
+      if (tag[0] == 't') hashTags.add(tag[1]);
+    }
+    return hashTags;
+  }
+
   static Note decodeNote(Event event) {
     if (event.kind == 1) {
       return Note(event.id, event.pubkey, event.createdAt,
-          Nip10.fromTags(event.tags), event.content);
+          Nip10.fromTags(event.tags), event.content, hashTags(event.tags));
     }
     throw Exception("${event.kind} is not nip1 compatible");
   }
@@ -64,6 +72,8 @@ class Note {
   int createAt;
   Thread thread;
   String content;
+  List<String>? hashTags;
 
-  Note(this.nodeId, this.pubkey, this.createAt, this.thread, this.content);
+  Note(this.nodeId, this.pubkey, this.createAt, this.thread, this.content,
+      this.hashTags);
 }
