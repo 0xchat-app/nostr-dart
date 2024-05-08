@@ -47,21 +47,33 @@ class Nip18 {
   static QuoteReposts decodeQuoteReposts(Event event) {
     if (event.kind == 1) {
       String quoteRepostId = '';
+      List<String> hashTags = [];
       for (var tag in event.tags) {
         if (tag[0] == "q") quoteRepostId = tag[1];
+        if (tag[0] == 't') hashTags.add(tag[1]);
       }
 
       return QuoteReposts(event.id, event.pubkey, event.createdAt,
-          event.content, quoteRepostId, Nip10.fromTags(event.tags));
+          event.content, quoteRepostId, Nip10.fromTags(event.tags), hashTags);
     }
     throw Exception("${event.kind} is not nip18 compatible");
   }
 
-  static Future<Event> encodeQuoteReposts(String quoteRepostId,
-      String quoteRepostPubkey, String content, String pubkey, String privkey) {
+  static Future<Event> encodeQuoteReposts(
+      String quoteRepostId,
+      String quoteRepostPubkey,
+      String content,
+      List<String>? hashTags,
+      String pubkey,
+      String privkey) {
     List<List<String>> tags = [];
     tags.add(['q', quoteRepostId]);
     tags.add(['p', quoteRepostPubkey]);
+    if (hashTags != null) {
+      for (var t in hashTags) {
+        tags.add(['t', t]);
+      }
+    }
     return Event.from(
         kind: 1,
         tags: tags,
@@ -91,7 +103,8 @@ class QuoteReposts {
   String content;
   String quoteRepostsId;
   Thread thread;
+  List<String>? hashTags;
 
   QuoteReposts(this.eventId, this.pubkey, this.createAt, this.content,
-      this.quoteRepostsId, this.thread);
+      this.quoteRepostsId, this.thread, this.hashTags);
 }
