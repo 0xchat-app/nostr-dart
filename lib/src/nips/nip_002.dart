@@ -66,6 +66,16 @@ class Nip2 {
     }
     return result;
   }
+
+  static Future<Event> encode(
+      List<Profile> profiles, String pubkey, String privkey) {
+    return Event.from(
+        kind: 3,
+        tags: toTags(profiles),
+        content: '',
+        pubkey: pubkey,
+        privkey: privkey);
+  }
 }
 
 /// Each tag entry should contain the key for the profile, a relay URL where events from that key can be found
