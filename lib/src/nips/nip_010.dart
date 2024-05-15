@@ -37,6 +37,11 @@ class Nip10 {
         }
       }
     }
+    // only reply, no root
+    if(root.eventId.isEmpty && reply.eventId.isNotEmpty){
+      root = ETag(reply.eventId, reply.relayURL, 'root');
+      return Thread(root, null, mention, ptags);
+    }
     return Thread(root, reply, mention, ptags);
   }
 
