@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Relay-based Groups
@@ -272,6 +271,19 @@ class GroupAdmin {
   List<GroupActionKind> permissions;
 
   GroupAdmin(this.pubkey, this.role, this.permissions);
+
+  factory GroupAdmin.fromJson(List<dynamic> json) {
+    String pubkey = json[0];
+    String role = json[1];
+    List<GroupActionKind> permissions = (json.sublist(2) as List<String>)
+        .map((p) => GroupActionKind.fromString(p))
+        .toList();
+    return GroupAdmin(pubkey, role, permissions);
+  }
+
+  List<dynamic> toJson() {
+    return [pubkey, role, ...permissions.map((p) => p.name)];
+  }
 }
 
 /// groups info
