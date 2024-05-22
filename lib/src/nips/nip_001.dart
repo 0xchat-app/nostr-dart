@@ -58,8 +58,15 @@ class Nip1 {
     return null;
   }
 
+  static String groupId(List<List<String>> tags) {
+    for (var tag in tags) {
+      if (tag[0] == 'h') return tag[1];
+    }
+    return '';
+  }
+
   static Note decodeNote(Event event) {
-    if (event.kind == 1) {
+    if (event.kind == 1 || event.kind == 11 || event.kind == 12) {
       return Note(
           event.id,
           event.pubkey,
@@ -67,7 +74,8 @@ class Nip1 {
           Nip10.fromTags(event.tags),
           event.content,
           hashTags(event.tags),
-          quoteRepostId(event.tags));
+          quoteRepostId(event.tags),
+          groupId(event.tags));
     }
     throw Exception("${event.kind} is not nip1 compatible");
   }
@@ -87,7 +95,8 @@ class Note {
   String content;
   List<String>? hashTags;
   String? quoteRepostId;
+  String groupId;
 
   Note(this.nodeId, this.pubkey, this.createAt, this.thread, this.content,
-      this.hashTags, this.quoteRepostId);
+      this.hashTags, this.quoteRepostId, this.groupId);
 }
