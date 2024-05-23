@@ -112,10 +112,6 @@ class Nip29 {
         thread, content, previous);
   }
 
-  static GroupMessage decodeGroupMessageReply(Event event) {
-    return decodeGroupMessage(event);
-  }
-
   static Future<Event> encodeGroupNote(String groupId, String content,
       String pubkey, String privkey, List<String> previous,
       {List<String>? hashTags}) async {
