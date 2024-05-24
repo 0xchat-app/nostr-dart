@@ -90,13 +90,13 @@ class Nip1 {
 class Note {
   String nodeId;
   String pubkey;
-  int createAt;
+  int createdAt;
   Thread thread;
   String content;
   List<String>? hashTags;
   String? quoteRepostId;
   String groupId;
 
-  Note(this.nodeId, this.pubkey, this.createAt, this.thread, this.content,
+  Note(this.nodeId, this.pubkey, this.createdAt, this.thread, this.content,
       this.hashTags, this.quoteRepostId, this.groupId);
 }

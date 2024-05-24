@@ -357,9 +357,9 @@ class GroupJoinRequest {
   String requestId;
   String groupId;
   String pubkey;
-  int createAt;
+  int createdAt;
   String content;
 
   GroupJoinRequest(
-      this.requestId, this.groupId, this.pubkey, this.createAt, this.content);
+      this.requestId, this.groupId, this.pubkey, this.createdAt, this.content);
 }
