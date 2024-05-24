@@ -234,14 +234,14 @@ class Nip29 {
     return event;
   }
 
-  static Future<Event> encodeGroupAction(
+  static Future<Event> _encodeGroupAction(
       String groupId,
       GroupActionKind actionKind,
       String content,
+      List<List<String>> tags,
       List<String> previous,
       String pubkey,
       String privkey) async {
-    List<List<String>> tags = [];
     tags.add(['h', groupId]);
     if (previous.isNotEmpty) tags.add(['previous', ...previous]);
     Event event = await Event.from(
@@ -251,6 +251,151 @@ class Nip29 {
         pubkey: pubkey,
         privkey: privkey);
     return event;
+  }
+
+  static Future<Event> encodeAddUser(
+      String groupId,
+      String addUser,
+      String content,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['p', addUser]);
+    return _encodeGroupAction(groupId, GroupActionKind.addUser, content, tags,
+        previous, pubkey, privkey);
+  }
+
+  static Future<Event> encodeRemoveUser(
+      String groupId,
+      String removeUser,
+      String content,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['p', removeUser]);
+    return _encodeGroupAction(groupId, GroupActionKind.removeUser, content,
+        tags, previous, pubkey, privkey);
+  }
+
+  static Future<Event> encodeEditMetadata(
+      String groupId,
+      String name,
+      String about,
+      String picture,
+      String content,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['name', name]);
+    tags.add(['about', about]);
+    tags.add(['picture', picture]);
+    return _encodeGroupAction(groupId, GroupActionKind.editMetadata, content,
+        tags, previous, pubkey, privkey);
+  }
+
+  static Future<Event> encodeAddPermission(
+      String groupId,
+      String user,
+      String permission,
+      String content,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['p', user]);
+    tags.add(['permission', permission]);
+    return _encodeGroupAction(groupId, GroupActionKind.addPermission, content,
+        tags, previous, pubkey, privkey);
+  }
+
+  static Future<Event> encodeRemovePermission(
+      String groupId,
+      String user,
+      String permission,
+      String content,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['p', user]);
+    tags.add(['permission', permission]);
+    return _encodeGroupAction(groupId, GroupActionKind.removePermission,
+        content, tags, previous, pubkey, privkey);
+  }
+
+  static Future<Event> encodeDeleteEvent(
+      String groupId,
+      String eventId,
+      String content,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['e', eventId]);
+    return _encodeGroupAction(groupId, GroupActionKind.deleteEvent, content,
+        tags, previous, pubkey, privkey);
+  }
+
+  static Future<Event> encodeEditGroupStatus(
+      String groupId,
+      bool private,
+      String content,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
+    List<List<String>> tags = [];
+    private ? tags.add(['private']) : tags.add(['public']);
+    return _encodeGroupAction(groupId, GroupActionKind.editGroupStatus, content,
+        tags, previous, pubkey, privkey);
+  }
+
+  static Future<Event> encodeGroupModeration(
+      GroupModeration moderation, String pubkey, String privkey) {
+    switch (moderation.actionKind) {
+      case GroupActionKind.addUser:
+        return encodeAddUser(moderation.groupId, moderation.pubkey,
+            moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.removeUser:
+        return encodeAddUser(moderation.groupId, moderation.pubkey,
+            moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.editMetadata:
+        return encodeEditMetadata(
+            moderation.groupId,
+            moderation.name,
+            moderation.about,
+            moderation.picture,
+            moderation.content,
+            moderation.previous,
+            pubkey,
+            privkey);
+      case GroupActionKind.addPermission:
+        return encodeAddPermission(
+            moderation.groupId,
+            moderation.user,
+            moderation.permission,
+            moderation.content,
+            moderation.previous,
+            pubkey,
+            privkey);
+      case GroupActionKind.removePermission:
+        return encodeRemovePermission(
+            moderation.groupId,
+            moderation.user,
+            moderation.permission,
+            moderation.content,
+            moderation.previous,
+            pubkey,
+            privkey);
+      case GroupActionKind.deleteEvent:
+        return encodeDeleteEvent(moderation.groupId, moderation.eventId,
+            moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.editGroupStatus:
+        return encodeEditGroupStatus(moderation.groupId, moderation.private,
+            moderation.content, moderation.previous, pubkey, privkey);
+    }
   }
 }
 
@@ -271,6 +416,11 @@ enum GroupActionKind {
   static GroupActionKind fromString(String name) {
     return GroupActionKind.values.firstWhere((element) => element.name == name,
         orElse: () => throw ArgumentError('Invalid permission name: $name'));
+  }
+
+  static GroupActionKind fromKind(int kind) {
+    return GroupActionKind.values.firstWhere((element) => element.kind == kind,
+        orElse: () => throw ArgumentError('Invalid permission name: $kind'));
   }
 }
 
@@ -362,4 +512,40 @@ class GroupJoinRequest {
 
   GroupJoinRequest(
       this.requestId, this.groupId, this.pubkey, this.createdAt, this.content);
+}
+
+class GroupModeration {
+  String moderationId;
+  String groupId;
+  String pubkey;
+  int createdAt;
+  String content;
+  GroupActionKind actionKind;
+  List<String> previous;
+
+  String user;
+  String permission;
+  String eventId;
+  bool private;
+  String name;
+  String about;
+  String picture;
+  String pinned;
+
+  GroupModeration(
+      this.moderationId,
+      this.groupId,
+      this.pubkey,
+      this.createdAt,
+      this.content,
+      this.actionKind,
+      this.previous,
+      this.user,
+      this.permission,
+      this.eventId,
+      this.private,
+      this.name,
+      this.about,
+      this.picture,
+      this.pinned);
 }
