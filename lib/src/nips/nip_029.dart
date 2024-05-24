@@ -112,6 +112,19 @@ class Nip29 {
         thread, content, previous);
   }
 
+  static GroupJoinRequest decodeJoinRequest(Event event) {
+    if (event.kind != 9021) {
+      throw Exception("${event.kind} is not nip29 compatible");
+    }
+    var content = event.content;
+    String groupId = '';
+    for (var tag in event.tags) {
+      if (tag[0] == "h") groupId = tag[1];
+    }
+    return GroupJoinRequest(
+        event.id, groupId, event.pubkey, event.createdAt, content);
+  }
+
   static Future<Event> encodeGroupNote(String groupId, String content,
       String pubkey, String privkey, List<String> previous,
       {List<String>? hashTags}) async {
@@ -208,7 +221,7 @@ class Nip29 {
     return event;
   }
 
-  static Future<Event> encodeGroupRequest(
+  static Future<Event> encodeJoinRequest(
       String groupId, String content, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
