@@ -20,8 +20,8 @@ dependencies:
   kepler: ^1.0.3
   http: ^0.13.3
   bech32: ^0.2.0
-  cryptography: ^2.5.0
-  cryptography_flutter: ^2.3.0
+  cryptography: ^2.7.0
+  cryptography_flutter: ^2.3.2
 
 flutter:
   uses-material-design: true
