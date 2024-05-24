@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.NonNull
+import fr.acinq.secp256k1.Secp256k1
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -38,6 +39,8 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     private var mSignatureRequestCode = 101
     private val mSignerPackageName: String = "com.greenart7c3.nostrsigner"
 
+    private val secp256k1 = Secp256k1.get()
+
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         mContext = binding.applicationContext
         channel = MethodChannel(binding.binaryMessenger, OX_CORE_CHANNEL)
@@ -66,6 +69,16 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         if (call.method == "getPlatformVersion") {
             mMethodChannelResult?.success("Android ${android.os.Build.VERSION.RELEASE}")
             mMethodChannelResult = null
+        } else if (call.method == "verifySignature") {
+            if (paramsMap == null) {
+                return
+            }
+            verifySignature(call, result);
+        } else if (call.method == "signSchnorr") {
+            if (paramsMap == null) {
+                return
+            }
+            sign(call, result);
         } else if (call.method == "isAppInstalled"){
             if (paramsMap == null) {
                 return
@@ -193,4 +206,17 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         return null
     }
 
+    fun verifySignature(call: MethodCall, result: Result) {
+        var sig = call.argument<ByteArray>("signature");
+        var hash = call.argument<ByteArray>("hash");
+        var pubKey = call.argument<ByteArray>("pubKey");
+
+        result.success(secp256k1.verifySchnorr(sig, hash, pubKey))
+    }
+
+    fun signSchnorr(call: MethodCall, result: Result) {
+        var data = call.argument<ByteArray>("data");
+        var privKey = call.argument<ByteArray>("privKey");
+        result.success(secp256k1.signSchnorr(data, privKey, null))
+    }
 }
