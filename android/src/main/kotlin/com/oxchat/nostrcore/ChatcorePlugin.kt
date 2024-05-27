@@ -207,16 +207,28 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     }
 
     fun verifySignature(call: MethodCall, result: Result) {
-        var sig = call.argument<ByteArray>("signature");
-        var hash = call.argument<ByteArray>("hash");
-        var pubKey = call.argument<ByteArray>("pubKey");
+        val sig: ByteArray? = call.argument<ByteArray>("signature");
+        val hash: ByteArray? = call.argument<ByteArray>("hash");
+        val pubKey: ByteArray? = call.argument<ByteArray>("pubKey");
 
-        result.success(secp256k1.verifySchnorr(sig, hash, pubKey))
+        if (sig != null && hash != null && pubKey != null) {
+            result.success(secp256k1.verifySchnorr(sig, hash, pubKey))
+        } else {
+            // Handle the case where any of the arguments is null
+            result.error("ARGUMENT_NULL", "One or more arguments are null", null)
+        }
     }
 
     fun signSchnorr(call: MethodCall, result: Result) {
-        var data = call.argument<ByteArray>("data");
-        var privKey = call.argument<ByteArray>("privKey");
-        result.success(secp256k1.signSchnorr(data, privKey, null))
+        val data: ByteArray? = call.argument<ByteArray>("data");
+        val privKey: ByteArray? = call.argument<ByteArray>("privKey");
+
+        if (data != null && privKey != null) {
+            result.success(secp256k1.signSchnorr(data, privKey, null))
+        } else {
+            // Handle the case where any of the arguments is null
+            result.error("ARGUMENT_NULL", "One or more arguments are null", null)
+        }
     }
+
 }
