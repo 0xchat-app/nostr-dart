@@ -125,6 +125,47 @@ class Nip29 {
         event.id, groupId, event.pubkey, event.createdAt, content);
   }
 
+  static GroupModeration decodeModeration(Event event) {
+    if (event.kind < 9000 || event.kind > 9006) {
+      throw Exception("${event.kind} is not nip29 compatible");
+    }
+    String groupId = '',
+        user = '',
+        name = '',
+        about = '',
+        picture = '',
+        permission = '',
+        eventId = '';
+    bool private = false;
+    for (var tag in event.tags) {
+      if (tag[0] == "h") groupId = tag[1];
+      if (tag[0] == "p") user = tag[1];
+      if (tag[0] == "name") name = tag[1];
+      if (tag[0] == "about") about = tag[1];
+      if (tag[0] == "picture") picture = tag[1];
+      if (tag[0] == "permission") permission = tag[1];
+      if (tag[0] == "e") eventId = tag[1];
+      if (tag[0] == "private" || tag[0] == "closed") private = true;
+    }
+    List<String> previous = getPrevious(event.tags);
+    return GroupModeration(
+        event.id,
+        groupId,
+        event.pubkey,
+        event.createdAt,
+        event.content,
+        GroupActionKind.fromKind(event.kind),
+        previous,
+        user,
+        permission,
+        eventId,
+        private,
+        name,
+        about,
+        picture,
+        '');
+  }
+
   static Future<Event> encodeGroupNote(String groupId, String content,
       String pubkey, String privkey, List<String> previous,
       {List<String>? hashTags}) async {
