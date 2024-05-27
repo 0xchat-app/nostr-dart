@@ -8,28 +8,30 @@ class Message {
   late dynamic message;
 
 // nostr message deserializer
-  Message.deserialize(String payload) {
+  static Future<Message> deserialize(String payload) async {
+    Message m = Message();
     dynamic data = jsonDecode(payload);
     var messages = ["EVENT", "REQ", "CLOSE", "NOTICE", "EOSE", "OK", "AUTH"];
     assert(messages.contains(data[0]), "Unsupported payload (or NIP)");
 
-    type = data[0];
-    switch (type) {
+    m.type = data[0];
+    switch (m.type) {
       case "EVENT":
-        message = Event.deserialize(data);
+        m.message = await Event.deserialize(data);
         break;
       case "REQ":
-        message = Request.deserialize(data);
+        m.message = Request.deserialize(data);
         break;
       case "CLOSE":
-        message = Close.deserialize(data);
+        m.message = Close.deserialize(data);
         break;
       case "AUTH":
-        message = Auth.deserialize(data);
+        m.message = Auth.deserialize(data);
         break;
       default:
-        message = jsonEncode(data.sublist(1));
+        m.message = jsonEncode(data.sublist(1));
         break;
     }
+    return m;
   }
 }
