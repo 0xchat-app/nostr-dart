@@ -356,10 +356,10 @@ class Nip29 {
       GroupModeration moderation, String pubkey, String privkey) {
     switch (moderation.actionKind) {
       case GroupActionKind.addUser:
-        return encodeAddUser(moderation.groupId, moderation.pubkey,
+        return encodeAddUser(moderation.groupId, moderation.user,
             moderation.content, moderation.previous, pubkey, privkey);
       case GroupActionKind.removeUser:
-        return encodeAddUser(moderation.groupId, moderation.pubkey,
+        return encodeAddUser(moderation.groupId, moderation.user,
             moderation.content, moderation.previous, pubkey, privkey);
       case GroupActionKind.editMetadata:
         return encodeEditMetadata(
@@ -548,4 +548,116 @@ class GroupModeration {
       this.about,
       this.picture,
       this.pinned);
+
+  factory GroupModeration.addUser(
+      String groupId, String addUser, String reason) {
+    return GroupModeration('', groupId, '', 0, reason, GroupActionKind.addUser,
+        [], addUser, '', '', false, '', '', '', '');
+  }
+
+  factory GroupModeration.removeUser(
+      String groupId, String addUser, String reason) {
+    return GroupModeration('', groupId, '', 0, reason,
+        GroupActionKind.removeUser, [], addUser, '', '', false, '', '', '', '');
+  }
+
+  factory GroupModeration.editMetadata(String groupId, String name,
+      String about, String picture, String reason) {
+    return GroupModeration(
+        '',
+        groupId,
+        '',
+        0,
+        reason,
+        GroupActionKind.editMetadata,
+        [],
+        '',
+        '',
+        '',
+        false,
+        name,
+        about,
+        picture,
+        '');
+  }
+
+  factory GroupModeration.addPermission(
+      String groupId, String user, String permission, String reason) {
+    return GroupModeration(
+        '',
+        groupId,
+        '',
+        0,
+        reason,
+        GroupActionKind.addPermission,
+        [],
+        user,
+        permission,
+        '',
+        false,
+        '',
+        '',
+        '',
+        '');
+  }
+
+  factory GroupModeration.removePermission(
+      String groupId, String user, String permission, String reason) {
+    return GroupModeration(
+        '',
+        groupId,
+        '',
+        0,
+        reason,
+        GroupActionKind.removePermission,
+        [],
+        user,
+        permission,
+        '',
+        false,
+        '',
+        '',
+        '',
+        '');
+  }
+
+  factory GroupModeration.deleteEvent(
+      String groupId, String eventId, String reason) {
+    return GroupModeration(
+        '',
+        groupId,
+        '',
+        0,
+        reason,
+        GroupActionKind.deleteEvent,
+        [],
+        '',
+        '',
+        eventId,
+        false,
+        '',
+        '',
+        '',
+        '');
+  }
+
+  factory GroupModeration.editGroupStatus(
+      String groupId, bool private, String reason) {
+    return GroupModeration(
+        '',
+        groupId,
+        '',
+        0,
+        reason,
+        GroupActionKind.editGroupStatus,
+        [],
+        '',
+        '',
+        '',
+        private,
+        '',
+        '',
+        '',
+        '');
+  }
 }
