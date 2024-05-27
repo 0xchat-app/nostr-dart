@@ -78,7 +78,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             if (paramsMap == null) {
                 return
             }
-            sign(call, result);
+            signSchnorr(call, result);
         } else if (call.method == "isAppInstalled"){
             if (paramsMap == null) {
                 return
