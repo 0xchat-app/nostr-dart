@@ -91,7 +91,7 @@ class Nip17 {
             event.content, event.pubkey, myPubkey, privkey);
         Map<String, dynamic> map = jsonDecode(content);
         map['sig'] = '';
-        Event innerEvent = Event.fromJson(map, verify: false);
+        Event innerEvent = await Event.fromJson(map, verify: false);
         if (innerEvent.pubkey == event.pubkey) {
           return innerEvent;
         }

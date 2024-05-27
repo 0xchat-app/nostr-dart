@@ -9,7 +9,7 @@ import 'package:hex/hex.dart';
 class ChannelCryptoTool {
 
 
-  static Future<bool> verifySignature(String signature, String eventId, String eventPubKey) async {
+  static Future<bool> verifySignature( String eventPubKey, String eventId, String signature) async {
     final bool result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'verifySignature',
       {

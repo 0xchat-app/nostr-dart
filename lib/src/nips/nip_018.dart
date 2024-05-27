@@ -3,7 +3,7 @@ import 'package:nostr_core_dart/nostr.dart';
 
 /// Reposts & Quote Reposts
 class Nip18 {
-  static Reposts decodeReposts(Event event) {
+  static Future<Reposts> decodeReposts(Event event) async {
     if (event.kind == 6) {
       String repostId = '';
       Note? repostNote;
@@ -12,7 +12,7 @@ class Nip18 {
       }
       try {
         var repostJson = jsonDecode(event.content);
-        Event repostEvent = Event.fromJson(repostJson);
+        Event repostEvent = await Event.fromJson(repostJson);
         repostNote = Nip1.decodeNote(repostEvent);
         repostId = repostNote.nodeId;
       } catch (_) {}

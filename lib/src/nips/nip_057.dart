@@ -62,7 +62,7 @@ class Nip57 {
                 recipient, bip340.getPublicKey(derivedPrivkey), derivedPrivkey);
           }
           if (eventString.isNotEmpty) {
-            Event privEvent = Event.fromJson(jsonDecode(eventString));
+            Event privEvent = await Event.fromJson(jsonDecode(eventString));
             sender = privEvent.pubkey;
             content = privEvent.content;
           }

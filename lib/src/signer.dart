@@ -12,7 +12,7 @@ class SignerHelper {
         eventString, event.id, Nip19.encodePubkey(currentUser));
     String? eventJson = map?['event'];
     if (eventJson != null) {
-      event = Event.fromJson(jsonDecode(eventJson));
+      event = await Event.fromJson(jsonDecode(eventJson));
     }
     return event;
   }

@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:convert/convert.dart';
 import 'package:pointycastle/export.dart';
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:nostr_core_dart/nostr.dart';
+
+import 'channel/channel_crypto_tool.dart';
 
 /// The only object type that exists is the event, which has the following format on the wire:
 ///
@@ -89,7 +92,6 @@ class Event {
     bool verify = true,
   }) {
     pubkey = pubkey.toLowerCase();
-    if (verify) assert(isValid() == true);
   }
 
   /// Partial constructor, you have to fill the fields yourself
@@ -193,11 +195,12 @@ class Event {
   /// This option adds event checks such as id, signature, non-futuristic event: default=True
   ///
   /// Performances could be a reason to disable event checks
-  factory Event.fromJson(Map<String, dynamic> json, {bool verify = true}) {
+  static Future<Event> fromJson(Map<String, dynamic> json,
+      {bool verify = true}) async {
     var tags = (json['tags'] as List<dynamic>)
         .map((e) => (e as List<dynamic>).map((e) => e as String).toList())
         .toList();
-    return Event(
+    Event event = Event(
       json['id'],
       json['pubkey'],
       json['created_at'],
@@ -207,6 +210,8 @@ class Event {
       json['sig'] ?? '',
       verify: verify,
     );
+    if (verify) assert(await event.isValid() == true);
+    return event;
   }
 
   /// Serialize an event in JSON
@@ -251,7 +256,7 @@ class Event {
   ///   }
   /// ]);
   /// ```
-  factory Event.deserialize(input, {bool verify = true}) {
+  static Future<Event> deserialize(input, {bool verify = true}) async {
     Map<String, dynamic> json = {};
     String? subscriptionId;
     if (input.length == 2) {
@@ -267,7 +272,7 @@ class Event {
         .map((e) => (e as List<dynamic>).map((e) => e as String).toList())
         .toList();
 
-    return Event(
+    Event event = Event(
       json['id'],
       json['pubkey'],
       json['created_at'],
@@ -278,6 +283,8 @@ class Event {
       subscriptionId: subscriptionId,
       verify: verify,
     );
+    if (verify) assert(await event.isValid() == true);
+    return event;
   }
 
   /// To obtain the event.id, we sha256 the serialized event.
@@ -338,12 +345,14 @@ class Event {
 
   /// Verify if event checks such as id, signature, non-futuristic are valid
   /// Performances could be a reason to disable event checks
-  bool isValid() {
+  Future<bool> isValid() async {
     String verifyId = getEventId();
-    if (createdAt.toString().length == 10 &&
-        id == verifyId &&
-        bip340.verify(pubkey, id, sig)) {
-      return true;
+    if (createdAt.toString().length == 10 && id == verifyId) {
+      if (Platform.isAndroid) {
+        return await ChannelCryptoTool.verifySignature(pubkey, id, sig);
+      } else {
+        return bip340.verify(pubkey, id, sig);
+      }
     } else {
       return false;
     }
