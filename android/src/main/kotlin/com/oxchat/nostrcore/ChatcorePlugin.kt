@@ -215,7 +215,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             result.success(secp256k1.verifySchnorr(sig, hash, pubKey))
         } else {
             // Handle the case where any of the arguments is null
-            result.error("ARGUMENT_NULL", "One or more arguments are null", null)
+            result.success(false)
         }
     }
 
@@ -227,7 +227,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             result.success(secp256k1.signSchnorr(data, privKey, null))
         } else {
             // Handle the case where any of the arguments is null
-            result.error("ARGUMENT_NULL", "One or more arguments are null", null)
+            result.success(false)
         }
     }
 
