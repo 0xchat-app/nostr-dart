@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Relay-based Groups
@@ -149,21 +151,21 @@ class Nip29 {
     }
     List<String> previous = getPrevious(event.tags);
     return GroupModeration(
-        event.id,
-        groupId,
-        event.pubkey,
-        event.createdAt,
-        event.content,
-        GroupActionKind.fromKind(event.kind),
-        previous,
-        user,
-        permission,
-        eventId,
-        private,
-        name,
-        about,
-        picture,
-        '');
+        moderationId: event.id,
+        groupId: groupId,
+        pubkey: event.pubkey,
+        createdAt: event.createdAt,
+        content: event.content,
+        actionKind: GroupActionKind.fromKind(event.kind),
+        previous: previous,
+        user: user,
+        permission: permission,
+        eventId: eventId,
+        private: private,
+        name: name,
+        about: about,
+        picture: picture,
+        pinned: '');
   }
 
   static Future<Event> encodeGroupNote(String groupId, String content,
@@ -574,131 +576,86 @@ class GroupModeration {
   String pinned;
 
   GroupModeration(
-      this.moderationId,
-      this.groupId,
-      this.pubkey,
-      this.createdAt,
-      this.content,
-      this.actionKind,
-      this.previous,
-      this.user,
-      this.permission,
-      this.eventId,
-      this.private,
-      this.name,
-      this.about,
-      this.picture,
-      this.pinned);
+      {this.moderationId = '',
+      this.groupId = '',
+      this.pubkey = '',
+      this.createdAt = 0,
+      this.content = '',
+      this.actionKind = GroupActionKind.addUser,
+      this.previous = const [],
+      this.user = '',
+      this.permission = '',
+      this.eventId = '',
+      this.private = false,
+      this.name = '',
+      this.about = '',
+      this.picture = '',
+      this.pinned = ''});
 
   factory GroupModeration.addUser(
       String groupId, String addUser, String reason) {
-    return GroupModeration('', groupId, '', 0, reason, GroupActionKind.addUser,
-        [], addUser, '', '', false, '', '', '', '');
+    return GroupModeration(
+        groupId: groupId,
+        user: addUser,
+        content: reason,
+        actionKind: GroupActionKind.addUser);
   }
 
   factory GroupModeration.removeUser(
       String groupId, String addUser, String reason) {
-    return GroupModeration('', groupId, '', 0, reason,
-        GroupActionKind.removeUser, [], addUser, '', '', false, '', '', '', '');
+    return GroupModeration(
+        groupId: groupId,
+        user: addUser,
+        content: reason,
+        actionKind: GroupActionKind.removeUser);
   }
 
   factory GroupModeration.editMetadata(String groupId, String name,
       String about, String picture, String reason) {
     return GroupModeration(
-        '',
-        groupId,
-        '',
-        0,
-        reason,
-        GroupActionKind.editMetadata,
-        [],
-        '',
-        '',
-        '',
-        false,
-        name,
-        about,
-        picture,
-        '');
+        groupId: groupId,
+        name: name,
+        about: about,
+        picture: picture,
+        content: reason,
+        actionKind: GroupActionKind.editMetadata);
   }
 
   factory GroupModeration.addPermission(
       String groupId, String user, String permission, String reason) {
     return GroupModeration(
-        '',
-        groupId,
-        '',
-        0,
-        reason,
-        GroupActionKind.addPermission,
-        [],
-        user,
-        permission,
-        '',
-        false,
-        '',
-        '',
-        '',
-        '');
+        groupId: groupId,
+        user: user,
+        permission: permission,
+        content: reason,
+        actionKind: GroupActionKind.addPermission);
   }
 
   factory GroupModeration.removePermission(
       String groupId, String user, String permission, String reason) {
     return GroupModeration(
-        '',
-        groupId,
-        '',
-        0,
-        reason,
-        GroupActionKind.removePermission,
-        [],
-        user,
-        permission,
-        '',
-        false,
-        '',
-        '',
-        '',
-        '');
+        groupId: groupId,
+        user: user,
+        permission: permission,
+        content: reason,
+        actionKind: GroupActionKind.removePermission);
   }
 
   factory GroupModeration.deleteEvent(
       String groupId, String eventId, String reason) {
     return GroupModeration(
-        '',
-        groupId,
-        '',
-        0,
-        reason,
-        GroupActionKind.deleteEvent,
-        [],
-        '',
-        '',
-        eventId,
-        false,
-        '',
-        '',
-        '',
-        '');
+        groupId: groupId,
+        eventId: eventId,
+        content: reason,
+        actionKind: GroupActionKind.deleteEvent);
   }
 
   factory GroupModeration.editGroupStatus(
       String groupId, bool private, String reason) {
     return GroupModeration(
-        '',
-        groupId,
-        '',
-        0,
-        reason,
-        GroupActionKind.editGroupStatus,
-        [],
-        '',
-        '',
-        '',
-        private,
-        '',
-        '',
-        '',
-        '');
+        groupId: groupId,
+        private: private,
+        content: reason,
+        actionKind: GroupActionKind.editGroupStatus);
   }
 }
