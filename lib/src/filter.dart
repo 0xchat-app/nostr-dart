@@ -15,6 +15,9 @@ class Filter {
   /// a list of pubkeys that are referenced in a "p" tag
   List<String>? p;
 
+  /// a list of pubkeys that are referenced in a "P" tag
+  List<String>? P;
+
   /// a list of identifiers that are referenced in a "d" tag
   List<String>? d;
 
@@ -43,6 +46,7 @@ class Filter {
       this.kinds,
       this.e,
       this.p,
+      this.P,
       this.d,
       this.t,
       this.h,
@@ -59,6 +63,7 @@ class Filter {
     kinds = json['kinds'] == null ? null : List<int>.from(json['kinds']);
     e = json['#e'] == null ? null : List<String>.from(json['#e']);
     p = json['#p'] == null ? null : List<String>.from(json['#p']);
+    P = json['#P'] == null ? null : List<String>.from(json['#P']);
     d = json['#d'] == null ? null : List<String>.from(json['#d']);
     t = json['#t'] == null ? null : List<String>.from(json['#t']);
     h = json['#h'] == null ? null : List<String>.from(json['#h']);
@@ -87,6 +92,9 @@ class Filter {
     }
     if (p != null) {
       data['#p'] = p;
+    }
+    if (P != null) {
+      data['#P'] = P;
     }
     if (d != null) {
       data['#d'] = d;
