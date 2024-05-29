@@ -91,7 +91,7 @@ class Note {
   String nodeId;
   String pubkey;
   int createdAt;
-  Thread thread;
+  Thread? thread;
   String content;
   List<String>? hashTags;
   String? quoteRepostId;
