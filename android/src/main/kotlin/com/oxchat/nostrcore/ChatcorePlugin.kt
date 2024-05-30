@@ -66,67 +66,37 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         if (call.arguments != null && call.arguments is HashMap<*, *>) {
             paramsMap = call.arguments as HashMap<*, *>
         }
-        if (call.method == "getPlatformVersion") {
-            mMethodChannelResult?.success("Android ${android.os.Build.VERSION.RELEASE}")
-            mMethodChannelResult = null
-            return
-        } else if (call.method == "verifySignature") {
-            if (paramsMap == null) {
+        when (call.method) {
+            "getPlatformVersion" -> {
+                result.success("Android ${android.os.Build.VERSION.RELEASE}")
                 return
             }
-            verifySignature(call);
-        } else if (call.method == "signSchnorr") {
-            if (paramsMap == null) {
+            "verifySignature" -> {
+                if (paramsMap != null) verifySignature(call, result)
                 return
             }
-            signSchnorr(call);
-        } else if (call.method == "isAppInstalled"){
-            if (paramsMap == null) {
+            "signSchnorr" -> {
+                if (paramsMap != null) signSchnorr(call, result)
                 return
             }
-            var packageName: String? = paramsMap["packageName"] as? String ?: return
-            val isInstalled : Boolean = PackageUtils.isPackageInstalled(mContext, packageName!!)
-            mMethodChannelResult?.success(isInstalled);
-            mMethodChannelResult = null
-        } else if (call.method == "nostrsigner") {
-            if (paramsMap == null) return
-            val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
-            if (resultFromCR != null && resultFromCR.isNotEmpty()) {
-                mMethodChannelResult?.success(resultFromCR)
-                mMethodChannelResult = null
+            "isAppInstalled" -> {
+                paramsMap?.let { map ->
+                    val packageName: String? = map["packageName"] as? String
+                    if (packageName != null) {
+                        val isInstalled: Boolean = PackageUtils.isPackageInstalled(mContext, packageName)
+                        result.success(isInstalled)
+                    }
+                }
                 return
             }
-            var extendParse: String? = paramsMap["extendParse"] as? String
-            val intent = Intent(
-                Intent.ACTION_VIEW, Uri.parse(
-                    "nostrsigner:$extendParse"
-                )
-            )
-            intent.`package` = mSignerPackageName
-            paramsMap["permissions"]?.let { permissions ->
-                if (permissions is String) intent.putExtra("permissions", permissions)
+            "nostrsigner" -> {
+                if (paramsMap != null) nostrsigner(paramsMap)
+                return
             }
-
-            var type: String? = paramsMap["type"] as? String ?: "get_public_key"
-            intent.putExtra("type", type)
-
-            paramsMap["id"]?.let { id ->
-                if (id is String) intent.putExtra("id", id)
+            else -> {
+                result.notImplemented()
+                return
             }
-            paramsMap["current_user"]?.let { currentUser ->
-                if (currentUser is String) intent.putExtra("current_user", currentUser)
-            }
-            paramsMap["pubKey"]?.let { pubKey ->
-                if (pubKey is String) intent.putExtra("pubKey", pubKey)
-            }
-            if (paramsMap.containsKey("requestCode")) {
-                mSignatureRequestCode = paramsMap["requestCode"] as Int
-            }
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            mActivity.startActivityForResult(intent, mSignatureRequestCode)
-        } else {
-            mMethodChannelResult?.notImplemented()
-            mMethodChannelResult = null
         }
     }
 
@@ -134,6 +104,10 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         if (mSignatureRequestCode == requestCode) {
             if (resultCode == Activity.RESULT_OK && result != null) {
                 val dataMap: HashMap<String, String?> = HashMap()
+
+                if (result.extras != null){
+                    Log.e("Michael", "${result.extras!!.keySet()}")
+                }
                 if (result.hasExtra("signature")) {
                     val signature = result.getStringExtra("signature")
                     dataMap["signature"] = signature
@@ -152,6 +126,42 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             return true
         }
         return false
+    }
+
+    private fun nostrsigner (paramsMap: HashMap<*, *>){
+        val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
+        if (resultFromCR != null && resultFromCR.isNotEmpty()) {
+            mMethodChannelResult?.success(resultFromCR)
+            return
+        }
+        var extendParse: String? = paramsMap["extendParse"] as? String
+        val intent = Intent(
+            Intent.ACTION_VIEW, Uri.parse(
+                "nostrsigner:$extendParse"
+            )
+        )
+        intent.`package` = mSignerPackageName
+        paramsMap["permissions"]?.let { permissions ->
+            if (permissions is String) intent.putExtra("permissions", permissions)
+        }
+
+        var type: String? = paramsMap["type"] as? String ?: "get_public_key"
+        intent.putExtra("type", type)
+
+        paramsMap["id"]?.let { id ->
+            if (id is String) intent.putExtra("id", id)
+        }
+        paramsMap["current_user"]?.let { currentUser ->
+            if (currentUser is String) intent.putExtra("current_user", currentUser)
+        }
+        paramsMap["pubKey"]?.let { pubKey ->
+            if (pubKey is String) intent.putExtra("pubKey", pubKey)
+        }
+        if (paramsMap.containsKey("requestCode")) {
+            mSignatureRequestCode = paramsMap["requestCode"] as Int
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        mActivity.startActivityForResult(intent, mSignatureRequestCode)
     }
 
     fun getDataContentResolver(paramsMap: HashMap<*, *>): HashMap<String, String?>? {
@@ -208,31 +218,29 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         return null
     }
 
-    fun verifySignature(call: MethodCall) {
+    fun verifySignature(call: MethodCall, result: Result) {
         val sig: ByteArray? = call.argument<ByteArray>("signature");
         val hash: ByteArray? = call.argument<ByteArray>("hash");
         val pubKey: ByteArray? = call.argument<ByteArray>("pubKey");
 
         if (sig != null && hash != null && pubKey != null) {
-            mMethodChannelResult?.success(secp256k1.verifySchnorr(sig, hash, pubKey))
+            result.success(secp256k1.verifySchnorr(sig, hash, pubKey))
         } else {
             // Handle the case where any of the arguments is null
-            mMethodChannelResult?.success(false)
+            result.success(false)
         }
-        mMethodChannelResult = null
     }
 
-    fun signSchnorr(call: MethodCall) {
+    fun signSchnorr(call: MethodCall, result: Result) {
         val data: ByteArray? = call.argument<ByteArray>("data");
         val privKey: ByteArray? = call.argument<ByteArray>("privKey");
 
         if (data != null && privKey != null) {
-            mMethodChannelResult?.success(secp256k1.signSchnorr(data, privKey, null))
+            result.success(secp256k1.signSchnorr(data, privKey, null))
         } else {
             // Handle the case where any of the arguments is null
-            mMethodChannelResult?.success(false)
+            result.success(false)
         }
-        mMethodChannelResult = null;
     }
 
 }
