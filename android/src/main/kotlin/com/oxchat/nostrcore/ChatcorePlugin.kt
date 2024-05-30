@@ -125,8 +125,8 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             mActivity.startActivityForResult(intent, mSignatureRequestCode)
         } else {
-            result.notImplemented()
-            result = null
+            mMethodChannelResult?.notImplemented()
+            mMethodChannelResult = null
         }
     }
 
