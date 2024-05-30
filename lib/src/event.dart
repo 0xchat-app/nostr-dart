@@ -183,7 +183,6 @@ class Event {
     );
 
     if (SignerHelper.needSigner(privkey)) {
-      // await SignerHelper.signMessage(event.id, pubkey);
       return await SignerHelper.signEvent(event, pubkey);
     }
     return event;

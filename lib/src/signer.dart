@@ -9,7 +9,9 @@ class SignerHelper {
   static Future<String?> signMessage(String hexMessage, String currentUser) async {
     Map<String, String>? map = await ExternalSignerTool.signMessage(hexMessage, hexMessage,
          Nip19.encodePubkey(currentUser));
-    print(jsonEncode(map));
+    String? sign = map?['signature'];
+    // print('signMessage: $sign');
+    return sign;
   }
 
   static Future<Event> signEvent(Event event, String currentUser) async {
