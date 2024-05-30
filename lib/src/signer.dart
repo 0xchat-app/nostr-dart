@@ -10,7 +10,6 @@ class SignerHelper {
     Map<String, String>? map = await ExternalSignerTool.signMessage(hexMessage, hexMessage,
          Nip19.encodePubkey(currentUser));
     String? sign = map?['signature'];
-    // print('signMessage: $sign');
     return sign;
   }
 
