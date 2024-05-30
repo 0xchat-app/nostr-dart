@@ -35,14 +35,15 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     private lateinit var channel: MethodChannel
     private lateinit var mContext: Context
     private lateinit var mActivity: Activity
-    private var mMethodChannelResult: Result? = null
-    private var mSignatureRequestCode = 101
+    private lateinit var mMethodChannelResultMap: HashMap<Int, Result?>
+    private var mSignatureRequestCodeList: MutableList<Int> = mutableListOf()
     private val mSignerPackageName: String = "com.greenart7c3.nostrsigner"
 
     private val secp256k1 = Secp256k1.get()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         mContext = binding.applicationContext
+        mMethodChannelResultMap = HashMap<Int, Result?>()
         channel = MethodChannel(binding.binaryMessenger, OX_CORE_CHANNEL)
         channel.setMethodCallHandler(this)
     }
@@ -61,7 +62,6 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     override fun onDetachedFromActivity() {}
 
     override fun onMethodCall(call: MethodCall, result: Result) {
-        mMethodChannelResult = result
         var paramsMap: HashMap<*, *>? = null
         if (call.arguments != null && call.arguments is HashMap<*, *>) {
             paramsMap = call.arguments as HashMap<*, *>
@@ -90,7 +90,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 return
             }
             "nostrsigner" -> {
-                if (paramsMap != null) nostrsigner(paramsMap)
+                if (paramsMap != null) nostrsigner(paramsMap, result)
                 return
             }
             else -> {
@@ -101,7 +101,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, result: Intent?): Boolean {
-        if (mSignatureRequestCode == requestCode) {
+        if (mSignatureRequestCodeList.contains(requestCode)) {
             if (resultCode == Activity.RESULT_OK && result != null) {
                 val dataMap: HashMap<String, String?> = HashMap()
 
@@ -120,18 +120,28 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                     val event = result.getStringExtra("event")
                     dataMap["event"] = event
                 }
-                mMethodChannelResult?.success(dataMap)
+                mMethodChannelResultMap[requestCode]?.success(dataMap)
             }
-            mMethodChannelResult = null
+            mMethodChannelResultMap[requestCode] = null
+            mMethodChannelResultMap.remove(requestCode)
             return true
         }
         return false
     }
 
-    private fun nostrsigner (paramsMap: HashMap<*, *>){
+    private fun nostrsigner (paramsMap: HashMap<*, *>, result: Result){
+        var requestCode = 0;
+        if (paramsMap.containsKey("requestCode")) {
+            requestCode = result.hashCode();
+            mSignatureRequestCodeList.add(requestCode);
+            mMethodChannelResultMap[requestCode] = result
+        }
+
         val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
-        if (resultFromCR != null && resultFromCR.isNotEmpty()) {
-            mMethodChannelResult?.success(resultFromCR)
+        if (!resultFromCR.isNullOrEmpty()) {
+            mMethodChannelResultMap[requestCode]?.success(resultFromCR)
+            mMethodChannelResultMap[requestCode] = null
+            mMethodChannelResultMap.remove(requestCode)
             return
         }
         var extendParse: String? = paramsMap["extendParse"] as? String
@@ -157,11 +167,8 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         paramsMap["pubKey"]?.let { pubKey ->
             if (pubKey is String) intent.putExtra("pubKey", pubKey)
         }
-        if (paramsMap.containsKey("requestCode")) {
-            mSignatureRequestCode = paramsMap["requestCode"] as Int
-        }
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        mActivity.startActivityForResult(intent, mSignatureRequestCode)
+        mActivity.startActivityForResult(intent, requestCode)
     }
 
     fun getDataContentResolver(paramsMap: HashMap<*, *>): HashMap<String, String?>? {
