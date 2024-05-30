@@ -11,8 +11,8 @@ class Message {
   static Future<Message> deserialize(String payload) async {
     Message m = Message();
     dynamic data = jsonDecode(payload);
-    var messages = ["EVENT", "REQ", "CLOSE", "NOTICE", "EOSE", "OK", "AUTH"];
-    assert(messages.contains(data[0]), "Unsupported payload (or NIP)");
+    var messages = ["EVENT", "REQ", "CLOSE", "CLOSED", "NOTICE", "EOSE", "OK", "AUTH"];
+    assert(messages.contains(data[0]), "Unsupported payload (or NIP) : $data");
 
     m.type = data[0];
     switch (m.type) {
@@ -23,6 +23,7 @@ class Message {
         m.message = Request.deserialize(data);
         break;
       case "CLOSE":
+      case "CLOSED":
         m.message = Close.deserialize(data);
         break;
       case "AUTH":

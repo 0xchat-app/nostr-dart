@@ -17,7 +17,7 @@ class Close {
   /// Deserialize a nostr close message
   /// - ["CLOSE", subscription_id]
   Close.deserialize(input) {
-    assert(input.length == 2);
+    assert(input.length >= 2);
     subscriptionId = input[1];
   }
 }
