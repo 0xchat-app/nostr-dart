@@ -46,6 +46,26 @@ class ExternalSignerTool {
     return resultMap;
   }
 
+  ///sign_message
+  static Future<Map<String, String>?> signMessage(String eventJson, String id, String current_user) async {
+    final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
+      'nostrsigner',
+      {
+        'type': SignerType.SIGN_MESSAGE.name,
+        'id': id,
+        'pubKey': "",
+        'current_user': current_user,
+        'requestCode': SignerType.SIGN_EVENT.requestCode,
+        'extendParse': eventJson,
+      },
+    );
+    if (result == null) return null;
+    final Map<String, String> resultMap = (result as Map).map((key, value) {
+      return MapEntry(key as String, value as String);
+    });
+    return resultMap;
+  }
+
   ///nip04_encrypt
   ///@return signature、id
   static Future<Map<String, String>?> nip04Encrypt(String plaintext, String id, String current_user, String pubKey) async {
@@ -153,6 +173,7 @@ class ExternalSignerTool {
 
 enum SignerType {
   SIGN_EVENT,
+  SIGN_MESSAGE,
   NIP04_ENCRYPT,
   NIP04_DECRYPT,
   NIP44_ENCRYPT,
@@ -168,6 +189,8 @@ extension SignerTypeEx on SignerType {
         return 'get_public_key';
       case SignerType.SIGN_EVENT:
         return 'sign_event';
+      case SignerType.SIGN_MESSAGE:
+        return 'sign_message';
       case SignerType.NIP04_ENCRYPT:
         return 'nip04_encrypt';
       case SignerType.NIP04_DECRYPT:
@@ -197,6 +220,8 @@ extension SignerTypeEx on SignerType {
         return 106;
       case SignerType.DECRYPT_ZAP_EVENT:
         return 107;
+      case SignerType.SIGN_MESSAGE:
+        return 108;
     }
   }
 }
