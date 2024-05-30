@@ -19,6 +19,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.HashMap
 
 
@@ -35,7 +36,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     private lateinit var channel: MethodChannel
     private lateinit var mContext: Context
     private lateinit var mActivity: Activity
-    private lateinit var mMethodChannelResultMap: HashMap<Int, Result?>
+    private lateinit var mMethodChannelResultMap: ConcurrentHashMap<Int, Result?>
     private var mSignatureRequestCodeList: MutableList<Int> = mutableListOf()
     private val mSignerPackageName: String = "com.greenart7c3.nostrsigner"
 
@@ -43,7 +44,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         mContext = binding.applicationContext
-        mMethodChannelResultMap = HashMap<Int, Result?>()
+        mMethodChannelResultMap = ConcurrentHashMap<Int, Result?>()
         channel = MethodChannel(binding.binaryMessenger, OX_CORE_CHANNEL)
         channel.setMethodCallHandler(this)
     }
