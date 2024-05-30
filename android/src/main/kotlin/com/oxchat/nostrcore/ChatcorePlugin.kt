@@ -69,16 +69,17 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         if (call.method == "getPlatformVersion") {
             mMethodChannelResult?.success("Android ${android.os.Build.VERSION.RELEASE}")
             mMethodChannelResult = null
+            return
         } else if (call.method == "verifySignature") {
             if (paramsMap == null) {
                 return
             }
-            verifySignature(call, result);
+            verifySignature(call);
         } else if (call.method == "signSchnorr") {
             if (paramsMap == null) {
                 return
             }
-            signSchnorr(call, result);
+            signSchnorr(call);
         } else if (call.method == "isAppInstalled"){
             if (paramsMap == null) {
                 return
@@ -125,6 +126,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             mActivity.startActivityForResult(intent, mSignatureRequestCode)
         } else {
             result.notImplemented()
+            result = null
         }
     }
 
@@ -206,29 +208,31 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         return null
     }
 
-    fun verifySignature(call: MethodCall, result: Result) {
+    fun verifySignature(call: MethodCall) {
         val sig: ByteArray? = call.argument<ByteArray>("signature");
         val hash: ByteArray? = call.argument<ByteArray>("hash");
         val pubKey: ByteArray? = call.argument<ByteArray>("pubKey");
 
         if (sig != null && hash != null && pubKey != null) {
-            result.success(secp256k1.verifySchnorr(sig, hash, pubKey))
+            mMethodChannelResult?.success(secp256k1.verifySchnorr(sig, hash, pubKey))
         } else {
             // Handle the case where any of the arguments is null
-            result.success(false)
+            mMethodChannelResult?.success(false)
         }
+        mMethodChannelResult = null
     }
 
-    fun signSchnorr(call: MethodCall, result: Result) {
+    fun signSchnorr(call: MethodCall) {
         val data: ByteArray? = call.argument<ByteArray>("data");
         val privKey: ByteArray? = call.argument<ByteArray>("privKey");
 
         if (data != null && privKey != null) {
-            result.success(secp256k1.signSchnorr(data, privKey, null))
+            mMethodChannelResult?.success(secp256k1.signSchnorr(data, privKey, null))
         } else {
             // Handle the case where any of the arguments is null
-            result.success(false)
+            mMethodChannelResult?.success(false)
         }
+        mMethodChannelResult = null;
     }
 
 }
