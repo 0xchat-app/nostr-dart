@@ -6,6 +6,12 @@ class SignerHelper {
     return privkey.isEmpty || privkey.startsWith('signer');
   }
 
+  static Future<String?> signMessage(String hexMessage, String currentUser) async {
+    Map<String, String>? map = await ExternalSignerTool.signMessage(hexMessage, hexMessage,
+         Nip19.encodePubkey(currentUser));
+    print(jsonEncode(map));
+  }
+
   static Future<Event> signEvent(Event event, String currentUser) async {
     final eventString = jsonEncode(event.toJson());
     Map<String, String>? map = await ExternalSignerTool.signEvent(

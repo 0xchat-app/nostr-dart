@@ -44,6 +44,7 @@ class SignerPermissionModel {
       SignerPermissionModel(type: "sign_event", kind: 42),
       SignerPermissionModel(type: "sign_event", kind: 43),
       SignerPermissionModel(type: "sign_event", kind: 5),
+      SignerPermissionModel(type: "sign_message"),
       SignerPermissionModel(type: "nip04_encrypt"),
       SignerPermissionModel(type: "nip04_decrypt"),
       SignerPermissionModel(type: "nip44_encrypt"),
