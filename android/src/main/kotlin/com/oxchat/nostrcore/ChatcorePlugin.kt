@@ -36,7 +36,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     private lateinit var channel: MethodChannel
     private lateinit var mContext: Context
     private lateinit var mActivity: Activity
-    private lateinit var mMethodChannelResultMap: ConcurrentHashMap<Int, Result?>
+    private var mMethodChannelResultMap: HashMap<Int, Result?> = HashMap<Int, Result?>()
     private var mSignatureRequestCodeList: MutableList<Int> = mutableListOf()
     private val mSignerPackageName: String = "com.greenart7c3.nostrsigner"
 
@@ -44,7 +44,6 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         mContext = binding.applicationContext
-        mMethodChannelResultMap = ConcurrentHashMap<Int, Result?>()
         channel = MethodChannel(binding.binaryMessenger, OX_CORE_CHANNEL)
         channel.setMethodCallHandler(this)
     }
@@ -123,7 +122,6 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 }
                 mMethodChannelResultMap[requestCode]?.success(dataMap)
             }
-            mMethodChannelResultMap[requestCode] = null
             mMethodChannelResultMap.remove(requestCode)
             return true
         }
@@ -131,17 +129,13 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     }
 
     private fun nostrsigner (paramsMap: HashMap<*, *>, result: Result){
-        var requestCode = 0;
-        if (paramsMap.containsKey("requestCode")) {
-            requestCode = result.hashCode();
-            mSignatureRequestCodeList.add(requestCode);
-            mMethodChannelResultMap[requestCode] = result
-        }
+        var requestCode = result.hashCode() + System.currentTimeMillis().toInt();
+        mSignatureRequestCodeList.add(requestCode);
+        mMethodChannelResultMap[requestCode] = result
 
         val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
         if (!resultFromCR.isNullOrEmpty()) {
             mMethodChannelResultMap[requestCode]?.success(resultFromCR)
-            mMethodChannelResultMap[requestCode] = null
             mMethodChannelResultMap.remove(requestCode)
             return
         }
@@ -169,7 +163,13 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             if (pubKey is String) intent.putExtra("pubKey", pubKey)
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        mActivity.startActivityForResult(intent, requestCode)
+        try {
+            mActivity.startActivityForResult(intent, requestCode)
+        } catch (e: Exception) {
+            mMethodChannelResultMap.remove(requestCode)
+            mSignatureRequestCodeList.remove(requestCode)
+            result.error("ActivityStartError", "Failed to start amber sign", null)
+        }
     }
 
     fun getDataContentResolver(paramsMap: HashMap<*, *>): HashMap<String, String?>? {
