@@ -37,9 +37,8 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     private lateinit var mContext: Context
     private lateinit var mActivity: Activity
     private var mMethodChannelResultMap: HashMap<Int, Result?> = HashMap<Int, Result?>()
-    private var mSignatureRequestCodeList: MutableList<Int> = mutableListOf()
+    private var mSignatureRequestCodeList: MutableSet<Int> = mutableSetOf()
     private val mSignerPackageName: String = "com.greenart7c3.nostrsigner"
-
     private val secp256k1 = Secp256k1.get()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -129,16 +128,15 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     }
 
     private fun nostrsigner (paramsMap: HashMap<*, *>, result: Result){
-        var requestCode = result.hashCode() + System.currentTimeMillis().toInt();
-        mSignatureRequestCodeList.add(requestCode);
-        mMethodChannelResultMap[requestCode] = result
 
         val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
         if (!resultFromCR.isNullOrEmpty()) {
-            mMethodChannelResultMap[requestCode]?.success(resultFromCR)
-            mMethodChannelResultMap.remove(requestCode)
+            result.success(resultFromCR)
             return
         }
+        val requestCode = result.hashCode()
+        mSignatureRequestCodeList.add(requestCode)
+        mMethodChannelResultMap[requestCode] = result
         var extendParse: String? = paramsMap["extendParse"] as? String
         val intent = Intent(
             Intent.ACTION_VIEW, Uri.parse(
