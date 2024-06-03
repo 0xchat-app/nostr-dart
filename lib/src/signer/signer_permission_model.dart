@@ -19,6 +19,8 @@ class SignerPermissionModel {
       SignerPermissionModel(type: "sign_event", kind: 22456),
       SignerPermissionModel(type: "sign_event", kind: 3),
       SignerPermissionModel(type: "sign_event", kind: 4),
+      SignerPermissionModel(type: "sign_event", kind: 6),
+      SignerPermissionModel(type: "sign_event", kind: 7),
       SignerPermissionModel(type: "sign_event", kind: 13),
       SignerPermissionModel(type: "sign_event", kind: 14),
       SignerPermissionModel(type: "sign_event", kind: 8),
