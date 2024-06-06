@@ -2,14 +2,16 @@ import 'package:nostr_core_dart/nostr.dart';
 
 /// Reactions
 class Nip25 {
-  static Future<Event> encode(String reactedId, String reactedPubkey,
+  static Future<Event> encode(String reactedId, List<String> reactedPubkeys,
       String reactedKind, bool upVote, String pubkey, String privkey,
       {String? content, String? emojiShotCode, String? emojiURL}) async {
     content ??= upVote ? '+' : '-';
     List<List<String>> tags = [];
     tags.add(["e", reactedId]);
-    tags.add(["p", reactedPubkey]);
     tags.add(["k", reactedKind]);
+    for (var p in reactedPubkeys) {
+      tags.add(["p", p]);
+    }
     if (emojiShotCode != null && emojiURL != null) {
       content = ":$emojiShotCode:";
       tags.add(["emoji", emojiShotCode, emojiURL]);

@@ -23,11 +23,18 @@ class Nip18 {
     throw Exception("${event.kind} is not nip18 compatible");
   }
 
-  static Future<Event> encodeReposts(String repostId, String? repostEventRelay,
-      String repostPubkey, String? rawEvent, String pubkey, String privkey) {
+  static Future<Event> encodeReposts(
+      String repostId,
+      String? repostEventRelay,
+      List<String> repostPubkeys,
+      String? rawEvent,
+      String pubkey,
+      String privkey) {
     List<List<String>> tags = [];
     tags.add(['e', repostId, repostEventRelay ?? '']);
-    tags.add(['p', repostPubkey]);
+    for (var p in repostPubkeys) {
+      tags.add(["p", p]);
+    }
     String content = rawEvent ?? '';
     return Event.from(
         kind: 6,
@@ -61,14 +68,16 @@ class Nip18 {
 
   static Future<Event> encodeQuoteReposts(
       String quoteRepostId,
-      String quoteRepostPubkey,
+      List<String> quoteRepostPubkeys,
       String content,
       List<String>? hashTags,
       String pubkey,
       String privkey) {
     List<List<String>> tags = [];
     tags.add(['q', quoteRepostId]);
-    tags.add(['p', quoteRepostPubkey]);
+    for (var p in quoteRepostPubkeys) {
+      tags.add(["p", p]);
+    }
     if (hashTags != null) {
       for (var t in hashTags) {
         tags.add(['t', t]);
