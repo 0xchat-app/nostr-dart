@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:nostr_core_dart/nostr.dart';
 
 /// HTTP File Storage Integration
 class Nip96 {
