@@ -16,7 +16,7 @@ class Nip98 {
         privkey: privkey);
   }
 
-  static base64Event(String url, String myPubkey, String privkey) async {
+  static Future<String> base64Event(String url, String myPubkey, String privkey) async {
     Event event = await encode(url, myPubkey, privkey);
     String jsonString = jsonEncode(event.toJson());
     List<int> bytes = utf8.encode(jsonString);

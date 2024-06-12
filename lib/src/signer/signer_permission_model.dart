@@ -17,6 +17,7 @@ class SignerPermissionModel {
     final permissions = [
       SignerPermissionModel(type: "sign_event", kind: 22242),
       SignerPermissionModel(type: "sign_event", kind: 22456),
+      SignerPermissionModel(type: "sign_event", kind: 27235),
       SignerPermissionModel(type: "sign_event", kind: 3),
       SignerPermissionModel(type: "sign_event", kind: 4),
       SignerPermissionModel(type: "sign_event", kind: 6),
