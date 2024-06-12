@@ -16,6 +16,9 @@ class Message {
 
     m.type = data[0];
     switch (m.type) {
+      case "OK":
+        m.message = OKEvent.deserialize(data);
+        break;
       case "EVENT":
         m.message = await Event.deserialize(data);
         break;
@@ -23,8 +26,10 @@ class Message {
         m.message = Request.deserialize(data);
         break;
       case "CLOSE":
-      case "CLOSED":
         m.message = Close.deserialize(data);
+        break;
+      case "CLOSED":
+        m.message = Closed.deserialize(data);
         break;
       case "AUTH":
         m.message = Auth.deserialize(data);

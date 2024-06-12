@@ -19,4 +19,12 @@ class Nip42 {
     var auth = ["AUTH", event.toJson()];
     return jsonEncode(auth);
   }
+
+  static bool authRequired(String message){
+    return message.startsWith('auth-required: ');
+  }
+
+  static bool restricted(String message){
+    return message.startsWith('restricted: ');
+  }
 }
