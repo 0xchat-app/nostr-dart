@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 ///@author Michael
 ///CreateTime: 2023/11/29 17:39
 class CoreMethodChannel{
-  static const MethodChannel channelChatCore = const MethodChannel('com.oxchat.nostrcore');
+  static const MethodChannel channelChatCore = MethodChannel('com.oxchat.nostrcore');
 
 
   ///check an app is installed/enabled
