@@ -5,7 +5,8 @@ import 'package:nostr_core_dart/nostr.dart';
 /// https://github.com/nostr-protocol/nips/blob/master/47.md
 class Nip47 {
   static Future<Event> request(
-      String invoice, String sender, String receiver, String privkey) async {
+      String invoice, String receiver, String privkey) async {
+    String sender = Keychain.getPublicKey(privkey);
     Map request = {
       'method': 'pay_invoice',
       'params': {'invoice': invoice}
@@ -13,7 +14,7 @@ class Nip47 {
     String content = jsonEncode(request);
     String enContent =
         await Nip4.encryptContent(content, receiver, sender, privkey);
-    return Event.from(
+    return await Event.from(
         kind: 23194,
         tags: [
           ['p', receiver]
