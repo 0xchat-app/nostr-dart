@@ -20,7 +20,7 @@ class Message {
         m.message = OKEvent.deserialize(data);
         break;
       case "EVENT":
-        m.message = await Event.deserialize(data);
+        m.message = await Event.deserialize(data, verify: false);
         break;
       case "REQ":
         m.message = Request.deserialize(data);
