@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Private Direct Messages
@@ -17,7 +19,7 @@ class Nip17 {
         kind: kind?.toString(),
         expiration: expiration,
         sealedPrivkey: sealedPrivkey,
-        createAt: createAt);
+        createAt: createAt ?? randomTimeUpTo2DaysInThePast());
   }
 
   static Future<Event> _encodeSealedGossip(
@@ -26,9 +28,11 @@ class Nip17 {
     String encodedEvent = jsonEncode(event);
     String content =
         await Nip44.encryptContent(encodedEvent, receiver, myPubkey, privkey);
+
     return Event.from(
         kind: 13,
         tags: [],
+        createdAt: randomTimeUpTo2DaysInThePast(),
         content: content,
         pubkey: myPubkey,
         privkey: privkey);
@@ -36,8 +40,9 @@ class Nip17 {
 
   static Future<Event> encodeInnerEvent(String receiver, String content,
       String replyId, String myPubkey, String privKey,
-      {String? subContent, int? expiration}) async {
-    List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration);
+      {String? subContent, int? expiration, List<String>? members}) async {
+    List<List<String>> tags =
+        Nip4.toTags(receiver, replyId, expiration, members: members);
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
     }
@@ -56,7 +61,8 @@ class Nip17 {
       int? createAt,
       String? subContent,
       int? expiration,
-      Event? innerEvent}) async {
+      Event? innerEvent,
+      List<String>? members}) async {
     innerEvent ??= await encodeInnerEvent(
         receiver, content, replyId, myPubkey, privKey,
         subContent: subContent, expiration: expiration);
@@ -74,8 +80,8 @@ class Nip17 {
     try {
       Event sealedGossipEvent =
           await Nip59.decode(event, myPubkey, sealedPrivkey ?? privkey);
-      Event decodeEvent =
-          await _decodeSealedGossip(sealedGossipEvent, myPubkey, sealedPrivkey ?? privkey);
+      Event decodeEvent = await _decodeSealedGossip(
+          sealedGossipEvent, myPubkey, sealedPrivkey ?? privkey);
       return decodeEvent;
     } catch (e) {
       print('decode error: ${e.toString()}');
@@ -103,25 +109,58 @@ class Nip17 {
   }
 
   static Future<EDMessage?> decodeSealedGossipDM(
-      Event dmEvent, String receiver) async {
-    if (dmEvent.kind == 14) {
+      Event innerEvent, String receiver) async {
+    if (innerEvent.kind == 14) {
       List<String> receivers = [];
       String replyId = "";
-      String subContent = dmEvent.content;
+      String subContent = innerEvent.content;
       String? expiration;
-      for (var tag in dmEvent.tags) {
-        if (tag[0] == "p") receivers.add(tag[1]);
+      String? subject;
+      for (var tag in innerEvent.tags) {
+        if (tag[0] == "p") {
+          if (!receivers.contains(tag[1])) receivers.add(tag[1]);
+        }
         if (tag[0] == "e") replyId = tag[1];
         if (tag[0] == "subContent") subContent = tag[1];
         if (tag[0] == "expiration") expiration = tag[1];
+        if (tag[0] == "subject") subject = tag[1];
       }
       if (receivers.length == 1) {
-        return EDMessage(dmEvent.pubkey, receivers.first, dmEvent.createdAt,
-            subContent, replyId, expiration);
+        // private chat
+        return EDMessage(innerEvent.pubkey, receivers.first,
+            innerEvent.createdAt, subContent, replyId, expiration);
       } else {
-        return null;
+        // private chat room
+        return EDMessage(innerEvent.pubkey, '', innerEvent.createdAt,
+            subContent, replyId, expiration,
+            groupId: ChatRoom.generateChatRoomID(receivers),
+            subject: subject,
+            members: receivers);
       }
     }
     return null;
+  }
+
+  static int randomTimeUpTo2DaysInThePast() {
+    var intValue = Random().nextInt(24 * 60 * 60 * 2);
+    return currentUnixTimestampSeconds() - intValue;
+  }
+}
+
+/// ChatRoom info
+class ChatRoom {
+  String id;
+  String name;
+  List<String> members;
+
+  /// Default constructor
+  ChatRoom(this.id, this.name, this.members);
+
+  static String generateChatRoomID(List<String> members) {
+    members.sort();
+    String concatenatedPubkeys = members.join();
+    var bytes = utf8.encode(concatenatedPubkeys);
+    var digest = md5.convert(bytes);
+    return digest.toString();
   }
 }

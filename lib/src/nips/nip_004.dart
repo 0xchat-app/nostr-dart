@@ -86,7 +86,11 @@ class Nip4 {
       tags.add(['subContent', enSubContent]);
     }
     Event event = await Event.from(
-        kind: 4, tags: tags, content: enContent, pubkey: sender, privkey: privkey);
+        kind: 4,
+        tags: tags,
+        content: enContent,
+        pubkey: sender,
+        privkey: privkey);
     return event;
   }
 
@@ -99,9 +103,13 @@ class Nip4 {
     }
   }
 
-  static List<List<String>> toTags(String p, String e, int? expiration) {
+  static List<List<String>> toTags(String p, String e, int? expiration,
+      {List<String>? members}) {
     List<List<String>> result = [];
     result.add(["p", p]);
+    for (var m in members ?? []) {
+      if (m != p) result.add(["p", m]);
+    }
     if (e.isNotEmpty) result.add(["e", e, '', 'reply']);
     if (expiration != null) result.add(['expiration', expiration.toString()]);
     return result;
@@ -122,7 +130,14 @@ class EDMessage {
 
   String? expiration;
 
+  String? groupId;
+
+  String? subject;
+
+  List<String>? members;
+
   /// Default constructor
   EDMessage(this.sender, this.receiver, this.createdAt, this.content,
-      this.replyId, this.expiration);
+      this.replyId, this.expiration,
+      {this.groupId, this.subject, this.members});
 }
