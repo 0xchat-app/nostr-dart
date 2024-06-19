@@ -40,7 +40,10 @@ class Nip17 {
 
   static Future<Event> encodeInnerEvent(String receiver, String content,
       String replyId, String myPubkey, String privKey,
-      {String? subContent, int? expiration, List<String>? members, String? subject}) async {
+      {String? subContent,
+      int? expiration,
+      List<String>? members,
+      String? subject}) async {
     List<List<String>> tags =
         Nip4.toTags(receiver, replyId, expiration, members: members);
     if (subContent != null && subContent.isNotEmpty) {
@@ -142,6 +145,31 @@ class Nip17 {
       }
     }
     return null;
+  }
+
+  static Future<Event> encodeDMRelays(
+      List<String> relays, String myPubkey, String privkey) async {
+    List<List<String>> tags = [];
+    for (var relay in relays) {
+      tags.add(['relay', relay]);
+    }
+    return await Event.from(
+        kind: 10050,
+        tags: tags,
+        content: '',
+        pubkey: myPubkey,
+        privkey: privkey);
+  }
+
+  static List<String> decodeDMRelays(Event event) {
+    if (event.kind == 10050) {
+      List<String> result = [];
+      for (var tag in event.tags) {
+        if (tag[0] == 'relay') result.add(tag[1]);
+      }
+      return result;
+    }
+    throw Exception("${event.kind} is not nip17 compatible");
   }
 
   static int randomTimeUpTo2DaysInThePast() {
