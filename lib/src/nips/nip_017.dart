@@ -40,11 +40,14 @@ class Nip17 {
 
   static Future<Event> encodeInnerEvent(String receiver, String content,
       String replyId, String myPubkey, String privKey,
-      {String? subContent, int? expiration, List<String>? members}) async {
+      {String? subContent, int? expiration, List<String>? members, String? subject}) async {
     List<List<String>> tags =
         Nip4.toTags(receiver, replyId, expiration, members: members);
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
+    }
+    if (subject != null && subject.isNotEmpty) {
+      tags.add(['subject', subject]);
     }
     return await Event.from(
         kind: 14,
