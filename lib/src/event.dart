@@ -345,14 +345,15 @@ class Event {
 
   /// Verify if event checks such as id, signature, non-futuristic are valid
   /// Performances could be a reason to disable event checks
-  Future<bool> isValid() async {
+  bool isValid(){
     String verifyId = getEventId();
     if (createdAt.toString().length == 10 && id == verifyId) {
-      if (Platform.isAndroid) {
-        return await ChannelCryptoTool.verifySignature(pubkey, id, sig);
-      } else {
-        return bip340.verify(pubkey, id, sig);
-      }
+      return bip340.verify(pubkey, id, sig);
+      // if (Platform.isAndroid) {
+      //   return await ChannelCryptoTool.verifySignature(pubkey, id, sig);
+      // } else {
+      //   return bip340.verify(pubkey, id, sig);
+      // }
     } else {
       return false;
     }
