@@ -231,11 +231,11 @@ String generateStrongPassword(int length) {
 
 Future<String> signData(List data, String pubkey, String private) async {
   String serializedData = json.encode(data);
+  if (SignerHelper.needSigner(private)) {
+    return await SignerHelper.signMessage(serializedData, pubkey) ?? '';
+  }
   Uint8List hash =
       SHA256Digest().process(Uint8List.fromList(utf8.encode(serializedData)));
-  if (SignerHelper.needSigner(private)) {
-    return await SignerHelper.signMessage(hex.encode(hash), pubkey) ?? '';
-  }
   String aux = generate64RandomHexChars();
   return  bip340.sign(private, hex.encode(hash), aux);
 }
