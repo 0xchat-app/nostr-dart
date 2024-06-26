@@ -18,7 +18,7 @@ dependencies:
 
   pointycastle: ^3.3.0
   kepler: ^1.0.3
-  http: ^0.13.3
+  http: ^1.0.0
   bech32: ^0.2.0
   cryptography: ^2.7.0
   cryptography_flutter: ^2.3.2
