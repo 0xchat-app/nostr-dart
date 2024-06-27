@@ -217,7 +217,7 @@ class Nip51 {
     if (event.kind == 10005) identifier = "Public chats";
     if (event.kind == 10009) identifier = "Simple groups";
 
-    return Lists(event.pubkey, identifier, people, bookmarks, event.createdAt);
+    return Lists(event.pubkey, identifier, people, bookmarks, groups, event.createdAt);
   }
 }
 
@@ -247,9 +247,11 @@ class Lists {
 
   List<String> bookmarks;
 
+  List<SimpleGroups> groups;
+
   int createTime;
 
   /// Default constructor
-  Lists(this.owner, this.identifier, this.people, this.bookmarks,
+  Lists(this.owner, this.identifier, this.people, this.bookmarks, this.groups,
       this.createTime);
 }
