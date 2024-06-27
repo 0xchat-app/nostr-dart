@@ -186,7 +186,7 @@ class Nip51 {
         event.kind != 10005 &&
         event.kind != 10009 &&
         event.kind != 30000 &&
-        event.kind != 30001) {
+        event.kind != 30003) {
       throw Exception("${event.kind} is not nip51 compatible");
     }
     String identifier = "";
