@@ -25,6 +25,14 @@ class Nip51 {
     return result;
   }
 
+  static List<List<String>> simpleGroupToTags(List<SimpleGroups> items) {
+    List<List<String>> result = [];
+    for (var item in items) {
+      result.add(["group", item.groupId, item.relay]);
+    }
+    return result;
+  }
+
   static Future<String> peoplesToContent(
       List<People> items, String privkey, String pubkey) async {
     var list = [];
@@ -51,10 +59,22 @@ class Nip51 {
     return await Nip4.encryptContent(content, pubkey, pubkey, privkey);
   }
 
+  static Future<String> groupsToContent(
+      List<SimpleGroups> items, String privkey, String pubkey) async {
+    if (items.isEmpty) return '';
+    var list = [];
+    for (var item in items) {
+      list.add(['group', item.groupId, item.relay]);
+    }
+    String content = jsonEncode(list);
+    return await Nip4.encryptContent(content, pubkey, pubkey, privkey);
+  }
+
   static Future<Map<String, List>?> fromContent(
       String content, String privkey, String pubkey) async {
     List<People> people = [];
     List<String> bookmarks = [];
+    List<SimpleGroups> groups = [];
     int ivIndex = content.indexOf("?iv=");
     String deContent = '';
     if (ivIndex <= 0) {
@@ -72,11 +92,13 @@ class Nip51 {
         } else if (tag[0] == "e") {
           // bookmark
           bookmarks.add(tag[1]);
+        } else if (tag[0] == "group") {
+          groups.add(SimpleGroups(tag[1], tag.length > 2 ? tag[2] : ''));
         }
       }
     }
 
-    return {"people": people, "bookmarks": bookmarks};
+    return {"people": people, "bookmarks": bookmarks, "groups": groups};
   }
 
   static Future<Event> createMutePeople(List<People> items,
@@ -101,6 +123,28 @@ class Nip51 {
         privkey: privkey);
   }
 
+  static Future<Event> createPublicChatList(List<String> items,
+      List<String> encryptedItems, String privkey, String pubkey) async {
+    String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
+    return Event.from(
+        kind: 10005,
+        tags: bookmarksToTags(items),
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
+  }
+
+  static Future<Event> createSimpleGroupList(List<SimpleGroups> items,
+      List<SimpleGroups> encryptedItems, String privkey, String pubkey) async {
+    String content = await groupsToContent(encryptedItems, privkey, pubkey);
+    return Event.from(
+        kind: 10009,
+        tags: simpleGroupToTags(items),
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
+  }
+
   static Future<Event> createCategorizedPeople(
       String identifier,
       List<People> items,
@@ -111,7 +155,11 @@ class Nip51 {
     tags.add(["d", identifier]);
     String content = await peoplesToContent(encryptedItems, privkey, pubkey);
     return Event.from(
-        kind: 30000, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
+        kind: 30000,
+        tags: tags,
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
   }
 
   static Future<Event> createCategorizedBookmarks(
@@ -124,12 +172,19 @@ class Nip51 {
     tags.add(["d", identifier]);
     String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
     return Event.from(
-        kind: 30001, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
+        kind: 30003,
+        tags: tags,
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
   }
 
-  static Future<Lists> getLists(Event event, String pubkey, String privkey) async {
+  static Future<Lists> getLists(
+      Event event, String pubkey, String privkey) async {
     if (event.kind != 10000 &&
         event.kind != 10001 &&
+        event.kind != 10005 &&
+        event.kind != 10009 &&
         event.kind != 30000 &&
         event.kind != 30001) {
       throw Exception("${event.kind} is not nip51 compatible");
@@ -137,6 +192,7 @@ class Nip51 {
     String identifier = "";
     List<People> people = [];
     List<String> bookmarks = [];
+    List<SimpleGroups> groups = [];
     for (List tag in event.tags) {
       if (tag[0] == "p") {
         people.add(People(tag[1], tag.length > 2 ? tag[2] : "",
@@ -145,15 +201,21 @@ class Nip51 {
       if (tag[0] == "e") {
         bookmarks.add(tag[1]);
       }
+      if (tag[0] == "group") {
+        groups.add(SimpleGroups(tag[1], tag.length > 2 ? tag[2] : ''));
+      }
       if (tag[0] == "d") identifier = tag[1];
     }
     Map? content = await Nip51.fromContent(event.content, privkey, pubkey);
     if (content != null) {
       people.addAll(content["people"]);
       bookmarks.addAll(content["bookmarks"]);
+      groups.addAll(content["groups"]);
     }
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
+    if (event.kind == 10005) identifier = "Public chats";
+    if (event.kind == 10009) identifier = "Simple groups";
 
     return Lists(event.pubkey, identifier, people, bookmarks, event.createdAt);
   }
@@ -168,6 +230,12 @@ class People {
 
   /// Default constructor
   People(this.pubkey, this.mainRelay, this.petName, this.aliasPubKey);
+}
+
+class SimpleGroups {
+  String groupId;
+  String relay;
+  SimpleGroups(this.groupId, this.relay);
 }
 
 class Lists {
