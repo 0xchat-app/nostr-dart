@@ -15,7 +15,7 @@ class Nip28 {
         String? picture = additional.remove("picture");
         String? pinned = additional.remove("pinned");
         return Channel(event.id, name ?? '', about ?? '', picture ?? '', pinned,
-            event.pubkey, null, null, additional);
+            event.pubkey, null, null, additional, event.createdAt, 0);
       } else {
         throw Exception("${event.kind} is not nip28 compatible");
       }
@@ -48,13 +48,13 @@ class Nip28 {
           }
         }
         Channel result = Channel(channelId!, name!, about!, picture!, pinned,
-            owner, relay, members, additional);
+            owner, relay, members, additional, 0, event.createdAt);
         return result;
       } else {
-        return Channel(event.id, '', '', '', null, '', '', null, {});
+        return Channel(event.id, '', '', '', null, '', '', null, {}, 0, 0);
       }
     } catch (e, s) {
-      return Channel(event.id, '', '', '', null, '', '', null, {});
+      return Channel(event.id, '', '', '', null, '', '', null, {}, 0, 0);
     }
   }
 
@@ -314,9 +314,13 @@ class Channel {
   /// Clients MAY add additional metadata fields.
   Map<String, dynamic> additional;
 
+  int createdAt;
+
+  int updatedAt;
+
   /// Default constructor
   Channel(this.channelId, this.name, this.about, this.picture, this.pinned,
-      this.owner, this.relay, this.members, this.additional);
+      this.owner, this.relay, this.members, this.additional, this.createdAt, this.updatedAt);
 }
 
 /// messages in channel
