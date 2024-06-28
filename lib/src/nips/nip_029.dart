@@ -99,7 +99,7 @@ class Nip29 {
   }
 
   static GroupMessage decodeGroupMessage(Event event) {
-    if (event.kind != 9 || event.kind != 10) {
+    if (event.kind != 9 && event.kind != 10) {
       throw Exception("${event.kind} is not nip29 compatible");
     }
     var content = event.content;
