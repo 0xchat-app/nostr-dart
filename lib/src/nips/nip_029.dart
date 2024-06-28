@@ -242,7 +242,9 @@ class Nip29 {
       List<String>? replyUsers,
       String? subContent}) async {
     List<List<String>> tags = [];
+    int kind = 9; // normal message
     if (rootEvent != null) {
+      kind = 10; // reply message
       ETag root = Nip10.rootTag(rootEvent, '');
       ETag? reply = replyEvent == null ? null : Nip10.replyTag(replyEvent, '');
       List<PTag> pTags = Nip10.pTags(replyUsers ?? [], []);
@@ -256,7 +258,7 @@ class Nip29 {
       tags.add(['subContent', subContent]);
     }
     Event event = await Event.from(
-        kind: 10,
+        kind: kind,
         tags: tags,
         content: content,
         pubkey: pubkey,
