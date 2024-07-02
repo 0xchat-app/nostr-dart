@@ -31,4 +31,6 @@ flutter:
       android:
         package: com.oxchat.nostrcore
         pluginClass: ChatcorePlugin
+      ios:
+        pluginClass: NostrCoreDartPlugin
 
