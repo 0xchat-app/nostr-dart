@@ -348,12 +348,7 @@ class Event {
   Future<bool> isValid() async {
     String verifyId = getEventId();
     if (createdAt.toString().length == 10 && id == verifyId) {
-      // return bip340.verify(pubkey, id, sig);
-      if (Platform.isAndroid) {
-        return await ChannelCryptoTool.verifySignature(pubkey, id, sig);
-      } else {
-        return bip340.verify(pubkey, id, sig);
-      }
+      return ChannelCryptoTool.verifySignature(pubkey, id, sig);
     } else {
       return false;
     }
