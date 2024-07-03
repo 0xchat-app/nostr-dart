@@ -347,7 +347,7 @@ class Event {
   /// Performances could be a reason to disable event checks
   Future<bool> isValid() async {
     String verifyId = getEventId();
-    if (createdAt.toString().length == 10 && id == verifyId) {
+    if (id == verifyId) {
       return ChannelCryptoTool.verifySignature(pubkey, id, sig);
     } else {
       return false;
