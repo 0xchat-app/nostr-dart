@@ -10,7 +10,7 @@ class Nip29 {
     }
 
     String groupId = '', name = '', picture = '', about = '';
-    bool private = false;
+    bool private = true, closed = true;
     for (var tag in event.tags) {
       if (tag[0] == "d") {
         groupId = tag[1];
@@ -25,12 +25,15 @@ class Nip29 {
         about = tag[1];
       }
       if (tag[0] == "public" || tag[0] == "open") {
-        private = true;
+        private = false;
+      }
+      if (tag[0] == "open") {
+        closed = false;
       }
     }
     String id = '$fromRelay\'$groupId';
-    return Group(id, fromRelay, event.pubkey, groupId, private, [], name, about,
-        picture, null, [], 0, 0, null);
+    return Group(id, fromRelay, event.pubkey, groupId, private, closed, [],
+        name, about, picture, null, [], 0, 0, null);
   }
 
   static List<GroupAdmin> decodeGroupAdmins(Event event, String groupId) {
@@ -244,7 +247,6 @@ class Nip29 {
     List<List<String>> tags = [];
     int kind = 9; // normal message
     if (rootEvent != null) {
-      kind = 10; // reply message
       ETag root = Nip10.rootTag(rootEvent, '');
       ETag? reply = replyEvent == null ? null : Nip10.replyTag(replyEvent, '');
       List<PTag> pTags = Nip10.pTags(replyUsers ?? [], []);
@@ -497,6 +499,7 @@ class Group {
   String relayPubkey;
   String groupId;
   bool private;
+  bool closed;
   List<GroupAdmin> mods;
   String name;
   String about;
@@ -515,6 +518,7 @@ class Group {
       this.relayPubkey,
       this.groupId,
       this.private,
+      this.closed,
       this.mods,
       this.name,
       this.about,
