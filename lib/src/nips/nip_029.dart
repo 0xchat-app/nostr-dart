@@ -134,6 +134,7 @@ class Nip29 {
     if (event.kind < 9000 || event.kind > 9006) {
       throw Exception("${event.kind} is not nip29 compatible");
     }
+    List<String> users = [];
     String groupId = '',
         user = '',
         name = '',
@@ -144,7 +145,7 @@ class Nip29 {
     bool private = false;
     for (var tag in event.tags) {
       if (tag[0] == "h") groupId = tag[1];
-      if (tag[0] == "p") user = tag[1];
+      if (tag[0] == "p") users.add(tag[1]);
       if (tag[0] == "name") name = tag[1];
       if (tag[0] == "about") about = tag[1];
       if (tag[0] == "picture") picture = tag[1];
@@ -161,7 +162,7 @@ class Nip29 {
         content: event.content,
         actionKind: GroupActionKind.fromKind(event.kind),
         previous: previous,
-        user: user,
+        users: users,
         permission: permission,
         eventId: eventId,
         private: private,
@@ -302,13 +303,15 @@ class Nip29 {
 
   static Future<Event> encodeAddUser(
       String groupId,
-      String addUser,
+      List<String> addUser,
       String content,
       List<String> previous,
       String pubkey,
       String privkey) async {
     List<List<String>> tags = [];
-    tags.add(['p', addUser]);
+    for (var p in addUser) {
+      tags.add(['p', p]);
+    }
     return _encodeGroupAction(groupId, GroupActionKind.addUser, content, tags,
         previous, pubkey, privkey);
   }
@@ -345,14 +348,16 @@ class Nip29 {
 
   static Future<Event> encodeAddPermission(
       String groupId,
-      String user,
+      List<String> users,
       String permission,
       String content,
       List<String> previous,
       String pubkey,
       String privkey) async {
     List<List<String>> tags = [];
-    tags.add(['p', user]);
+    for (var p in users) {
+      tags.add(['p', p]);
+    }
     tags.add(['permission', permission]);
     return _encodeGroupAction(groupId, GroupActionKind.addPermission, content,
         tags, previous, pubkey, privkey);
@@ -360,14 +365,16 @@ class Nip29 {
 
   static Future<Event> encodeRemovePermission(
       String groupId,
-      String user,
+      List<String> users,
       String permission,
       String content,
       List<String> previous,
       String pubkey,
       String privkey) async {
     List<List<String>> tags = [];
-    tags.add(['p', user]);
+    for (var p in users) {
+      tags.add(['p', p]);
+    }
     tags.add(['permission', permission]);
     return _encodeGroupAction(groupId, GroupActionKind.removePermission,
         content, tags, previous, pubkey, privkey);
@@ -403,10 +410,10 @@ class Nip29 {
       GroupModeration moderation, String pubkey, String privkey) {
     switch (moderation.actionKind) {
       case GroupActionKind.addUser:
-        return encodeAddUser(moderation.groupId, moderation.user,
+        return encodeAddUser(moderation.groupId, moderation.users,
             moderation.content, moderation.previous, pubkey, privkey);
       case GroupActionKind.removeUser:
-        return encodeAddUser(moderation.groupId, moderation.user,
+        return encodeAddUser(moderation.groupId, moderation.users,
             moderation.content, moderation.previous, pubkey, privkey);
       case GroupActionKind.editMetadata:
         return encodeEditMetadata(
@@ -421,7 +428,7 @@ class Nip29 {
       case GroupActionKind.addPermission:
         return encodeAddPermission(
             moderation.groupId,
-            moderation.user,
+            moderation.users,
             moderation.permission,
             moderation.content,
             moderation.previous,
@@ -430,7 +437,7 @@ class Nip29 {
       case GroupActionKind.removePermission:
         return encodeRemovePermission(
             moderation.groupId,
-            moderation.user,
+            moderation.users,
             moderation.permission,
             moderation.content,
             moderation.previous,
@@ -572,7 +579,7 @@ class GroupModeration {
   GroupActionKind actionKind;
   List<String> previous;
 
-  String user;
+  List<String> users;
   String permission;
   String eventId;
   bool private;
@@ -589,7 +596,7 @@ class GroupModeration {
       this.content = '',
       this.actionKind = GroupActionKind.addUser,
       this.previous = const [],
-      this.user = '',
+      this.users = const [],
       this.permission = '',
       this.eventId = '',
       this.private = false,
@@ -599,19 +606,19 @@ class GroupModeration {
       this.pinned = ''});
 
   factory GroupModeration.addUser(
-      String groupId, String addUser, String reason) {
+      String groupId, List<String> addUser, String reason) {
     return GroupModeration(
         groupId: groupId,
-        user: addUser,
+        users: addUser,
         content: reason,
         actionKind: GroupActionKind.addUser);
   }
 
   factory GroupModeration.removeUser(
-      String groupId, String addUser, String reason) {
+      String groupId, List<String> addUser, String reason) {
     return GroupModeration(
         groupId: groupId,
-        user: addUser,
+        users: addUser,
         content: reason,
         actionKind: GroupActionKind.removeUser);
   }
@@ -628,20 +635,20 @@ class GroupModeration {
   }
 
   factory GroupModeration.addPermission(
-      String groupId, String user, String permission, String reason) {
+      String groupId, List<String> user, String permission, String reason) {
     return GroupModeration(
         groupId: groupId,
-        user: user,
+        users: user,
         permission: permission,
         content: reason,
         actionKind: GroupActionKind.addPermission);
   }
 
   factory GroupModeration.removePermission(
-      String groupId, String user, String permission, String reason) {
+      String groupId, List<String> user, String permission, String reason) {
     return GroupModeration(
         groupId: groupId,
-        user: user,
+        users: user,
         permission: permission,
         content: reason,
         actionKind: GroupActionKind.removePermission);
