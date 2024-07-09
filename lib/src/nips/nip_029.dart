@@ -48,7 +48,7 @@ class Nip29 {
       }
       if (tag[0] == "p") {
         List<GroupActionKind> permissions = [];
-        for (int i = 3; i < tag.length - 1; ++i) {
+        for (int i = 3; i < tag.length; ++i) {
           permissions.add(GroupActionKind.fromString(tag[i]));
         }
         admins.add(GroupAdmin(tag[1], tag[2], permissions));
