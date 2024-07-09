@@ -86,7 +86,7 @@ class Nip29 {
   }
 
   static GroupNote decodeGroupNote(Event event) {
-    if (event.kind != 11) {
+    if (event.kind != 11 && event.kind != 12) {
       throw Exception("${event.kind} is not nip29 compatible");
     }
     Note note = Nip1.decodeNote(event);
@@ -318,13 +318,15 @@ class Nip29 {
 
   static Future<Event> encodeRemoveUser(
       String groupId,
-      String removeUser,
+      List<String> removeUsers,
       String content,
       List<String> previous,
       String pubkey,
       String privkey) async {
     List<List<String>> tags = [];
-    tags.add(['p', removeUser]);
+    for (var p in removeUsers) {
+      tags.add(['p', p]);
+    }
     return _encodeGroupAction(groupId, GroupActionKind.removeUser, content,
         tags, previous, pubkey, privkey);
   }
@@ -413,7 +415,7 @@ class Nip29 {
         return encodeAddUser(moderation.groupId, moderation.users,
             moderation.content, moderation.previous, pubkey, privkey);
       case GroupActionKind.removeUser:
-        return encodeAddUser(moderation.groupId, moderation.users,
+        return encodeRemoveUser(moderation.groupId, moderation.users,
             moderation.content, moderation.previous, pubkey, privkey);
       case GroupActionKind.editMetadata:
         return encodeEditMetadata(
@@ -615,10 +617,10 @@ class GroupModeration {
   }
 
   factory GroupModeration.removeUser(
-      String groupId, List<String> addUser, String reason) {
+      String groupId, List<String> removeUsers, String reason) {
     return GroupModeration(
         groupId: groupId,
-        users: addUser,
+        users: removeUsers,
         content: reason,
         actionKind: GroupActionKind.removeUser);
   }
