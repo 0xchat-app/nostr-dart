@@ -4,11 +4,15 @@ import 'package:nostr_core_dart/nostr.dart';
 class Nip25 {
   static Future<Event> encode(String reactedId, List<String> reactedPubkeys,
       String reactedKind, bool upVote, String pubkey, String privkey,
-      {String? content, String? emojiShotCode, String? emojiURL}) async {
+      {String? content,
+      String? emojiShotCode,
+      String? emojiURL,
+      String? relayGroupId}) async {
     content ??= upVote ? '+' : '-';
     List<List<String>> tags = [];
     tags.add(["e", reactedId]);
     tags.add(["k", reactedKind]);
+    if (relayGroupId != null) tags.add(["h", relayGroupId]);
     for (var p in reactedPubkeys) {
       tags.add(["p", p]);
     }
