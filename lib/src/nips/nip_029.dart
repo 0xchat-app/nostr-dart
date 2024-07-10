@@ -398,12 +398,14 @@ class Nip29 {
   static Future<Event> encodeEditGroupStatus(
       String groupId,
       bool private,
+      bool closed,
       String content,
       List<String> previous,
       String pubkey,
       String privkey) async {
     List<List<String>> tags = [];
     private ? tags.add(['private']) : tags.add(['public']);
+    closed ? tags.add(['closed']) : tags.add(['open']);
     return _encodeGroupAction(groupId, GroupActionKind.editGroupStatus, content,
         tags, previous, pubkey, privkey);
   }
@@ -449,8 +451,14 @@ class Nip29 {
         return encodeDeleteEvent(moderation.groupId, moderation.eventId,
             moderation.content, moderation.previous, pubkey, privkey);
       case GroupActionKind.editGroupStatus:
-        return encodeEditGroupStatus(moderation.groupId, moderation.private,
-            moderation.content, moderation.previous, pubkey, privkey);
+        return encodeEditGroupStatus(
+            moderation.groupId,
+            moderation.private,
+            moderation.closed,
+            moderation.content,
+            moderation.previous,
+            pubkey,
+            privkey);
     }
   }
 }
@@ -585,6 +593,7 @@ class GroupModeration {
   String permission;
   String eventId;
   bool private;
+  bool closed;
   String name;
   String about;
   String picture;
@@ -602,6 +611,7 @@ class GroupModeration {
       this.permission = '',
       this.eventId = '',
       this.private = false,
+      this.closed = false,
       this.name = '',
       this.about = '',
       this.picture = '',
