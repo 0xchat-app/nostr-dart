@@ -136,13 +136,12 @@ class Nip29 {
     }
     List<String> users = [];
     String groupId = '',
-        user = '',
         name = '',
         about = '',
         picture = '',
         permission = '',
         eventId = '';
-    bool private = false;
+    bool private = false, closed = false;
     for (var tag in event.tags) {
       if (tag[0] == "h") groupId = tag[1];
       if (tag[0] == "p") users.add(tag[1]);
@@ -151,7 +150,8 @@ class Nip29 {
       if (tag[0] == "picture") picture = tag[1];
       if (tag[0] == "permission") permission = tag[1];
       if (tag[0] == "e") eventId = tag[1];
-      if (tag[0] == "private" || tag[0] == "closed") private = true;
+      if (tag[0] == "private") private = true;
+      if (tag[0] == "closed") closed = true;
     }
     List<String> previous = getPrevious(event.tags);
     return GroupModeration(
@@ -166,6 +166,7 @@ class Nip29 {
         permission: permission,
         eventId: eventId,
         private: private,
+        closed: closed,
         name: name,
         about: about,
         picture: picture,
@@ -697,9 +698,10 @@ class GroupModeration {
   }
 
   factory GroupModeration.editGroupStatus(
-      String groupId, bool private, String reason) {
+      String groupId, bool closed, bool private, String reason) {
     return GroupModeration(
         groupId: groupId,
+        closed: closed,
         private: private,
         content: reason,
         actionKind: GroupActionKind.editGroupStatus);
