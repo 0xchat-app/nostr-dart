@@ -282,6 +282,15 @@ class Nip29 {
     return event;
   }
 
+  static Future<Event> encodeCreateGroup(
+      String groupId, String pubkey, String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['h', groupId]);
+    Event event = await Event.from(
+        kind: 9007, tags: tags, content: '', pubkey: pubkey, privkey: privkey);
+    return event;
+  }
+
   static Future<Event> _encodeGroupAction(
       String groupId,
       GroupActionKind actionKind,
@@ -485,6 +494,18 @@ enum GroupActionKind {
   static GroupActionKind fromKind(int kind) {
     return GroupActionKind.values.firstWhere((element) => element.kind == kind,
         orElse: () => throw ArgumentError('Invalid permission name: $kind'));
+  }
+
+  static List<GroupActionKind> all() {
+    return [
+      GroupActionKind.addUser,
+      GroupActionKind.removeUser,
+      GroupActionKind.editMetadata,
+      GroupActionKind.addPermission,
+      GroupActionKind.removePermission,
+      GroupActionKind.editGroupStatus,
+      GroupActionKind.deleteEvent,
+    ];
   }
 }
 
