@@ -36,16 +36,22 @@ class Nip29 {
         name, about, picture, null, [], 0, 0, null);
   }
 
-  static List<GroupAdmin> decodeGroupAdmins(Event event, String groupId) {
+  static String? getGroupIdFromEvent(Event event) {
+    for (var tag in event.tags) {
+      if (tag[0] == "d") {
+        return tag[1];
+      }
+    }
+    return null;
+  }
+
+  static List<GroupAdmin> decodeGroupAdmins(Event event) {
     if (event.kind != 39001) {
       throw Exception("${event.kind} is not nip29 compatible");
     }
 
     List<GroupAdmin> admins = [];
     for (var tag in event.tags) {
-      if (tag[0] == "d") {
-        if (groupId != tag[1]) throw Exception("wrong groupId ${tag[1]}");
-      }
       if (tag[0] == "p") {
         List<GroupActionKind> permissions = [];
         for (int i = 3; i < tag.length; ++i) {
@@ -57,16 +63,13 @@ class Nip29 {
     return admins;
   }
 
-  static List<String> decodeGroupMembers(Event event, String groupId) {
+  static List<String> decodeGroupMembers(Event event) {
     if (event.kind != 39002) {
       throw Exception("${event.kind} is not nip29 compatible");
     }
 
     List<String> members = [];
     for (var tag in event.tags) {
-      if (tag[0] == "d") {
-        if (groupId != tag[1]) throw Exception("wrong groupId ${tag[1]}");
-      }
       if (tag[0] == "p") members.add(tag[1]);
     }
     return members;
