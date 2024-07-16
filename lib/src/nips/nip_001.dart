@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Basic Event Kinds
@@ -25,9 +27,12 @@ class Nip1 {
       ETag? reply = replyEvent == null
           ? null
           : Nip10.replyTag(replyEvent, replyEventRelay ?? '');
-      List<PTag> pTags = Nip10.pTags(replyUsers ?? [], replyUserRelays ?? []);
-      Thread thread = Thread(root, reply, null, pTags);
+      Thread thread = Thread(root, reply, null, null);
       tags = Nip10.toTags(thread);
+    }
+    List<PTag> pTags = Nip10.pTags(replyUsers ?? [], replyUserRelays ?? []);
+    for (var pTag in pTags) {
+      tags.add(["p", pTag.pubkey, pTag.relayURL]);
     }
     if (hashTags != null) {
       for (var t in hashTags) {

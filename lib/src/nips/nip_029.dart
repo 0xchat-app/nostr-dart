@@ -205,9 +205,12 @@ class Nip29 {
     if (rootEvent != null) {
       ETag root = Nip10.rootTag(rootEvent, '');
       ETag? reply = replyEvent == null ? null : Nip10.replyTag(replyEvent, '');
-      List<PTag> pTags = Nip10.pTags(replyUsers ?? [], []);
-      Thread thread = Thread(root, reply, null, pTags);
+      Thread thread = Thread(root, reply, null, null);
       tags = Nip10.toTags(thread);
+    }
+    List<PTag> pTags = Nip10.pTags(replyUsers ?? [], []);
+    for (var pTag in pTags) {
+      tags.add(["p", pTag.pubkey, pTag.relayURL]);
     }
     tags.add(['h', groupId]);
     if (previous.isNotEmpty) tags.add(['previous', ...previous]);
@@ -254,9 +257,12 @@ class Nip29 {
     if (rootEvent != null) {
       ETag root = Nip10.rootTag(rootEvent, '');
       ETag? reply = replyEvent == null ? null : Nip10.replyTag(replyEvent, '');
-      List<PTag> pTags = Nip10.pTags(replyUsers ?? [], []);
-      Thread thread = Thread(root, reply, null, pTags);
+      Thread thread = Thread(root, reply, null, null);
       tags = Nip10.toTags(thread);
+    }
+    List<PTag> pTags = Nip10.pTags(replyUsers ?? [], []);
+    for (var pTag in pTags) {
+      tags.add(["p", pTag.pubkey, pTag.relayURL]);
     }
     tags.add(['h', groupId]);
     if (previous.isNotEmpty) tags.add(['previous', ...previous]);
