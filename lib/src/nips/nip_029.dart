@@ -529,7 +529,7 @@ class GroupAdmin {
   factory GroupAdmin.fromJson(List<dynamic> json) {
     String pubkey = json[0];
     String role = json[1];
-    List<GroupActionKind> permissions = (json.sublist(2) as List<String>)
+    List<GroupActionKind> permissions = (json.sublist(2).cast<String>())
         .map((p) => GroupActionKind.fromString(p))
         .toList();
     return GroupAdmin(pubkey, role, permissions);
