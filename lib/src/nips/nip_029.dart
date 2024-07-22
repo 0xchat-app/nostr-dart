@@ -137,13 +137,8 @@ class Nip29 {
     if (event.kind < 9000 || event.kind > 9006) {
       throw Exception("${event.kind} is not nip29 compatible");
     }
-    List<String> users = [];
-    String groupId = '',
-        name = '',
-        about = '',
-        picture = '',
-        permission = '',
-        eventId = '';
+    List<String> users = [], permissions = [];
+    String groupId = '', name = '', about = '', picture = '', eventId = '';
     bool private = false, closed = false;
     for (var tag in event.tags) {
       if (tag[0] == "h") groupId = tag[1];
@@ -151,7 +146,7 @@ class Nip29 {
       if (tag[0] == "name") name = tag[1];
       if (tag[0] == "about") about = tag[1];
       if (tag[0] == "picture") picture = tag[1];
-      if (tag[0] == "permission") permission = tag[1];
+      if (tag[0] == "permission") permissions.add(tag[1]);
       if (tag[0] == "e") eventId = tag[1];
       if (tag[0] == "private") private = true;
       if (tag[0] == "closed") closed = true;
@@ -166,7 +161,7 @@ class Nip29 {
         actionKind: GroupActionKind.fromKind(event.kind),
         previous: previous,
         users: users,
-        permission: permission,
+        permissions: permissions,
         eventId: eventId,
         private: private,
         closed: closed,
@@ -370,7 +365,7 @@ class Nip29 {
   static Future<Event> encodeAddPermission(
       String groupId,
       List<String> users,
-      String permission,
+      List<String> permissions,
       String content,
       List<String> previous,
       String pubkey,
@@ -379,7 +374,9 @@ class Nip29 {
     for (var p in users) {
       tags.add(['p', p]);
     }
-    tags.add(['permission', permission]);
+    for (var permission in permissions) {
+      tags.add(['permission', permission]);
+    }
     return _encodeGroupAction(groupId, GroupActionKind.addPermission, content,
         tags, previous, pubkey, privkey);
   }
@@ -387,7 +384,7 @@ class Nip29 {
   static Future<Event> encodeRemovePermission(
       String groupId,
       List<String> users,
-      String permission,
+      List<String> permissions,
       String content,
       List<String> previous,
       String pubkey,
@@ -396,7 +393,9 @@ class Nip29 {
     for (var p in users) {
       tags.add(['p', p]);
     }
-    tags.add(['permission', permission]);
+    for (var permission in permissions) {
+      tags.add(['permission', permission]);
+    }
     return _encodeGroupAction(groupId, GroupActionKind.removePermission,
         content, tags, previous, pubkey, privkey);
   }
@@ -452,7 +451,7 @@ class Nip29 {
         return encodeAddPermission(
             moderation.groupId,
             moderation.users,
-            moderation.permission,
+            moderation.permissions,
             moderation.content,
             moderation.previous,
             pubkey,
@@ -461,7 +460,7 @@ class Nip29 {
         return encodeRemovePermission(
             moderation.groupId,
             moderation.users,
-            moderation.permission,
+            moderation.permissions,
             moderation.content,
             moderation.previous,
             pubkey,
@@ -621,7 +620,7 @@ class GroupModeration {
   List<String> previous;
 
   List<String> users;
-  String permission;
+  List<String> permissions;
   String eventId;
   bool private;
   bool closed;
@@ -639,7 +638,7 @@ class GroupModeration {
       this.actionKind = GroupActionKind.addUser,
       this.previous = const [],
       this.users = const [],
-      this.permission = '',
+      this.permissions = const [],
       this.eventId = '',
       this.private = false,
       this.closed = false,
@@ -677,22 +676,22 @@ class GroupModeration {
         actionKind: GroupActionKind.editMetadata);
   }
 
-  factory GroupModeration.addPermission(
-      String groupId, List<String> user, String permission, String reason) {
+  factory GroupModeration.addPermission(String groupId, List<String> user,
+      List<String> permissions, String reason) {
     return GroupModeration(
         groupId: groupId,
         users: user,
-        permission: permission,
+        permissions: permissions,
         content: reason,
         actionKind: GroupActionKind.addPermission);
   }
 
-  factory GroupModeration.removePermission(
-      String groupId, List<String> user, String permission, String reason) {
+  factory GroupModeration.removePermission(String groupId, List<String> user,
+      List<String> permissions, String reason) {
     return GroupModeration(
         groupId: groupId,
         users: user,
-        permission: permission,
+        permissions: permissions,
         content: reason,
         actionKind: GroupActionKind.removePermission);
   }
