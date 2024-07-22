@@ -86,13 +86,13 @@ class Nip61 {
         comment, mint, eventId, eventRelay);
   }
 
-  static Future<Event> encodeNutZapClaim(String? walletTag, String event,
+  static Future<Event> encodeNutZapClaim(String? walletTag, String eventId,
       String eventRelay, String sender, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     if (walletTag != null) {
       tags.add(['a', walletTag]);
     }
-    tags.add(['e', event, eventRelay, 'redeemed']);
+    tags.add(['e', eventId, eventRelay, 'redeemed']);
     tags.add(['p', sender]);
     return await Event.from(
         kind: 7376, tags: tags, content: '', pubkey: pubkey, privkey: privkey);
