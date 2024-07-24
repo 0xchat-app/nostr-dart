@@ -4,6 +4,10 @@ import 'package:nostr_core_dart/nostr.dart';
 
 /// Relay-based Groups
 class Nip29 {
+  static bool restricted(String message) {
+    return message.startsWith('restricted: ');
+  }
+
   static Group decodeMetadata(Event event, String fromRelay) {
     if (event.kind != 39000) {
       throw Exception("${event.kind} is not nip29 compatible");
