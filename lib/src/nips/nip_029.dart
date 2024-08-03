@@ -250,7 +250,8 @@ class Nip29 {
       {String? rootEvent,
       String? replyEvent,
       List<String>? replyUsers,
-      String? subContent}) async {
+      String? subContent,
+      int createAt = 0}) async {
     List<List<String>> tags = [];
     int kind = 9; // normal message
     if (rootEvent != null) {
@@ -274,7 +275,8 @@ class Nip29 {
         tags: tags,
         content: content,
         pubkey: pubkey,
-        privkey: privkey);
+        privkey: privkey,
+        createdAt: createAt);
     return event;
   }
 
