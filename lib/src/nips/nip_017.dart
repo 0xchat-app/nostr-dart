@@ -43,7 +43,8 @@ class Nip17 {
       {String? subContent,
       int? expiration,
       List<String>? members,
-      String? subject}) async {
+      String? subject,
+      int createAt = 0}) async {
     List<List<String>> tags =
         Nip4.toTags(receiver, replyId, expiration, members: members);
     if (subContent != null && subContent.isNotEmpty) {
@@ -57,7 +58,8 @@ class Nip17 {
         tags: tags,
         content: content,
         pubkey: myPubkey,
-        privkey: privKey);
+        privkey: privKey,
+        createdAt: createAt);
   }
 
   static Future<Event> encodeSealedGossipDM(String receiver, String content,
