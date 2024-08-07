@@ -19,4 +19,9 @@ class CoreMethodChannel{
     );
     return result;
   }
+
+  static Future<bool> isInstalledAmber() async {
+    final bool result = await isAppInstalled('com.greenart7c3.nostrsigner');
+    return result;
+  }
 }
