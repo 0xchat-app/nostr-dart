@@ -7,27 +7,38 @@ import 'package:nostr_core_dart/nostr.dart';
 /// bech32-encoded entities
 class Nip19 {
   static encodePubkey(String pubkey) {
-    return bech32Encode("npub", pubkey);
+    try {
+      return bech32Encode("npub", pubkey);
+    } catch (_) {
+      return '';
+    }
   }
 
   static encodePrivkey(String privkey) {
-    return bech32Encode("nsec", privkey);
+    try {
+      return bech32Encode("nsec", privkey);
+    } catch (_) {
+      return '';
+    }
   }
 
   static encodeNote(String noteid) {
-    return bech32Encode("note", noteid);
+    try {
+      return bech32Encode("note", noteid);
+    } catch (_) {
+      return '';
+    }
   }
 
   static String decodePubkey(String data) {
-    try{
+    try {
       Map map = bech32Decode(data);
       if (map["prefix"] == "npub") {
         return map["data"];
       } else {
         return "";
       }
-    }
-    catch(_){
+    } catch (_) {
       return "";
     }
   }
@@ -42,18 +53,16 @@ class Nip19 {
   }
 
   static String decodeNote(String data) {
-    try{
+    try {
       Map map = bech32Decode(data);
       if (map["prefix"] == "note") {
         return map["data"];
       } else {
         return "";
       }
-    }
-    catch(_){
+    } catch (_) {
       return "";
     }
-
   }
 
   // 0: special
@@ -110,14 +119,14 @@ class Nip19 {
   }
 
   static Map<String, dynamic> decodeShareableEntity(String shareableEntity) {
-    try{
+    try {
       String prefix = '';
       String special = '';
       List<String> relays = [];
       String? author;
       int? kind;
       Map<String, String> decodedMap =
-      bech32Decode(shareableEntity, maxLength: shareableEntity.length);
+          bech32Decode(shareableEntity, maxLength: shareableEntity.length);
       prefix = decodedMap['prefix']!;
       final data = hexToBytes(decodedMap['data']!);
 
@@ -150,8 +159,7 @@ class Nip19 {
         'author': author,
         'kind': kind
       };
-    }
-    catch(_){
+    } catch (_) {
       return {'prefix': ''};
     }
   }

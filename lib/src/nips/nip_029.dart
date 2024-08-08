@@ -56,7 +56,7 @@ class Nip29 {
 
     List<GroupAdmin> admins = [];
     for (var tag in event.tags) {
-      if (tag[0] == "p") {
+      if (tag[0] == "p" && isHexadecimalString(tag[1])) {
         List<GroupActionKind> permissions = [];
         for (int i = 3; i < tag.length; ++i) {
           permissions.add(GroupActionKind.fromString(tag[i]));
@@ -67,6 +67,11 @@ class Nip29 {
     return admins;
   }
 
+  static bool isHexadecimalString(String input) {
+    final regex = RegExp(r'^[a-fA-F0-9]{64}$');
+    return regex.hasMatch(input);
+  }
+
   static List<String> decodeGroupMembers(Event event) {
     if (event.kind != 39002) {
       throw Exception("${event.kind} is not nip29 compatible");
@@ -74,7 +79,7 @@ class Nip29 {
 
     List<String> members = [];
     for (var tag in event.tags) {
-      if (tag[0] == "p") members.add(tag[1]);
+      if (tag[0] == "p" && isHexadecimalString(tag[1])) members.add(tag[1]);
     }
     return members;
   }
