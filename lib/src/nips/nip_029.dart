@@ -259,7 +259,7 @@ class Nip29 {
       int createAt = 0}) async {
     List<List<String>> tags = [];
     int kind = 9; // normal message
-    if (rootEvent != null) {
+    if (rootEvent != null && rootEvent.isNotEmpty) {
       ETag root = Nip10.rootTag(rootEvent, '');
       ETag? reply = replyEvent == null ? null : Nip10.replyTag(replyEvent, '');
       Thread thread = Thread(root, reply, null, null);
