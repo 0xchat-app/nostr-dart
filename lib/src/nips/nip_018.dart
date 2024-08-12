@@ -29,9 +29,11 @@ class Nip18 {
       List<String> repostPubkeys,
       String? rawEvent,
       String pubkey,
-      String privkey) {
+      String privkey,
+      {String? relayGroupId}) {
     List<List<String>> tags = [];
     tags.add(['e', repostId, repostEventRelay ?? '']);
+    if (relayGroupId != null) tags.add(["h", relayGroupId]);
     for (var p in repostPubkeys) {
       tags.add(["p", p]);
     }
@@ -72,9 +74,11 @@ class Nip18 {
       String content,
       List<String>? hashTags,
       String pubkey,
-      String privkey) {
+      String privkey,
+      {String? relayGroupId}) {
     List<List<String>> tags = [];
     tags.add(['q', quoteRepostId]);
+    if (relayGroupId != null) tags.add(["h", relayGroupId]);
     for (var p in quoteRepostPubkeys) {
       tags.add(["p", p]);
     }
