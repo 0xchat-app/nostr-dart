@@ -83,6 +83,11 @@ class Nip19 {
   static String encodeShareableEntity(String prefix, String special,
       List<String>? relays, String? author, int? kind) {
     // 0:special
+    if(prefix == 'naddr'){
+      special = special.codeUnits
+          .map((number) => number.toRadixString(16).padLeft(2, '0'))
+          .join('');
+    }
     String result =
         '00${hexToBytes(special).length.toRadixString(16).padLeft(2, '0')}$special';
     // 1:relay
