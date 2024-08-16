@@ -100,7 +100,7 @@ class Nip58 {
     if (event.kind == 30008) {
       var tag = event.tags[0];
       Map<String, BadgeAward> result = {};
-      if (tag[0] == 'd' && tag[1] == 'profile_badges') {
+      if (tag[0] == 'd') {
         for (int i = 1; i < event.tags.length; i += 2) {
           if (event.tags[i][0] == 'a' && event.tags[i + 1][0] == 'e') {
             BadgeAward? badgeAward =
