@@ -298,6 +298,19 @@ class Nip29 {
     return event;
   }
 
+  static Future<Event> encodeLeaveRequest(
+      String groupId, String content, String pubkey, String privkey) async {
+    List<List<String>> tags = [];
+    tags.add(['h', groupId]);
+    Event event = await Event.from(
+        kind: 9022,
+        tags: tags,
+        content: content,
+        pubkey: pubkey,
+        privkey: privkey);
+    return event;
+  }
+
   static Future<Event> encodeCreateGroup(
       String groupId, String pubkey, String privkey) async {
     List<List<String>> tags = [];
@@ -439,6 +452,13 @@ class Nip29 {
         tags, previous, pubkey, privkey);
   }
 
+  static Future<Event> encodeDeleteGroupStatus(String groupId, String content,
+      List<String> previous, String pubkey, String privkey) async {
+    List<List<String>> tags = [];
+    return _encodeGroupAction(groupId, GroupActionKind.deleteGroup, content,
+        tags, previous, pubkey, privkey);
+  }
+
   static Future<Event> encodeGroupModeration(
       GroupModeration moderation, String pubkey, String privkey) {
     switch (moderation.actionKind) {
@@ -488,6 +508,9 @@ class Nip29 {
             moderation.previous,
             pubkey,
             privkey);
+      case GroupActionKind.deleteGroup:
+        return encodeDeleteGroupStatus(moderation.groupId, moderation.content,
+            moderation.previous, pubkey, privkey);
     }
   }
 }
@@ -499,7 +522,8 @@ enum GroupActionKind {
   addPermission(9003, 'add-permission'),
   removePermission(9004, 'remove-permission'),
   deleteEvent(9005, 'delete-event'),
-  editGroupStatus(9006, 'edit-group-status');
+  editGroupStatus(9006, 'edit-group-status'),
+  deleteGroup(9008, 'delete-group	');
 
   final int kind;
   final String name;
@@ -724,5 +748,13 @@ class GroupModeration {
         private: private,
         content: reason,
         actionKind: GroupActionKind.editGroupStatus);
+  }
+
+  factory GroupModeration.deleteGroup(
+      String groupId, String reason) {
+    return GroupModeration(
+        groupId: groupId,
+        content: reason,
+        actionKind: GroupActionKind.deleteGroup);
   }
 }
