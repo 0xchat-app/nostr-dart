@@ -119,25 +119,57 @@ class Nip4 {
 /// ```
 class EDMessage {
   String sender;
-
   String receiver;
-
   int createdAt;
-
   String content;
-
   String replyId;
-
   String? expiration;
-
   String? groupId;
-
   String? subject;
-
   List<String>? members;
 
   /// Default constructor
-  EDMessage(this.sender, this.receiver, this.createdAt, this.content,
-      this.replyId, this.expiration,
-      {this.groupId, this.subject, this.members});
+  EDMessage(
+    this.sender,
+    this.receiver,
+    this.createdAt,
+    this.content,
+    this.replyId,
+    this.expiration, {
+    this.groupId,
+    this.subject,
+    this.members,
+  });
+
+  /// Creates an instance of EDMessage from a Map
+  factory EDMessage.fromMap(Map<String, dynamic> map) {
+    return EDMessage(
+      map['sender'] as String,
+      map['receiver'] as String,
+      map['createdAt'] as int,
+      map['content'] as String,
+      map['replyId'] as String,
+      map['expiration'] as String?,
+      groupId: map['groupId'] as String?,
+      subject: map['subject'] as String?,
+      members: map['members'] != null
+          ? List<String>.from(map['members'] as List)
+          : null,
+    );
+  }
+
+  /// Converts an instance of EDMessage to a Map
+  Map<String, dynamic> toMap() {
+    return {
+      'sender': sender,
+      'receiver': receiver,
+      'createdAt': createdAt,
+      'content': content,
+      'replyId': replyId,
+      'expiration': expiration,
+      'groupId': groupId,
+      'subject': subject,
+      'members': members,
+    };
+  }
 }
