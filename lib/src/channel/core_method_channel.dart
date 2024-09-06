@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 
 ///Title: core_method_channel
@@ -21,6 +23,7 @@ class CoreMethodChannel{
   }
 
   static Future<bool> isInstalledAmber() async {
+    if (Platform.isIOS) return false;
     final bool result = await isAppInstalled('com.greenart7c3.nostrsigner');
     return result;
   }
