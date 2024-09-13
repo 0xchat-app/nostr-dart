@@ -45,6 +45,9 @@ class Nip29 {
       if (tag[0] == "d") {
         return tag[1];
       }
+      if (tag[0] == "h") {
+        return tag[1];
+      }
     }
     return null;
   }
@@ -549,6 +552,7 @@ enum GroupActionKind {
       GroupActionKind.removePermission,
       GroupActionKind.editGroupStatus,
       GroupActionKind.deleteEvent,
+      GroupActionKind.deleteGroup
     ];
   }
 }
