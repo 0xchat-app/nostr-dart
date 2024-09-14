@@ -146,7 +146,7 @@ class Nip29 {
   }
 
   static GroupModeration decodeModeration(Event event) {
-    if (event.kind < 9000 || event.kind > 9006) {
+    if (event.kind < 9000 || event.kind > 9008) {
       throw Exception("${event.kind} is not nip29 compatible");
     }
     List<String> users = [], permissions = [];
@@ -526,7 +526,7 @@ enum GroupActionKind {
   removePermission(9004, 'remove-permission'),
   deleteEvent(9005, 'delete-event'),
   editGroupStatus(9006, 'edit-group-status'),
-  deleteGroup(9008, 'delete-group	');
+  deleteGroup(9008, 'delete-group');
 
   final int kind;
   final String name;
