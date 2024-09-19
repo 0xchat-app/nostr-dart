@@ -33,8 +33,8 @@ class Nip51 {
     return result;
   }
 
-  static Future<String> peoplesToContent(
-      List<People> items, String privkey, String pubkey) async {
+  static Future<String> peoplesToContent(List<People> items, String privkey, String pubkey,
+      {List<String>? hashTags, List<String>? words, List<String>? threads}) async {
     var list = [];
     for (People item in items) {
       list.add([
@@ -44,6 +44,15 @@ class Nip51 {
         item.petName ?? "",
         item.aliasPubKey ?? "",
       ]);
+    }
+    for (var t in hashTags ?? []) {
+      list.add(['t', t]);
+    }
+    for (var word in words ?? []) {
+      list.add(['word', word]);
+    }
+    for (var e in threads ?? []) {
+      list.add(['e', e]);
     }
     String content = jsonEncode(list);
     return await Nip4.encryptContent(content, pubkey, pubkey, privkey);
@@ -87,8 +96,8 @@ class Nip51 {
     if (deContent.isNotEmpty) {
       for (List tag in jsonDecode(deContent)) {
         if (tag[0] == "p") {
-          people.add(People(tag[1], tag.length > 2 ? tag[2] : "",
-              tag.length > 3 ? tag[3] : "", tag.length > 4 ? tag[4] : ""));
+          people.add(People(tag[1], tag.length > 2 ? tag[2] : "", tag.length > 3 ? tag[3] : "",
+              tag.length > 4 ? tag[4] : ""));
         } else if (tag[0] == "e") {
           // bookmark
           bookmarks.add(tag[1]);
@@ -101,9 +110,11 @@ class Nip51 {
     return {"people": people, "bookmarks": bookmarks, "groups": groups};
   }
 
-  static Future<Event> createMutePeople(List<People> items,
-      List<People> encryptedItems, String privkey, String pubkey) async {
-    String content = await peoplesToContent(encryptedItems, privkey, pubkey);
+  static Future<Event> createMutePeople(
+      List<People> items, List<People> encryptedItems, String privkey, String pubkey,
+      {List<String>? hashTags, List<String>? words, List<String>? threads}) async {
+    String content = await peoplesToContent(encryptedItems, privkey, pubkey,
+        hashTags: hashTags, words: words, threads: threads);
     return Event.from(
         kind: 10000,
         tags: peoplesToTags(items),
@@ -112,8 +123,8 @@ class Nip51 {
         privkey: privkey);
   }
 
-  static Future<Event> createPinEvent(List<String> items,
-      List<String> encryptedItems, String privkey, String pubkey) async {
+  static Future<Event> createPinEvent(
+      List<String> items, List<String> encryptedItems, String privkey, String pubkey) async {
     String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 10001,
@@ -123,8 +134,8 @@ class Nip51 {
         privkey: privkey);
   }
 
-  static Future<Event> createPublicChatList(List<String> items,
-      List<String> encryptedItems, String privkey, String pubkey) async {
+  static Future<Event> createPublicChatList(
+      List<String> items, List<String> encryptedItems, String privkey, String pubkey) async {
     String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
     return Event.from(
         kind: 10005,
@@ -145,42 +156,23 @@ class Nip51 {
         privkey: privkey);
   }
 
-  static Future<Event> createCategorizedPeople(
-      String identifier,
-      List<People> items,
-      List<People> encryptedItems,
-      String privkey,
-      String pubkey) async {
+  static Future<Event> createCategorizedPeople(String identifier, List<People> items,
+      List<People> encryptedItems, String privkey, String pubkey) async {
     List<List<String>> tags = peoplesToTags(items);
     tags.add(["d", identifier]);
     String content = await peoplesToContent(encryptedItems, privkey, pubkey);
-    return Event.from(
-        kind: 30000,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+    return Event.from(kind: 30000, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
-  static Future<Event> createCategorizedBookmarks(
-      String identifier,
-      List<String> items,
-      List<String> encryptedItems,
-      String privkey,
-      String pubkey) async {
+  static Future<Event> createCategorizedBookmarks(String identifier, List<String> items,
+      List<String> encryptedItems, String privkey, String pubkey) async {
     List<List<String>> tags = bookmarksToTags(items);
     tags.add(["d", identifier]);
     String content = await bookmarksToContent(encryptedItems, privkey, pubkey);
-    return Event.from(
-        kind: 30003,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+    return Event.from(kind: 30003, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
-  static Future<Lists> getLists(
-      Event event, String pubkey, String privkey) async {
+  static Future<Lists> getLists(Event event, String pubkey, String privkey) async {
     if (event.kind != 10000 &&
         event.kind != 10001 &&
         event.kind != 10005 &&
@@ -193,14 +185,22 @@ class Nip51 {
     String identifier = "";
     List<People> people = [];
     List<String> bookmarks = [];
+    List<String> words = [];
+    List<String> hashTags = [];
     List<SimpleGroups> groups = [];
     for (List tag in event.tags) {
       if (tag[0] == "p") {
-        people.add(People(tag[1], tag.length > 2 ? tag[2] : "",
-            tag.length > 3 ? tag[3] : "", tag.length > 4 ? tag[4] : ""));
+        people.add(People(tag[1], tag.length > 2 ? tag[2] : "", tag.length > 3 ? tag[3] : "",
+            tag.length > 4 ? tag[4] : ""));
       }
       if (tag[0] == "e") {
         bookmarks.add(tag[1]);
+      }
+      if (tag[0] == "word") {
+        words.add(tag[1]);
+      }
+      if (tag[0] == "t") {
+        hashTags.add(tag[1]);
       }
       if (tag[0] == "group") {
         groups.add(SimpleGroups(tag[1], tag.length > 2 ? tag[2] : ''));
@@ -218,7 +218,8 @@ class Nip51 {
     if (event.kind == 10005) identifier = "Public chats";
     if (event.kind == 10009) identifier = "Simple groups";
 
-    return Lists(event.pubkey, identifier, people, bookmarks, groups, event.createdAt);
+    return Lists(
+        event.pubkey, identifier, people, bookmarks, words, hashTags, groups, event.createdAt);
   }
 }
 
@@ -248,11 +249,15 @@ class Lists {
 
   List<String> bookmarks;
 
+  List<String> words;
+
+  List<String> hashTags;
+
   List<SimpleGroups> groups;
 
   int createTime;
 
   /// Default constructor
-  Lists(this.owner, this.identifier, this.people, this.bookmarks, this.groups,
-      this.createTime);
+  Lists(this.owner, this.identifier, this.people, this.bookmarks, this.words, this.hashTags,
+      this.groups, this.createTime);
 }
