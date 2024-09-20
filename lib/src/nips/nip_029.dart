@@ -534,6 +534,7 @@ enum GroupActionKind {
   const GroupActionKind(this.kind, this.name);
 
   static GroupActionKind fromString(String name) {
+    if(name == 'delete-group-status') return GroupActionKind.deleteGroup;
     return GroupActionKind.values.firstWhere((element) => element.name == name,
         orElse: () => throw ArgumentError('Invalid permission name: $name'));
   }
