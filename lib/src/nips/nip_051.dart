@@ -83,6 +83,8 @@ class Nip51 {
       String content, String privkey, String pubkey) async {
     List<People> people = [];
     List<String> bookmarks = [];
+    List<String> words = [];
+    List<String> hashTags = [];
     List<SimpleGroups> groups = [];
     int ivIndex = content.indexOf("?iv=");
     String deContent = '';
@@ -101,13 +103,23 @@ class Nip51 {
         } else if (tag[0] == "e") {
           // bookmark
           bookmarks.add(tag[1]);
+        } else if (tag[0] == "word") {
+          words.add(tag[1]);
+        } else if (tag[0] == "t") {
+          hashTags.add(tag[1]);
         } else if (tag[0] == "group") {
           groups.add(SimpleGroups(tag[1], tag.length > 2 ? tag[2] : ''));
         }
       }
     }
 
-    return {"people": people, "bookmarks": bookmarks, "groups": groups};
+    return {
+      "people": people,
+      "bookmarks": bookmarks,
+      "groups": groups,
+      "words": words,
+      "hashTags": hashTags
+    };
   }
 
   static Future<Event> createMutePeople(
@@ -212,6 +224,8 @@ class Nip51 {
       people.addAll(content["people"]);
       bookmarks.addAll(content["bookmarks"]);
       groups.addAll(content["groups"]);
+      words.addAll(content["words"]);
+      hashTags.addAll(content["hashTags"]);
     }
     if (event.kind == 10000) identifier = "Mute";
     if (event.kind == 10001) identifier = "Pin";
