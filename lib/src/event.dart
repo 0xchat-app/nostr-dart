@@ -198,7 +198,7 @@ class Event {
   static Future<Event> fromJson(Map<String, dynamic> json,
       {bool verify = true}) async {
     var tags = (json['tags'] as List<dynamic>)
-        .map((e) => (e as List<dynamic>).map((e) => e as String).toList())
+        .map((e) => (e as List<dynamic>).map((e) => e.toString()).toList())
         .toList();
     Event event = Event(
       json['id'],
