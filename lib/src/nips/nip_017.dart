@@ -117,7 +117,7 @@ class Nip17 {
   }
 
   static Future<EDMessage?> decodeSealedGossipDM(
-      Event innerEvent, String receiver) async {
+      Event innerEvent, String receiver, String myPubkey) async {
     if (innerEvent.kind == 14) {
       List<String> receivers = [];
       String replyId = "";
@@ -133,7 +133,7 @@ class Nip17 {
         if (tag[0] == "expiration") expiration = tag[1];
         if (tag[0] == "subject") subject = tag[1];
       }
-      if (receivers.length == 1) {
+      if (receivers.length == 1 || (receivers.length == 2 && receivers.contains(myPubkey))) {
         // private chat
         return EDMessage(innerEvent.pubkey, receivers.first,
             innerEvent.createdAt, subContent, replyId, expiration);
