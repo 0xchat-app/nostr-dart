@@ -20,8 +20,7 @@ class Nip4 {
   ///
   ///  EDMessage eDMessage = Nip4.decode(event);
   ///```
-  static Future<EDMessage?> decode(
-      Event event, String myPubkey, String privkey) async {
+  static Future<EDMessage?> decode(Event event, String myPubkey, String privkey) async {
     if (event.kind == 4) {
       return await _toEDMessage(event, myPubkey, privkey);
     }
@@ -29,8 +28,7 @@ class Nip4 {
   }
 
   /// Returns EDMessage from event
-  static Future<EDMessage> _toEDMessage(
-      Event event, String myPubkey, String privkey) async {
+  static Future<EDMessage> _toEDMessage(Event event, String myPubkey, String privkey) async {
     String sender = event.pubkey;
     int createdAt = event.createdAt;
     String receiver = "";
@@ -55,8 +53,8 @@ class Nip4 {
     return EDMessage(sender, receiver, createdAt, content, replyId, expiration);
   }
 
-  static Future<String> decryptContent(String content, String peerPubkey,
-      String myPubkey, String privkey) async {
+  static Future<String> decryptContent(
+      String content, String peerPubkey, String myPubkey, String privkey) async {
     int ivIndex = content.indexOf("?iv=");
     if (ivIndex <= 0) {
       print("Invalid content for dm, could not get ivIndex: $content");
@@ -75,27 +73,22 @@ class Nip4 {
     }
   }
 
-  static Future<Event> encode(String sender, String receiver, String content,
-      String replyId, String privkey,
+  static Future<Event> encode(
+      String sender, String receiver, String content, String replyId, String privkey,
       {String? subContent, int? expiration}) async {
     String enContent = await encryptContent(content, receiver, sender, privkey);
     List<List<String>> tags = toTags(receiver, replyId, expiration);
     if (subContent != null && subContent.isNotEmpty) {
-      String enSubContent =
-          await encryptContent(subContent, receiver, sender, privkey);
+      String enSubContent = await encryptContent(subContent, receiver, sender, privkey);
       tags.add(['subContent', enSubContent]);
     }
-    Event event = await Event.from(
-        kind: 4,
-        tags: tags,
-        content: enContent,
-        pubkey: sender,
-        privkey: privkey);
+    Event event =
+        await Event.from(kind: 4, tags: tags, content: enContent, pubkey: sender, privkey: privkey);
     return event;
   }
 
-  static Future<String> encryptContent(String plainText, String peerPubkey,
-      String myPubkey, String privkey) async {
+  static Future<String> encryptContent(
+      String plainText, String peerPubkey, String myPubkey, String privkey) async {
     if (SignerHelper.needSigner(privkey)) {
       return await SignerHelper.encryptNip04(plainText, peerPubkey, myPubkey);
     } else {
@@ -103,8 +96,7 @@ class Nip4 {
     }
   }
 
-  static List<List<String>> toTags(String p, String e, int? expiration,
-      {List<String>? members}) {
+  static List<List<String>> toTags(String p, String e, int? expiration, {List<String>? members}) {
     List<List<String>> result = [];
     result.add(["p", p]);
     for (var m in members ?? []) {
@@ -127,19 +119,20 @@ class EDMessage {
   String? groupId;
   String? subject;
   List<String>? members;
+  String? mimeType;
+  String? algorithm;
+  String? secret;
+  String? nonce;
 
   /// Default constructor
-  EDMessage(
-    this.sender,
-    this.receiver,
-    this.createdAt,
-    this.content,
-    this.replyId,
-    this.expiration, {
-    this.groupId,
-    this.subject,
-    this.members,
-  });
+  EDMessage(this.sender, this.receiver, this.createdAt, this.content, this.replyId, this.expiration,
+      {this.groupId,
+      this.subject,
+      this.members,
+      this.mimeType,
+      this.algorithm,
+      this.secret,
+      this.nonce});
 
   /// Creates an instance of EDMessage from a Map
   factory EDMessage.fromMap(Map<String, dynamic> map) {
@@ -152,9 +145,11 @@ class EDMessage {
       map['expiration'] as String?,
       groupId: map['groupId'] as String?,
       subject: map['subject'] as String?,
-      members: map['members'] != null
-          ? List<String>.from(map['members'] as List)
-          : null,
+      members: map['members'] != null ? List<String>.from(map['members'] as List) : null,
+      mimeType: map['mimeType'] as String?,
+      algorithm: map['algorithm'] as String?,
+      secret: map['secret'] as String?,
+      nonce: map['nonce'] as String?,
     );
   }
 
@@ -170,6 +165,10 @@ class EDMessage {
       'groupId': groupId,
       'subject': subject,
       'members': members,
+      'mimeType': mimeType,
+      'algorithm': algorithm,
+      'secret': secret,
+      'nonce': nonce,
     };
   }
 }
