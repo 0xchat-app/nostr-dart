@@ -188,7 +188,7 @@ class Nip29 {
       {List<String>? hashTags}) async {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
-    if (previous.isNotEmpty) tags.add(['previous', ...previous]);
+    // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
     if (hashTags != null) {
       for (var t in hashTags) {
         tags.add(['t', t]);
@@ -220,7 +220,7 @@ class Nip29 {
       tags.add(["p", pTag.pubkey, pTag.relayURL]);
     }
     tags.add(['h', groupId]);
-    if (previous.isNotEmpty) tags.add(['previous', ...previous]);
+    // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
     if (hashTags != null) {
       for (var t in hashTags) {
         tags.add(['t', t]);
@@ -240,7 +240,7 @@ class Nip29 {
       {String? subContent}) async {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
-    if (previous.isNotEmpty) tags.add(['previous', ...previous]);
+    // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
     }
@@ -273,7 +273,7 @@ class Nip29 {
       tags.add(["p", pTag.pubkey, pTag.relayURL]);
     }
     tags.add(['h', groupId]);
-    if (previous.isNotEmpty) tags.add(['previous', ...previous]);
+    // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
 
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
@@ -332,7 +332,7 @@ class Nip29 {
       String pubkey,
       String privkey) async {
     tags.add(['h', groupId]);
-    if (previous.isNotEmpty) tags.add(['previous', ...previous]);
+    // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
     Event event = await Event.from(
         kind: actionKind.kind,
         tags: tags,
