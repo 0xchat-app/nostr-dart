@@ -149,6 +149,7 @@ class Nip17 {
         if (tag[0] == "decryption-key") secret = tag[1];
         if (tag[0] == "decryption-nonce") nonce = tag[1];
       }
+      if (receivers.isEmpty) receivers.add(myPubkey);
       if (receivers.length == 1 || (receivers.length == 2 && receivers.contains(myPubkey))) {
         // private chat
         return EDMessage(innerEvent.pubkey, receivers.first, innerEvent.createdAt, subContent,
