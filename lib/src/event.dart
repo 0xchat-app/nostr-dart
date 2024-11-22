@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:convert/convert.dart';
 import 'package:pointycastle/export.dart';
+import 'package:flutter/foundation.dart';
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:nostr_core_dart/nostr.dart';
 
@@ -348,7 +349,10 @@ class Event {
   Future<bool> isValid() async {
     String verifyId = getEventId();
     if (createdAt.toString().length == 10 && id == verifyId) {
-      return ChannelCryptoTool.verifySignature(pubkey, id, sig);
+      if (Platform.isAndroid || Platform.isIOS)
+        return ChannelCryptoTool.verifySignature(pubkey, id, sig);
+      else
+        return bip340.verify(pubkey, id, sig);
     } else {
       return false;
     }
