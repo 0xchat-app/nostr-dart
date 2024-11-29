@@ -35,6 +35,7 @@ export 'src/nips/nip_040.dart';
 export 'src/nips/nip_042.dart';
 export 'src/nips/nip_044.dart';
 export 'src/nips/nip_044_v2.dart';
+export 'src/nips/nip_046.dart';
 export 'src/nips/nip_047.dart';
 export 'src/nips/nip_051.dart';
 export 'src/nips/nip_057.dart';
