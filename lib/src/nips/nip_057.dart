@@ -35,38 +35,38 @@ class Nip57 {
       }
       List<String>? splitStrings = anon?.split('_');
       if (splitStrings != null && splitStrings.length == 2) {
-        /// recipient decrypt
-        try {
-          String contentBech32 = splitStrings[0];
-          String ivBech32 = splitStrings[1];
-          String? encryptedContent = bech32Decode(contentBech32,
-              maxLength: contentBech32.length)['data'];
-          String? iv =
-              bech32Decode(ivBech32, maxLength: ivBech32.length)['data'];
-
-          String encryptedContentBase64 =
-              base64Encode(hexToBytes(encryptedContent!));
-          String ivBase64 = base64Encode(hexToBytes(iv!));
-
-          String eventString = await Nip4.decryptContent(
-              '$encryptedContentBase64?iv=$ivBase64',
-              recipient!,
-              myPubkey,
-              privkey);
-
-          /// try to use sender decrypt
-          if (eventString.isEmpty) {
-            String derivedPrivkey =
-                generateKeyPair(recipient, event.createdAt, privkey);
-            eventString = await Nip4.decryptContent('$encryptedContent?iv=$iv',
-                recipient, bip340.getPublicKey(derivedPrivkey), derivedPrivkey);
-          }
-          if (eventString.isNotEmpty) {
-            Event privEvent = await Event.fromJson(jsonDecode(eventString));
-            sender = privEvent.pubkey;
-            content = privEvent.content;
-          }
-        } catch (_) {}
+        // /// recipient decrypt
+        // try {
+        //   String contentBech32 = splitStrings[0];
+        //   String ivBech32 = splitStrings[1];
+        //   String? encryptedContent = bech32Decode(contentBech32,
+        //       maxLength: contentBech32.length)['data'];
+        //   String? iv =
+        //       bech32Decode(ivBech32, maxLength: ivBech32.length)['data'];
+        //
+        //   String encryptedContentBase64 =
+        //       base64Encode(hexToBytes(encryptedContent!));
+        //   String ivBase64 = base64Encode(hexToBytes(iv!));
+        //
+        //   String eventString = await Nip4.decryptContent(
+        //       '$encryptedContentBase64?iv=$ivBase64',
+        //       recipient!,
+        //       myPubkey,
+        //       privkey);
+        //
+        //   /// try to use sender decrypt
+        //   if (eventString.isEmpty) {
+        //     String derivedPrivkey =
+        //         generateKeyPair(recipient, event.createdAt, privkey);
+        //     eventString = await Nip4.decryptContent('$encryptedContent?iv=$iv',
+        //         recipient, bip340.getPublicKey(derivedPrivkey), derivedPrivkey);
+        //   }
+        //   if (eventString.isNotEmpty) {
+        //     Event privEvent = await Event.fromJson(jsonDecode(eventString));
+        //     sender = privEvent.pubkey;
+        //     content = privEvent.content;
+        //   }
+        // } catch (_) {}
       }
 
       ZapReceipt zapReceipt = ZapReceipt(
