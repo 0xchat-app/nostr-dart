@@ -52,7 +52,7 @@ class Nip44 {
       {String encodeType = 'base64', String? prefix}) async {
     try {
       if (SignerHelper.needSigner(privkey)) {
-        return await SignerHelper.decryptNip44(content, peerPubkey, myPubkey);
+        return await SignerHelper.decryptNip44(content, peerPubkey, myPubkey, privkey) ?? '';
       }
       Uint8List? decodeContent;
       if (encodeType == 'base64') {
@@ -106,7 +106,7 @@ class Nip44 {
   static Future<String> encryptContent(String plainText, String peerPubkey,
       String myPubkey, String privkey) async {
     if (SignerHelper.needSigner(privkey)) {
-      return await SignerHelper.encryptNip44(plainText, peerPubkey, myPubkey);
+      return await SignerHelper.encryptNip44(plainText, peerPubkey, myPubkey, privkey) ?? '';
     } else {
       return await encrypt(privkey, peerPubkey, plainText);
     }

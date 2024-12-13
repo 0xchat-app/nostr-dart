@@ -232,7 +232,7 @@ String generateStrongPassword(int length) {
 Future<String> signData(List data, String pubkey, String private) async {
   String serializedData = json.encode(data);
   if (SignerHelper.needSigner(private)) {
-    return await SignerHelper.signMessage(serializedData, pubkey) ?? '';
+    return await SignerHelper.signMessage(serializedData, pubkey, private) ?? '';
   }
   Uint8List hash =
       SHA256Digest().process(Uint8List.fromList(utf8.encode(serializedData)));

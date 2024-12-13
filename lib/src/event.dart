@@ -184,7 +184,7 @@ class Event {
     );
 
     if (SignerHelper.needSigner(privkey)) {
-      return await SignerHelper.signEvent(event, pubkey);
+      return await SignerHelper.signEvent(event, pubkey, privkey) ?? event;
     }
     return event;
   }

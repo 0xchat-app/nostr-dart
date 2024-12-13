@@ -64,7 +64,7 @@ class Nip4 {
     String encString = content.substring(0, ivIndex);
     try {
       if (SignerHelper.needSigner(privkey)) {
-        return await SignerHelper.decryptNip04(content, peerPubkey, myPubkey);
+        return await SignerHelper.decryptNip04(content, peerPubkey, myPubkey, privkey) ?? '';
       } else {
         return decrypt(privkey, '02$peerPubkey', encString, iv);
       }
@@ -90,7 +90,7 @@ class Nip4 {
   static Future<String> encryptContent(
       String plainText, String peerPubkey, String myPubkey, String privkey) async {
     if (SignerHelper.needSigner(privkey)) {
-      return await SignerHelper.encryptNip04(plainText, peerPubkey, myPubkey);
+      return await SignerHelper.encryptNip04(plainText, peerPubkey, myPubkey, privkey) ?? '';
     } else {
       return encrypt(privkey, '02$peerPubkey', plainText);
     }
