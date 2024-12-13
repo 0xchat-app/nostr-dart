@@ -23,13 +23,24 @@ class SignerHelper {
 
   static SignerApplication getSignerApplication(String privkey) {
     switch (privkey) {
-      case 'androidSigner':
       case '':
+      case 'androidSigner':
         return SignerApplication.androidSigner;
       case 'remoteSigner':
         return SignerApplication.androidSigner;
       default:
         return SignerApplication.none;
+    }
+  }
+
+  static String getSignerApplicationKey(SignerApplication signerApplication, String privkey) {
+    switch (signerApplication) {
+      case SignerApplication.androidSigner:
+        return 'androidSigner';
+      case SignerApplication.remoteSigner:
+        return 'remoteSigner';
+      default:
+        return privkey;
     }
   }
 
