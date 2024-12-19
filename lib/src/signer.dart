@@ -3,7 +3,7 @@ import 'package:nostr_core_dart/nostr.dart';
 
 enum SignerApplication { androidSigner, remoteSigner, none }
 
-typedef SignEventHandle = Future<Event> Function(Event unsignedEvent);
+typedef SignEventHandle = Future<Event> Function(String eventString);
 typedef Nip04EncryptEventHandle = Future<String?> Function(String plainText, String peerPubkey);
 typedef Nip04DecryptEventHandle = Future<String?> Function(String encryptedText, String peerPubkey);
 typedef Nip44EncryptEventHandle = Future<String?> Function(String plainText, String peerPubkey);
@@ -27,7 +27,7 @@ class SignerHelper {
       case 'androidSigner':
         return SignerApplication.androidSigner;
       case 'remoteSigner':
-        return SignerApplication.androidSigner;
+        return SignerApplication.remoteSigner;
       default:
         return SignerApplication.none;
     }
@@ -75,7 +75,7 @@ class SignerHelper {
         }
         return event;
       case SignerApplication.remoteSigner:
-        return SignerHelper.sharedInstance.signEventHandle?.call(event);
+        return SignerHelper.sharedInstance.signEventHandle?.call(eventString);
       default:
         return null;
     }

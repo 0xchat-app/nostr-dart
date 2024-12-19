@@ -73,7 +73,8 @@ class Nip46 {
 
   static Future<Event> encode(
       String remoteSigner, String id, NIP46Command command, String pubkey, String privkey) async {
-    var content = {'id': id, 'method': command.type.toString(), 'params': command.params};
+    var content = {'id': id, 'method': command.type.toValue(), 'params': command.params};
+    print('nip46 encode: content = $content, remotesigner = $remoteSigner, pubkey = $pubkey, privkey = $privkey');
     var encryptedContent =
         await Nip4.encryptContent(jsonEncode(content), remoteSigner, pubkey, privkey);
     return Event.from(
@@ -90,6 +91,7 @@ class Nip46 {
     if (event.kind == 24133) {
       String encryptedContent = event.content;
       String content = await Nip4.decryptContent(encryptedContent, event.pubkey, myPubkey, privkey);
+      print('receive NIP46CommandResult: $content');
       return NIP46CommandResult.fromJson(jsonDecode(content));
     }
     throw Exception("${event.kind} is not nip46 compatible");
@@ -108,14 +110,20 @@ class RemoteSignerConnection {
 
 enum CommandType {
   connect,
-  signEvent,
+  sign_event,
   ping,
-  getRelays,
-  getPublicKey,
-  nip04Encrypt,
-  nip04Decrypt,
-  nip44Encrypt,
-  nip44Decrypt,
+  get_relays,
+  get_public_key,
+  nip04_encrypt,
+  nip04_decrypt,
+  nip44_encrypt,
+  nip44_decrypt,
+}
+
+extension CommandTypeExtension on CommandType {
+  String toValue() {
+    return toString().split('.').last;
+  }
 }
 
 class NIP46Command {
@@ -138,15 +146,14 @@ class NIP46Command {
       params: [
         remoteSignerPubkey,
         optionalSecret,
-        optionalRequestedPermissions,
       ],
     );
   }
 
-  factory NIP46Command.signEvent(Map<String, dynamic> event) {
+  factory NIP46Command.signEvent(String eventString) {
     return NIP46Command(
-      type: CommandType.signEvent,
-      params: [event],
+      type: CommandType.sign_event,
+      params: [eventString],
     );
   }
 
@@ -159,42 +166,42 @@ class NIP46Command {
 
   factory NIP46Command.getRelays() {
     return NIP46Command(
-      type: CommandType.getRelays,
+      type: CommandType.get_relays,
       params: [],
     );
   }
 
   factory NIP46Command.getPublicKey() {
     return NIP46Command(
-      type: CommandType.getPublicKey,
+      type: CommandType.get_public_key,
       params: [],
     );
   }
 
   factory NIP46Command.nip04Encrypt(String thirdPartyPubkey, String plaintext) {
     return NIP46Command(
-      type: CommandType.nip04Encrypt,
+      type: CommandType.nip04_encrypt,
       params: [thirdPartyPubkey, plaintext],
     );
   }
 
   factory NIP46Command.nip04Decrypt(String thirdPartyPubkey, String ciphertext) {
     return NIP46Command(
-      type: CommandType.nip04Decrypt,
+      type: CommandType.nip04_decrypt,
       params: [thirdPartyPubkey, ciphertext],
     );
   }
 
   factory NIP46Command.nip44Encrypt(String thirdPartyPubkey, String plaintext) {
     return NIP46Command(
-      type: CommandType.nip44Encrypt,
+      type: CommandType.nip44_encrypt,
       params: [thirdPartyPubkey, plaintext],
     );
   }
 
   factory NIP46Command.nip44Decrypt(String thirdPartyPubkey, String ciphertext) {
     return NIP46Command(
-      type: CommandType.nip44Decrypt,
+      type: CommandType.nip44_decrypt,
       params: [thirdPartyPubkey, ciphertext],
     );
   }
@@ -202,13 +209,13 @@ class NIP46Command {
 
 class NIP46CommandResult {
   final String id;
-  final CommandType command;
+  final CommandType? command;
   final dynamic result;
   final String? error;
 
   NIP46CommandResult({
     required this.id,
-    required this.command,
+    this.command,
     this.result,
     this.error,
   });
@@ -230,7 +237,7 @@ class NIP46CommandResult {
         }
         break;
 
-      case CommandType.signEvent:
+      case CommandType.sign_event:
         if (response is String) {
           return NIP46CommandResult(
               id: id, command: command, result: response); // JSON Stringified event
@@ -243,27 +250,27 @@ class NIP46CommandResult {
         }
         break;
 
-      case CommandType.getRelays:
+      case CommandType.get_relays:
         if (response is Map<String, Map<String, bool>>) {
           return NIP46CommandResult(id: id, command: command, result: response);
         }
         break;
 
-      case CommandType.getPublicKey:
+      case CommandType.get_public_key:
         if (response is String) {
           return NIP46CommandResult(id: id, command: command, result: response);
         }
         break;
 
-      case CommandType.nip04Encrypt:
-      case CommandType.nip44Encrypt:
+      case CommandType.nip04_encrypt:
+      case CommandType.nip44_encrypt:
         if (response is String) {
           return NIP46CommandResult(id: id, command: command, result: response); // Ciphertext
         }
         break;
 
-      case CommandType.nip04Decrypt:
-      case CommandType.nip44Decrypt:
+      case CommandType.nip04_decrypt:
+      case CommandType.nip44_decrypt:
         if (response is String) {
           return NIP46CommandResult(id: id, command: command, result: response); // Plaintext
         }
@@ -285,8 +292,6 @@ class NIP46CommandResult {
   factory NIP46CommandResult.fromJson(Map<String, dynamic> json) {
     return NIP46CommandResult(
       id: json['id'],
-      command:
-          CommandType.values.firstWhere((e) => e.toString().split('.').last == json['command']),
       result: json['result'],
       error: json['error'],
     );
