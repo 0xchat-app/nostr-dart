@@ -3,6 +3,73 @@ import 'dart:core';
 import 'package:nostr_core_dart/nostr.dart';
 
 class Nip46 {
+  static String createNostrConnectUrl({
+    required String clientPubKey,
+    required String secret,
+    required List<String> relays,
+    String? perms,
+    String? name,
+    String? url,
+    String? image,
+  }) {
+    Uri uri = Uri.parse('nostrconnect://$clientPubKey');
+
+    Map<String, String> queryParams = {
+      'relay': relays.map((e) => Uri.encodeComponent(e)).join('&relay='),
+      'secret': secret,
+    };
+
+    if (perms != null && perms.isNotEmpty) {
+      queryParams['perms'] = perms;
+    }
+    if (name != null) {
+      queryParams['name'] = name;
+    }
+    if (url != null) {
+      queryParams['url'] = url;
+    }
+    if (image != null) {
+      queryParams['image'] = image;
+    }
+
+    uri = uri.replace(queryParameters: queryParams);
+    return uri.toString();
+  }
+
+  static RemoteSignerConnection parseNostrConnectUri(String uri) {
+    RemoteSignerConnection remoteSignerConnection = RemoteSignerConnection('', [], null);
+
+    if (!uri.startsWith('nostrconnect://')) {
+      throw ArgumentError('Invalid nostr connect URI format.');
+    }
+
+    final parts = uri.substring(9).split('?');
+    if (parts.isEmpty || parts[0].isEmpty) {
+      throw ArgumentError('Missing remote signer pubkey.');
+    }
+    remoteSignerConnection.clientPubkey = parts[0];
+
+    if (parts.length > 1) {
+      final queryParams = parts[1].split('&');
+      for (var param in queryParams) {
+        final keyValue = param.split('=');
+        if (keyValue.length == 2) {
+          final key = keyValue[0];
+          final value = keyValue[1];
+
+          if (key == 'relay') {
+            remoteSignerConnection.relays.add(value);
+          }
+          if (key == 'secret') {
+            remoteSignerConnection.secret = value;
+          }
+        }
+      }
+    }
+
+    return remoteSignerConnection;
+  }
+
   static RemoteSignerConnection parseBunkerUri(String uri) {
     RemoteSignerConnection remoteSignerConnection = RemoteSignerConnection('', [], null);
 
