@@ -139,13 +139,14 @@ class NIP46Command {
   factory NIP46Command.connect(
     String remoteSignerPubkey, [
     String? optionalSecret,
-    List<String>? optionalRequestedPermissions,
+    String? optionalRequestedPermissions,
   ]) {
     return NIP46Command(
       type: CommandType.connect,
       params: [
         remoteSignerPubkey,
         optionalSecret,
+        optionalRequestedPermissions
       ],
     );
   }
