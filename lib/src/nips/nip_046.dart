@@ -15,7 +15,7 @@ class Nip46 {
     Uri uri = Uri.parse('nostrconnect://$clientPubKey');
 
     Map<String, String> queryParams = {
-      'relay': relays.map((e) => Uri.encodeComponent(e)).join('&relay='),
+      'relay': relays.map((e) => e).join('&relay='),
       'secret': secret,
     };
 
@@ -54,8 +54,9 @@ class Nip46 {
       for (var param in queryParams) {
         final keyValue = param.split('=');
         if (keyValue.length == 2) {
-          final key = keyValue[0];
-          final value = keyValue[1];
+          final key = Uri.decodeComponent(keyValue[0]);
+          final value = Uri.decodeComponent(keyValue[1]);
+          print('parseBunkerUri: value = $value, ${keyValue[1]}');
 
           if (key == 'relay') {
             remoteSignerConnection.relays.add(value);
@@ -88,8 +89,9 @@ class Nip46 {
       for (var param in queryParams) {
         final keyValue = param.split('=');
         if (keyValue.length == 2) {
-          final key = keyValue[0];
-          final value = keyValue[1];
+          final key = Uri.decodeComponent(keyValue[0]);
+          final value = Uri.decodeComponent(keyValue[1]);
+          print('parseBunkerUri: value = $value, ${keyValue[1]}');
 
           if (key == 'relay') {
             remoteSignerConnection.relays.add(value);
