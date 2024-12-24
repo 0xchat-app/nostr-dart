@@ -56,7 +56,6 @@ class Nip46 {
         if (keyValue.length == 2) {
           final key = Uri.decodeComponent(keyValue[0]);
           final value = Uri.decodeComponent(keyValue[1]);
-          print('parseBunkerUri: value = $value, ${keyValue[1]}');
 
           if (key == 'relay') {
             remoteSignerConnection.relays.add(value);
@@ -91,7 +90,6 @@ class Nip46 {
         if (keyValue.length == 2) {
           final key = Uri.decodeComponent(keyValue[0]);
           final value = Uri.decodeComponent(keyValue[1]);
-          print('parseBunkerUri: value = $value, ${keyValue[1]}');
 
           if (key == 'relay') {
             remoteSignerConnection.relays.add(value);
@@ -160,7 +158,6 @@ class Nip46 {
     if (event.kind == 24133) {
       String encryptedContent = event.content;
       String content = await Nip4.decryptContent(encryptedContent, event.pubkey, myPubkey, privkey);
-      print('receive NIP46CommandResult: $content');
       return NIP46CommandResult.fromJson(jsonDecode(content));
     }
     throw Exception("${event.kind} is not nip46 compatible");
