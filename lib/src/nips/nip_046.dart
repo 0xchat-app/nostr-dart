@@ -81,7 +81,7 @@ class Nip46 {
     if (parts.isEmpty || parts[0].isEmpty) {
       throw ArgumentError('Missing remote signer pubkey.');
     }
-    remoteSignerConnection.pubkey = parts[0];
+    remoteSignerConnection.remotePubkey = parts[0];
 
     if (parts.length > 1) {
       final queryParams = parts[1].split('&');
@@ -166,13 +166,13 @@ class Nip46 {
 }
 
 class RemoteSignerConnection {
-  String pubkey;
+  String remotePubkey;
   List<String> relays;
   String? secret;
   String? clientPubkey;
   String? clientPrivkey;
 
-  RemoteSignerConnection(this.pubkey, this.relays, this.secret);
+  RemoteSignerConnection(this.remotePubkey, this.relays, this.secret);
 }
 
 enum CommandType {
