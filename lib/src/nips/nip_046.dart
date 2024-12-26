@@ -37,6 +37,7 @@ class Nip46 {
   }
 
   static RemoteSignerConnection parseNostrConnectUri(String uri) {
+    uri = Uri.decodeComponent(uri);
     RemoteSignerConnection remoteSignerConnection = RemoteSignerConnection('', [], null);
 
     if (!uri.startsWith('nostrconnect://')) {
@@ -54,8 +55,8 @@ class Nip46 {
       for (var param in queryParams) {
         final keyValue = param.split('=');
         if (keyValue.length == 2) {
-          final key = Uri.decodeComponent(keyValue[0]);
-          final value = Uri.decodeComponent(keyValue[1]);
+          final key = keyValue[0];
+          final value = keyValue[1];
 
           if (key == 'relay') {
             remoteSignerConnection.relays.add(value);
@@ -71,6 +72,8 @@ class Nip46 {
   }
 
   static RemoteSignerConnection parseBunkerUri(String uri) {
+    uri = Uri.decodeComponent(uri);
+
     RemoteSignerConnection remoteSignerConnection = RemoteSignerConnection('', [], null);
 
     if (!uri.startsWith('bunker://')) {
@@ -88,8 +91,8 @@ class Nip46 {
       for (var param in queryParams) {
         final keyValue = param.split('=');
         if (keyValue.length == 2) {
-          final key = Uri.decodeComponent(keyValue[0]);
-          final value = Uri.decodeComponent(keyValue[1]);
+          final key = keyValue[0];
+          final value = keyValue[1];
 
           if (key == 'relay') {
             remoteSignerConnection.relays.add(value);
@@ -141,7 +144,6 @@ class Nip46 {
   static Future<Event> encode(
       String remoteSigner, String id, NIP46Command command, String pubkey, String privkey) async {
     var content = {'id': id, 'method': command.type.toValue(), 'params': command.params};
-    print('nip46 encode: content = $content, remotesigner = $remoteSigner, pubkey = $pubkey, privkey = $privkey');
     var encryptedContent =
         await Nip4.encryptContent(jsonEncode(content), remoteSigner, pubkey, privkey);
     return Event.from(
@@ -209,11 +211,7 @@ class NIP46Command {
   ]) {
     return NIP46Command(
       type: CommandType.connect,
-      params: [
-        remoteSignerPubkey,
-        optionalSecret,
-        optionalRequestedPermissions
-      ],
+      params: [remoteSignerPubkey, optionalSecret, optionalRequestedPermissions],
     );
   }
 

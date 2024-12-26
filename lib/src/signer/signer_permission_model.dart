@@ -21,6 +21,7 @@ class SignerPermissionModel {
     SignerPermissionModel(type: "sign_event", kind: 12),
     SignerPermissionModel(type: "sign_event", kind: 13),
     SignerPermissionModel(type: "sign_event", kind: 14),
+    SignerPermissionModel(type: "sign_event", kind: 15),
     SignerPermissionModel(type: "sign_event", kind: 8),
     SignerPermissionModel(type: "sign_event", kind: 1059),
     SignerPermissionModel(type: "sign_event", kind: 30000),
@@ -67,6 +68,17 @@ class SignerPermissionModel {
     SignerPermissionModel(type: "nip44_decrypt"),
   ];
 
+  static final basePermissions = [
+    SignerPermissionModel(type: "sign_event", kind: 22456),
+    SignerPermissionModel(type: "sign_event", kind: 13),
+    SignerPermissionModel(type: "sign_event", kind: 14),
+    SignerPermissionModel(type: "sign_event", kind: 15),
+    SignerPermissionModel(type: "nip04_encrypt"),
+    SignerPermissionModel(type: "nip04_decrypt"),
+    SignerPermissionModel(type: "nip44_encrypt"),
+    SignerPermissionModel(type: "nip44_decrypt"),
+  ];
+
   SignerPermissionModel({required this.type, this.kind});
 
   String toJson() {
@@ -89,7 +101,7 @@ class SignerPermissionModel {
   static String defaultPermissionsForNIP46() {
     final permissionStrings = <String>[];
 
-    for (var permission in permissions) {
+    for (var permission in basePermissions) {
       if (permission.kind != null) {
         permissionStrings.add('${permission.type}:${permission.kind}');
       } else {
