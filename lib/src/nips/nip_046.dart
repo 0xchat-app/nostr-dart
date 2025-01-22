@@ -145,7 +145,7 @@ class Nip46 {
       String remoteSigner, String id, NIP46Command command, String pubkey, String privkey) async {
     var content = {'id': id, 'method': command.type.toValue(), 'params': command.params};
     var encryptedContent =
-        await Nip4.encryptContent(jsonEncode(content), remoteSigner, pubkey, privkey);
+        await Nip44.encryptContent(jsonEncode(content), remoteSigner, pubkey, privkey);
     return Event.from(
         kind: 24133,
         tags: [
@@ -159,7 +159,13 @@ class Nip46 {
   static Future<NIP46CommandResult> decode(Event event, String myPubkey, String privkey) async {
     if (event.kind == 24133) {
       String encryptedContent = event.content;
-      String content = await Nip4.decryptContent(encryptedContent, event.pubkey, myPubkey, privkey);
+      int ivIndex = encryptedContent.indexOf("?iv=");
+      String content;
+      if (ivIndex <= 0) {
+        content = await Nip44.decryptContent(encryptedContent, event.pubkey, myPubkey, privkey);
+      } else {
+        content = await Nip4.decryptContent(encryptedContent, event.pubkey, myPubkey, privkey);
+      }
       return NIP46CommandResult.fromJson(jsonDecode(content));
     }
     throw Exception("${event.kind} is not nip46 compatible");
