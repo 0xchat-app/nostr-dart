@@ -17,7 +17,11 @@ class Nip104 {
     return await Event.from(kind: 443, tags: tags, content: '', pubkey: myPubkey, privkey: privkey);
   }
 
-  static decodePackageEvent(Event event) {
+  static KeyPackageEvent decodePackageEvent(Event event) {
+    if (event.kind != 443) {
+      throw Exception("${event.kind} is not nip104 compatible");
+    }
+
     String pubkey;
     int createTime;
     late String mls_protocol_version;
@@ -51,7 +55,11 @@ class Nip104 {
     return event;
   }
 
-  static decodeWelcomeEvent(Event event) {
+  static WelcomeEvent decodeWelcomeEvent(Event event) {
+    if (event.kind != 444) {
+      throw Exception("${event.kind} is not nip104 compatible");
+    }
+
     String pubkey;
     int createTime;
     String welcome;
@@ -76,7 +84,11 @@ class Nip104 {
     return event;
   }
 
-  static decodeGroupEvent(Event event) {
+  static GroupEvent decodeGroupEvent(Event event) {
+    if (event.kind != 445) {
+      throw Exception("${event.kind} is not nip104 compatible");
+    }
+
     String pubkey;
     int createTime;
     late String groupId;
@@ -88,6 +100,31 @@ class Nip104 {
     createTime = event.createdAt;
     message = event.content;
     return GroupEvent(pubkey, createTime, groupId, message);
+  }
+
+  static Future<Event> encodeKeypackageRelayEvent(
+      List<String> relays, String myPubkey, String privkey) async {
+    List<List<String>> tags = [];
+    for (var relay in relays) {
+      tags.add(['relay', relay]);
+    }
+    Event event =
+        await Event.from(kind: 10051, tags: tags, content: '', pubkey: myPubkey, privkey: privkey);
+    return event;
+  }
+
+  static KeypackageRelayEvent decodeKeypackageRelayEvent(Event event) {
+    if (event.kind != 10051) {
+      throw Exception("${event.kind} is not nip104 compatible");
+    }
+
+    List<String> relays = [];
+    for (var tag in event.tags) {
+      if (tag[0] == 'relay') relays.add(tag[1]);
+    }
+    var pubkey = event.pubkey;
+    var createTime = event.createdAt;
+    return KeypackageRelayEvent(pubkey, createTime, relays);
   }
 }
 
@@ -121,4 +158,12 @@ class GroupEvent {
   String message;
 
   GroupEvent(this.pubkey, this.createTime, this.groupId, this.message);
+}
+
+class KeypackageRelayEvent {
+  String pubkey;
+  int createTime;
+  List<String> relays;
+
+  KeypackageRelayEvent(this.pubkey, this.createTime, this.relays);
 }
