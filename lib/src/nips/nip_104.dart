@@ -1,5 +1,6 @@
 /// nip 104 - MLS
 import 'package:nostr_core_dart/nostr.dart';
+import 'dart:typed_data';
 
 class Nip104 {
   static Future<Event> encodeKeyPackageEvent(String encoded_key_package, String ciphersuite,
@@ -60,24 +61,28 @@ class Nip104 {
 
     String pubkey;
     int createTime;
-    String welcome;
+    List<int> welcome;
     late List<String> relays;
     for (var tag in event.tags) {
       if (tag[0] == 'relays') relays = tag.sublist(1);
     }
     pubkey = event.pubkey;
     createTime = event.createdAt;
-    welcome = event.content;
+    welcome = hexToBytes(event.content);
     return WelcomeEvent(pubkey, createTime, relays, welcome);
   }
 
   static Future<Event> encodeGroupEvent(
-      String message, String groupId, String myPubkey, String privkey) async {
+      List<int> message, String groupId, String myPubkey, String privkey) async {
     var tags = [
       ['h', groupId],
     ];
     Event event = await Event.from(
-        kind: 445, tags: tags, content: message, pubkey: myPubkey, privkey: privkey);
+        kind: 445,
+        tags: tags,
+        content: bytesToHex(Uint8List.fromList(message)),
+        pubkey: myPubkey,
+        privkey: privkey);
     event.sig = '';
     return event;
   }
@@ -143,7 +148,7 @@ class WelcomeEvent {
   String pubkey;
   int createTime;
   List<String> relays;
-  String welcome;
+  List<int> welcome;
 
   WelcomeEvent(this.pubkey, this.createTime, this.relays, this.welcome);
 }
