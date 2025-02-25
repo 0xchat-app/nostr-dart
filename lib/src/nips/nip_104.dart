@@ -39,8 +39,8 @@ class Nip104 {
     }
     pubkey = event.pubkey;
     createTime = event.createdAt;
-    return KeyPackageEvent(
-        pubkey, createTime, mls_protocol_version, ciphersuite, extensions, relays, client);
+    return KeyPackageEvent(pubkey, createTime, mls_protocol_version, ciphersuite, extensions,
+        relays, client, event.content);
   }
 
   static Future<Event> encodeWelcomeEvent(
@@ -139,18 +139,19 @@ class KeyPackageEvent {
   List<String> extensions;
   List<String> relays;
   String client;
+  String encoded_key_package;
 
   KeyPackageEvent(this.pubkey, this.createTime, this.mls_protocol_version, this.ciphersuite,
-      this.extensions, this.relays, this.client);
+      this.extensions, this.relays, this.client, this.encoded_key_package);
 }
 
 class WelcomeEvent {
   String pubkey;
   int createTime;
   List<String> relays;
-  List<int> welcome;
+  List<int> serializedWelcomeMessage;
 
-  WelcomeEvent(this.pubkey, this.createTime, this.relays, this.welcome);
+  WelcomeEvent(this.pubkey, this.createTime, this.relays, this.serializedWelcomeMessage);
 }
 
 class GroupEvent {
