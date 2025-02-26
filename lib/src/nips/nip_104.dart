@@ -61,15 +61,15 @@ class Nip104 {
 
     String pubkey;
     int createTime;
-    List<int> welcome;
+    List<int> serializedWelcomeMessage;
     late List<String> relays;
     for (var tag in event.tags) {
       if (tag[0] == 'relays') relays = tag.sublist(1);
     }
     pubkey = event.pubkey;
     createTime = event.createdAt;
-    welcome = hexToBytes(event.content);
-    return WelcomeEvent(pubkey, createTime, relays, welcome);
+    serializedWelcomeMessage = hexToBytes(event.content);
+    return WelcomeEvent(pubkey, createTime, relays, serializedWelcomeMessage);
   }
 
   static Future<Event> encodeGroupEvent(
