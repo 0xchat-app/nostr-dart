@@ -86,7 +86,6 @@ class Nip104 {
         content: bytesToHex(Uint8List.fromList(message)),
         pubkey: myPubkey,
         privkey: privkey);
-    event.sig = '';
     return event;
   }
 
