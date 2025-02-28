@@ -39,7 +39,7 @@ class Nip59 {
       String content = await Nip44.decryptContent(
           event.content, event.pubkey, myPubkey, privkey);
       Map<String, dynamic> map = jsonDecode(content);
-      return Event.fromJson(map);
+      return Event.fromJson(map, verify: false);
     }
     throw Exception("${event.kind} is not nip59 compatible");
   }

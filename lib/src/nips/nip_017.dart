@@ -121,6 +121,9 @@ class Nip17 {
         throw Exception(e);
       }
     }
+    else{
+      return event;
+    }
     throw Exception("${event.kind} is not nip24 compatible");
   }
 
