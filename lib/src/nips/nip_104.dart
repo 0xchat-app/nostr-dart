@@ -11,8 +11,7 @@ class Nip104 {
       ['ciphersuite', ciphersuite],
       ['extensions', ...extensions],
       ['relays', ...relays],
-      ['client', client],
-      ['-']
+      ['client', client]
     ];
     return await Event.from(
         kind: 443, tags: tags, content: encoded_key_package, pubkey: myPubkey, privkey: privkey);
@@ -43,13 +42,17 @@ class Nip104 {
         relays, client, event.content);
   }
 
-  static Future<Event> encodeWelcomeEvent(
-      String welcome, List<String> relays, String myPubkey, String privkey) async {
+  static Future<Event> encodeWelcomeEvent(List<int> serializedWelcomeMessage, List<String> relays,
+      String myPubkey, String privkey) async {
     var tags = [
       ['relays', ...relays],
     ];
     Event event = await Event.from(
-        kind: 444, tags: tags, content: welcome, pubkey: myPubkey, privkey: privkey);
+        kind: 444,
+        tags: tags,
+        content: bytesToHex(Uint8List.fromList(serializedWelcomeMessage)),
+        pubkey: myPubkey,
+        privkey: privkey);
     event.sig = '';
     return event;
   }
