@@ -76,16 +76,12 @@ class Nip104 {
   }
 
   static Future<Event> encodeGroupEvent(
-      List<int> message, String groupId, String myPubkey, String privkey) async {
+      String content, String groupId, String myPubkey, String privkey) async {
     var tags = [
       ['h', groupId],
     ];
     Event event = await Event.from(
-        kind: 445,
-        tags: tags,
-        content: bytesToHex(Uint8List.fromList(message)),
-        pubkey: myPubkey,
-        privkey: privkey);
+        kind: 445, tags: tags, content: content, pubkey: myPubkey, privkey: privkey);
     return event;
   }
 
