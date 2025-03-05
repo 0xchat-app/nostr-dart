@@ -11,8 +11,7 @@ import 'package:pointycastle/digests/sha256.dart';
 /// https://github.com/nostr-protocol/nips/pull/715///
 class Nip44 {
   /// Returns the EDMessage Encrypted Direct Message event (kind=44)
-  static Future<EDMessage?> decode(
-      Event event, String myPubkey, String privkey) async {
+  static Future<EDMessage?> decode(Event event, String myPubkey, String privkey) async {
     if (event.kind == 44 || event.kind == 14) {
       return await _toEDMessage(event, myPubkey, privkey);
     }
@@ -20,8 +19,7 @@ class Nip44 {
   }
 
   /// Returns EDMessage from event
-  static Future<EDMessage> _toEDMessage(
-      Event event, String myPubkey, String privkey) async {
+  static Future<EDMessage> _toEDMessage(Event event, String myPubkey, String privkey) async {
     String sender = event.pubkey;
     int createdAt = event.createdAt;
     String receiver = "";
@@ -68,17 +66,13 @@ class Nip44 {
       if (v == 1) {
         final algorithm = Xchacha20(macAlgorithm: MacAlgorithm.empty);
         final secretKey = shareSecret(privkey, peerPubkey);
-        SecretBox secretBox =
-            SecretBox(cipherText, nonce: nonce, mac: Mac.empty);
-        final result =
-            await algorithm.decrypt(secretBox, secretKey: SecretKey(secretKey));
+        SecretBox secretBox = SecretBox(cipherText, nonce: nonce, mac: Mac.empty);
+        final result = await algorithm.decrypt(secretBox, secretKey: SecretKey(secretKey));
         return utf8.decode(result);
-      }
-      else if(v == 2){
+      } else if (v == 2) {
         Uint8List shareKey = Nip44v2.shareSecret(privkey, peerPubkey);
         return await Nip44v2.decrypt(content, shareKey);
-      }
-      else {
+      } else {
         print("nip44: decryptContent error: unknown algorithm version: $v");
         return "";
       }
@@ -88,14 +82,13 @@ class Nip44 {
     }
   }
 
-  static Future<Event> encode(String sender, String receiver, String content,
-      String replyId, String privkey,
+  static Future<Event> encode(String sender, String receiver, String content, String replyId,
+      String replyUser, String privkey,
       {String? subContent, int? expiration}) async {
     String enContent = await encryptContent(content, receiver, sender, privkey);
-    List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration);
+    List<List<String>> tags = Nip4.toTags(receiver, replyId, replyUser, expiration);
     if (subContent != null && subContent.isNotEmpty) {
-      String enSubContent =
-          await encryptContent(subContent, receiver, sender, privkey);
+      String enSubContent = await encryptContent(subContent, receiver, sender, privkey);
       tags.add(['subContent', enSubContent]);
     }
     Event event = await Event.from(
@@ -103,8 +96,8 @@ class Nip44 {
     return event;
   }
 
-  static Future<String> encryptContent(String plainText, String peerPubkey,
-      String myPubkey, String privkey) async {
+  static Future<String> encryptContent(
+      String plainText, String peerPubkey, String myPubkey, String privkey) async {
     if (SignerHelper.needSigner(privkey)) {
       return await SignerHelper.encryptNip44(plainText, peerPubkey, myPubkey, privkey) ?? '';
     } else {
@@ -119,8 +112,7 @@ class Nip44 {
     return result;
   }
 
-  static Future<String> encrypt(
-      String privateString, String publicString, String content) async {
+  static Future<String> encrypt(String privateString, String publicString, String content) async {
     Uint8List shareKey = Nip44v2.shareSecret(privateString, publicString);
     return await Nip44v2.encrypt(content, shareKey);
   }

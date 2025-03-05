@@ -36,15 +36,16 @@ class Nip17 {
         privkey: privkey);
   }
 
-  static Future<Event> encodeInnerEvent(
-      String receiver, String content, String replyId, String myPubkey, String privKey,
+  static Future<Event> encodeInnerEvent(String receiver, String content, String replyId,
+      String replyUser, String myPubkey, String privKey,
       {String? subContent,
       int? expiration,
       List<String>? members,
       String? subject,
       int createAt = 0,
       EncryptedFile? encryptedFile}) async {
-    List<List<String>> tags = Nip4.toTags(receiver, replyId, expiration, members: members);
+    List<List<String>> tags =
+        Nip4.toTags(receiver, replyId, replyUser, expiration, members: members);
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
     }
@@ -74,8 +75,8 @@ class Nip17 {
     }
   }
 
-  static Future<Event> encodeSealedGossipDM(
-      String receiver, String content, String replyId, String myPubkey, String privKey,
+  static Future<Event> encodeSealedGossipDM(String receiver, String content, String replyId,
+      String replyUser, String myPubkey, String privKey,
       {String? sealedPrivkey,
       String? sealedReceiver,
       int? createAt,
@@ -83,7 +84,7 @@ class Nip17 {
       int? expiration,
       Event? innerEvent,
       List<String>? members}) async {
-    innerEvent ??= await encodeInnerEvent(receiver, content, replyId, myPubkey, privKey,
+    innerEvent ??= await encodeInnerEvent(receiver, content, replyId, replyUser, myPubkey, privKey,
         subContent: subContent, expiration: expiration);
     Event event = await encode(innerEvent, receiver, myPubkey, privKey,
         sealedPrivkey: sealedPrivkey,
@@ -120,8 +121,7 @@ class Nip17 {
       } catch (e) {
         throw Exception(e);
       }
-    }
-    else{
+    } else {
       return event;
     }
     throw Exception("${event.kind} is not nip24 compatible");
@@ -144,6 +144,7 @@ class Nip17 {
           if (!receivers.contains(tag[1])) receivers.add(tag[1]);
         }
         if (tag[0] == "e") replyId = tag[1];
+        if (tag[0] == "q") replyId = tag[1];
         if (tag[0] == "subContent") subContent = tag[1];
         if (tag[0] == "expiration") expiration = tag[1];
         if (tag[0] == "subject") subject = tag[1];

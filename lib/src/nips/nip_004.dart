@@ -74,10 +74,10 @@ class Nip4 {
   }
 
   static Future<Event> encode(
-      String sender, String receiver, String content, String replyId, String privkey,
+      String sender, String receiver, String content, String replyId, String replyUser, String privkey,
       {String? subContent, int? expiration}) async {
     String enContent = await encryptContent(content, receiver, sender, privkey);
-    List<List<String>> tags = toTags(receiver, replyId, expiration);
+    List<List<String>> tags = toTags(receiver, replyId, replyUser, expiration);
     if (subContent != null && subContent.isNotEmpty) {
       String enSubContent = await encryptContent(subContent, receiver, sender, privkey);
       tags.add(['subContent', enSubContent]);
@@ -96,13 +96,13 @@ class Nip4 {
     }
   }
 
-  static List<List<String>> toTags(String p, String e, int? expiration, {List<String>? members}) {
+  static List<List<String>> toTags(String p, String q, String qPubkey, int? expiration, {List<String>? members}) {
     List<List<String>> result = [];
     result.add(["p", p]);
     for (var m in members ?? []) {
       if (m != p) result.add(["p", m]);
     }
-    if (e.isNotEmpty) result.add(["e", e, '', 'reply']);
+    if (q.isNotEmpty) result.add(["q", q, '', qPubkey]);
     if (expiration != null) result.add(['expiration', expiration.toString()]);
     return result;
   }

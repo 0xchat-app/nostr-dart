@@ -36,8 +36,8 @@ class Nip29 {
       }
     }
     String id = '$fromRelay\'$groupId';
-    return Group(id, fromRelay, event.pubkey, groupId, private, closed, [],
-        name, about, picture, null, [], 0, 0, null);
+    return Group(id, fromRelay, event.pubkey, groupId, private, closed, [], name, about, picture,
+        null, [], 0, 0, null);
   }
 
   static String? getGroupIdFromEvent(Event event) {
@@ -122,14 +122,18 @@ class Nip29 {
     }
     var content = event.content;
     String groupId = '';
+    String? replyId, replyUser;
     for (var tag in event.tags) {
       if (tag[0] == "subContent") content = tag[1];
       if (tag[0] == "h") groupId = tag[1];
+      if (tag[0] == "q") {
+        replyId = tag[1];
+        replyUser = tag[3];
+      }
     }
-    Thread thread = Nip10.fromTags(event.tags);
     List<String> previous = getPrevious(event.tags);
-    return GroupMessage(groupId, event.id, event.pubkey, event.createdAt,
-        thread, content, previous);
+    return GroupMessage(
+        groupId, event.id, event.pubkey, event.createdAt, replyId, replyUser, content, previous);
   }
 
   static GroupJoinRequest decodeJoinRequest(Event event) {
@@ -141,8 +145,7 @@ class Nip29 {
     for (var tag in event.tags) {
       if (tag[0] == "h") groupId = tag[1];
     }
-    return GroupJoinRequest(
-        event.id, groupId, event.pubkey, event.createdAt, content);
+    return GroupJoinRequest(event.id, groupId, event.pubkey, event.createdAt, content);
   }
 
   static GroupModeration decodeModeration(Event event) {
@@ -183,8 +186,8 @@ class Nip29 {
         pinned: '');
   }
 
-  static Future<Event> encodeGroupNote(String groupId, String content,
-      String pubkey, String privkey, List<String> previous,
+  static Future<Event> encodeGroupNote(
+      String groupId, String content, String pubkey, String privkey, List<String> previous,
       {List<String>? hashTags}) async {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
@@ -195,15 +198,11 @@ class Nip29 {
       }
     }
     return await Event.from(
-        kind: 11,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+        kind: 11, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
-  static Future<Event> encodeGroupNoteReply(String groupId, String content,
-      String pubkey, String privkey, List<String> previous,
+  static Future<Event> encodeGroupNoteReply(
+      String groupId, String content, String pubkey, String privkey, List<String> previous,
       {String? rootEvent,
       String? replyEvent,
       List<String>? replyUsers,
@@ -228,15 +227,11 @@ class Nip29 {
     }
 
     return await Event.from(
-        kind: 12,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+        kind: 12, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
-  static Future<Event> encodeGroupMessage(String groupId, String content,
-      List<String> previous, String pubkey, String privkey,
+  static Future<Event> encodeGroupMessage(
+      String groupId, String content, List<String> previous, String pubkey, String privkey,
       {String? subContent}) async {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
@@ -244,35 +239,20 @@ class Nip29 {
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
     }
-    Event event = await Event.from(
-        kind: 9,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+    Event event =
+        await Event.from(kind: 9, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
     return event;
   }
 
-  static Future<Event> encodeGroupMessageReply(String groupId, String content,
-      List<String> previous, String pubkey, String privkey,
-      {String? rootEvent,
-      String? replyEvent,
-      List<String>? replyUsers,
-      String? subContent,
-      int createAt = 0}) async {
+  static Future<Event> encodeGroupMessageReply(
+      String groupId, String content, List<String> previous, String pubkey, String privkey,
+      {String? replyEvent, String? replyUser, String? subContent, int createAt = 0}) async {
     List<List<String>> tags = [];
     int kind = 9; // normal message
-    if (rootEvent != null && rootEvent.isNotEmpty) {
-      ETag root = Nip10.rootTag(rootEvent, '');
-      ETag? reply = replyEvent == null ? null : Nip10.replyTag(replyEvent, '');
-      Thread thread = Thread(root, reply, null, null);
-      tags = Nip10.toTags(thread);
-    }
-    List<PTag> pTags = Nip10.pTags(replyUsers ?? [], []);
-    for (var pTag in pTags) {
-      tags.add(["p", pTag.pubkey, pTag.relayURL]);
-    }
     tags.add(['h', groupId]);
+    if (replyEvent != null) {
+      tags.add(["q", replyEvent, '', replyUser ?? '']);
+    }
     // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
 
     if (subContent != null && subContent.isNotEmpty) {
@@ -293,11 +273,7 @@ class Nip29 {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
     Event event = await Event.from(
-        kind: 9021,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+        kind: 9021, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
     return event;
   }
 
@@ -306,20 +282,15 @@ class Nip29 {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
     Event event = await Event.from(
-        kind: 9022,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+        kind: 9022, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
     return event;
   }
 
-  static Future<Event> encodeCreateGroup(
-      String groupId, String pubkey, String privkey) async {
+  static Future<Event> encodeCreateGroup(String groupId, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['h', groupId]);
-    Event event = await Event.from(
-        kind: 9007, tags: tags, content: '', pubkey: pubkey, privkey: privkey);
+    Event event =
+        await Event.from(kind: 9007, tags: tags, content: '', pubkey: pubkey, privkey: privkey);
     return event;
   }
 
@@ -334,59 +305,38 @@ class Nip29 {
     tags.add(['h', groupId]);
     // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
     Event event = await Event.from(
-        kind: actionKind.kind,
-        tags: tags,
-        content: content,
-        pubkey: pubkey,
-        privkey: privkey);
+        kind: actionKind.kind, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
     return event;
   }
 
-  static Future<Event> encodeAddUser(
-      String groupId,
-      List<String> addUser,
-      String content,
-      List<String> previous,
-      String pubkey,
-      String privkey) async {
+  static Future<Event> encodeAddUser(String groupId, List<String> addUser, String content,
+      List<String> previous, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     for (var p in addUser) {
       tags.add(['p', p]);
     }
-    return _encodeGroupAction(groupId, GroupActionKind.addUser, content, tags,
-        previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.addUser, content, tags, previous, pubkey, privkey);
   }
 
-  static Future<Event> encodeRemoveUser(
-      String groupId,
-      List<String> removeUsers,
-      String content,
-      List<String> previous,
-      String pubkey,
-      String privkey) async {
+  static Future<Event> encodeRemoveUser(String groupId, List<String> removeUsers, String content,
+      List<String> previous, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     for (var p in removeUsers) {
       tags.add(['p', p]);
     }
-    return _encodeGroupAction(groupId, GroupActionKind.removeUser, content,
-        tags, previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.removeUser, content, tags, previous, pubkey, privkey);
   }
 
-  static Future<Event> encodeEditMetadata(
-      String groupId,
-      String name,
-      String about,
-      String picture,
-      String content,
-      List<String> previous,
-      String pubkey,
-      String privkey) async {
+  static Future<Event> encodeEditMetadata(String groupId, String name, String about, String picture,
+      String content, List<String> previous, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['name', name]);
     tags.add(['about', about]);
     tags.add(['picture', picture]);
-    return _encodeGroupAction(groupId, GroupActionKind.editMetadata, content,
-        tags, previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.editMetadata, content, tags, previous, pubkey, privkey);
   }
 
   static Future<Event> encodeAddPermission(
@@ -404,8 +354,8 @@ class Nip29 {
     for (var permission in permissions) {
       tags.add(['permission', permission]);
     }
-    return _encodeGroupAction(groupId, GroupActionKind.addPermission, content,
-        tags, previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.addPermission, content, tags, previous, pubkey, privkey);
   }
 
   static Future<Event> encodeRemovePermission(
@@ -423,97 +373,61 @@ class Nip29 {
     for (var permission in permissions) {
       tags.add(['permission', permission]);
     }
-    return _encodeGroupAction(groupId, GroupActionKind.removePermission,
-        content, tags, previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.removePermission, content, tags, previous, pubkey, privkey);
   }
 
-  static Future<Event> encodeDeleteEvent(
-      String groupId,
-      String eventId,
-      String content,
-      List<String> previous,
-      String pubkey,
-      String privkey) async {
+  static Future<Event> encodeDeleteEvent(String groupId, String eventId, String content,
+      List<String> previous, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['e', eventId]);
-    return _encodeGroupAction(groupId, GroupActionKind.deleteEvent, content,
-        tags, previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.deleteEvent, content, tags, previous, pubkey, privkey);
   }
 
-  static Future<Event> encodeEditGroupStatus(
-      String groupId,
-      bool private,
-      bool closed,
-      String content,
-      List<String> previous,
-      String pubkey,
-      String privkey) async {
+  static Future<Event> encodeEditGroupStatus(String groupId, bool private, bool closed,
+      String content, List<String> previous, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     private ? tags.add(['private']) : tags.add(['public']);
     closed ? tags.add(['closed']) : tags.add(['open']);
-    return _encodeGroupAction(groupId, GroupActionKind.editGroupStatus, content,
-        tags, previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.editGroupStatus, content, tags, previous, pubkey, privkey);
   }
 
-  static Future<Event> encodeDeleteGroupStatus(String groupId, String content,
-      List<String> previous, String pubkey, String privkey) async {
+  static Future<Event> encodeDeleteGroupStatus(
+      String groupId, String content, List<String> previous, String pubkey, String privkey) async {
     List<List<String>> tags = [];
-    return _encodeGroupAction(groupId, GroupActionKind.deleteGroup, content,
-        tags, previous, pubkey, privkey);
+    return _encodeGroupAction(
+        groupId, GroupActionKind.deleteGroup, content, tags, previous, pubkey, privkey);
   }
 
   static Future<Event> encodeGroupModeration(
       GroupModeration moderation, String pubkey, String privkey) {
     switch (moderation.actionKind) {
       case GroupActionKind.addUser:
-        return encodeAddUser(moderation.groupId, moderation.users,
-            moderation.content, moderation.previous, pubkey, privkey);
-      case GroupActionKind.removeUser:
-        return encodeRemoveUser(moderation.groupId, moderation.users,
-            moderation.content, moderation.previous, pubkey, privkey);
-      case GroupActionKind.editMetadata:
-        return encodeEditMetadata(
-            moderation.groupId,
-            moderation.name,
-            moderation.about,
-            moderation.picture,
-            moderation.content,
-            moderation.previous,
-            pubkey,
-            privkey);
-      case GroupActionKind.addPermission:
-        return encodeAddPermission(
-            moderation.groupId,
-            moderation.users,
-            moderation.permissions,
-            moderation.content,
-            moderation.previous,
-            pubkey,
-            privkey);
-      case GroupActionKind.removePermission:
-        return encodeRemovePermission(
-            moderation.groupId,
-            moderation.users,
-            moderation.permissions,
-            moderation.content,
-            moderation.previous,
-            pubkey,
-            privkey);
-      case GroupActionKind.deleteEvent:
-        return encodeDeleteEvent(moderation.groupId, moderation.eventId,
-            moderation.content, moderation.previous, pubkey, privkey);
-      case GroupActionKind.editGroupStatus:
-        return encodeEditGroupStatus(
-            moderation.groupId,
-            moderation.private,
-            moderation.closed,
-            moderation.content,
-            moderation.previous,
-            pubkey,
-            privkey);
-      case GroupActionKind.deleteGroup:
-        return encodeDeleteGroupStatus(moderation.groupId, moderation.content,
+        return encodeAddUser(moderation.groupId, moderation.users, moderation.content,
             moderation.previous, pubkey, privkey);
+      case GroupActionKind.removeUser:
+        return encodeRemoveUser(moderation.groupId, moderation.users, moderation.content,
+            moderation.previous, pubkey, privkey);
+      case GroupActionKind.editMetadata:
+        return encodeEditMetadata(moderation.groupId, moderation.name, moderation.about,
+            moderation.picture, moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.addPermission:
+        return encodeAddPermission(moderation.groupId, moderation.users, moderation.permissions,
+            moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.removePermission:
+        return encodeRemovePermission(moderation.groupId, moderation.users, moderation.permissions,
+            moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.deleteEvent:
+        return encodeDeleteEvent(moderation.groupId, moderation.eventId, moderation.content,
+            moderation.previous, pubkey, privkey);
+      case GroupActionKind.editGroupStatus:
+        return encodeEditGroupStatus(moderation.groupId, moderation.private, moderation.closed,
+            moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.deleteGroup:
+        return encodeDeleteGroupStatus(
+            moderation.groupId, moderation.content, moderation.previous, pubkey, privkey);
     }
   }
 }
@@ -534,7 +448,7 @@ enum GroupActionKind {
   const GroupActionKind(this.kind, this.name);
 
   static GroupActionKind fromString(String name) {
-    if(name == 'delete-group-status') return GroupActionKind.deleteGroup;
+    if (name == 'delete-group-status') return GroupActionKind.deleteGroup;
     return GroupActionKind.values.firstWhere((element) => element.name == name,
         orElse: () => throw ArgumentError('Invalid permission name: $name'));
   }
@@ -568,9 +482,8 @@ class GroupAdmin {
   factory GroupAdmin.fromJson(List<dynamic> json) {
     String pubkey = json[0];
     String role = json[1];
-    List<GroupActionKind> permissions = (json.sublist(2).cast<String>())
-        .map((p) => GroupActionKind.fromString(p))
-        .toList();
+    List<GroupActionKind> permissions =
+        (json.sublist(2).cast<String>()).map((p) => GroupActionKind.fromString(p)).toList();
     return GroupAdmin(pubkey, role, permissions);
   }
 
@@ -631,12 +544,13 @@ class GroupMessage {
   String messageId;
   String pubkey;
   int createAt;
-  Thread thread;
+  String? replyId;
+  String? replyUser;
   String content;
   List<String>? previous;
 
-  GroupMessage(this.groupId, this.messageId, this.pubkey, this.createAt,
-      this.thread, this.content, this.previous);
+  GroupMessage(this.groupId, this.messageId, this.pubkey, this.createAt, this.replyId,
+      this.replyUser, this.content, this.previous);
 }
 
 class GroupJoinRequest {
@@ -646,8 +560,7 @@ class GroupJoinRequest {
   int createdAt;
   String content;
 
-  GroupJoinRequest(
-      this.requestId, this.groupId, this.pubkey, this.createdAt, this.content);
+  GroupJoinRequest(this.requestId, this.groupId, this.pubkey, this.createdAt, this.content);
 }
 
 class GroupModeration {
@@ -687,17 +600,12 @@ class GroupModeration {
       this.picture = '',
       this.pinned = ''});
 
-  factory GroupModeration.addUser(
-      String groupId, List<String> addUser, String reason) {
+  factory GroupModeration.addUser(String groupId, List<String> addUser, String reason) {
     return GroupModeration(
-        groupId: groupId,
-        users: addUser,
-        content: reason,
-        actionKind: GroupActionKind.addUser);
+        groupId: groupId, users: addUser, content: reason, actionKind: GroupActionKind.addUser);
   }
 
-  factory GroupModeration.removeUser(
-      String groupId, List<String> removeUsers, String reason) {
+  factory GroupModeration.removeUser(String groupId, List<String> removeUsers, String reason) {
     return GroupModeration(
         groupId: groupId,
         users: removeUsers,
@@ -705,8 +613,8 @@ class GroupModeration {
         actionKind: GroupActionKind.removeUser);
   }
 
-  factory GroupModeration.editMetadata(String groupId, String name,
-      String about, String picture, String reason) {
+  factory GroupModeration.editMetadata(
+      String groupId, String name, String about, String picture, String reason) {
     return GroupModeration(
         groupId: groupId,
         name: name,
@@ -716,8 +624,8 @@ class GroupModeration {
         actionKind: GroupActionKind.editMetadata);
   }
 
-  factory GroupModeration.addPermission(String groupId, List<String> user,
-      List<String> permissions, String reason) {
+  factory GroupModeration.addPermission(
+      String groupId, List<String> user, List<String> permissions, String reason) {
     return GroupModeration(
         groupId: groupId,
         users: user,
@@ -726,8 +634,8 @@ class GroupModeration {
         actionKind: GroupActionKind.addPermission);
   }
 
-  factory GroupModeration.removePermission(String groupId, List<String> user,
-      List<String> permissions, String reason) {
+  factory GroupModeration.removePermission(
+      String groupId, List<String> user, List<String> permissions, String reason) {
     return GroupModeration(
         groupId: groupId,
         users: user,
@@ -736,8 +644,7 @@ class GroupModeration {
         actionKind: GroupActionKind.removePermission);
   }
 
-  factory GroupModeration.deleteEvent(
-      String groupId, String eventId, String reason) {
+  factory GroupModeration.deleteEvent(String groupId, String eventId, String reason) {
     return GroupModeration(
         groupId: groupId,
         eventId: eventId,
@@ -755,11 +662,8 @@ class GroupModeration {
         actionKind: GroupActionKind.editGroupStatus);
   }
 
-  factory GroupModeration.deleteGroup(
-      String groupId, String reason) {
+  factory GroupModeration.deleteGroup(String groupId, String reason) {
     return GroupModeration(
-        groupId: groupId,
-        content: reason,
-        actionKind: GroupActionKind.deleteGroup);
+        groupId: groupId, content: reason, actionKind: GroupActionKind.deleteGroup);
   }
 }
