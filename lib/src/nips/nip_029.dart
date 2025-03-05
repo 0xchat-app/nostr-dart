@@ -126,10 +126,8 @@ class Nip29 {
     for (var tag in event.tags) {
       if (tag[0] == "subContent") content = tag[1];
       if (tag[0] == "h") groupId = tag[1];
-      if (tag[0] == "q") {
-        replyId = tag[1];
-        replyUser = tag[3];
-      }
+      if (tag[0] == "q") replyId = tag[1];
+      if (tag[0] == "p") replyUser = tag[1];
     }
     List<String> previous = getPrevious(event.tags);
     return GroupMessage(
@@ -251,7 +249,10 @@ class Nip29 {
     int kind = 9; // normal message
     tags.add(['h', groupId]);
     if (replyEvent != null) {
-      tags.add(["q", replyEvent, '', replyUser ?? '']);
+      tags.add(["q", replyEvent, '', '']);
+    }
+    if (replyUser != null) {
+      tags.add(["p", replyUser]);
     }
     // if (previous.isNotEmpty) tags.add(['previous', ...previous]);
 

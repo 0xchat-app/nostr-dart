@@ -102,7 +102,7 @@ class Nip4 {
     for (var m in members ?? []) {
       if (m != p) result.add(["p", m]);
     }
-    if (q.isNotEmpty) result.add(["q", q, '', qPubkey]);
+    if (q.isNotEmpty) result.add(["q", q, '', '']);
     if (expiration != null) result.add(['expiration', expiration.toString()]);
     return result;
   }
