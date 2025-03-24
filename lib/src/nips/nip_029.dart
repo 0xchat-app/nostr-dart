@@ -402,6 +402,15 @@ class Nip29 {
         groupId, GroupActionKind.deleteGroup, content, tags, previous, pubkey, privkey);
   }
 
+  static Future<Event> encodeCreateInvite(
+      String groupId, String code, List<String> previous, String pubkey, String privkey) async {
+    List<List<String>> tags = [
+      ['code', code]
+    ];
+    return _encodeGroupAction(
+        groupId, GroupActionKind.createInvite, '', tags, previous, pubkey, privkey);
+  }
+
   static Future<Event> encodeGroupModeration(
       GroupModeration moderation, String pubkey, String privkey) {
     switch (moderation.actionKind) {
@@ -429,6 +438,10 @@ class Nip29 {
       case GroupActionKind.deleteGroup:
         return encodeDeleteGroupStatus(
             moderation.groupId, moderation.content, moderation.previous, pubkey, privkey);
+      case GroupActionKind.createInvite:
+        return encodeCreateInvite(
+            moderation.groupId, moderation.inviteCode, moderation.previous, pubkey, privkey);
+        break;
     }
   }
 }
@@ -441,7 +454,8 @@ enum GroupActionKind {
   removePermission(9004, 'remove-permission'),
   deleteEvent(9005, 'delete-event'),
   editGroupStatus(9006, 'edit-group-status'),
-  deleteGroup(9008, 'delete-group');
+  deleteGroup(9008, 'delete-group'),
+  createInvite(9009, 'create-invite');
 
   final int kind;
   final String name;
@@ -582,6 +596,7 @@ class GroupModeration {
   String about;
   String picture;
   String pinned;
+  String inviteCode;
 
   GroupModeration(
       {this.moderationId = '',
@@ -599,7 +614,8 @@ class GroupModeration {
       this.name = '',
       this.about = '',
       this.picture = '',
-      this.pinned = ''});
+      this.pinned = '',
+      this.inviteCode = ''});
 
   factory GroupModeration.addUser(String groupId, List<String> addUser, String reason) {
     return GroupModeration(
