@@ -60,11 +60,17 @@ class Nip29 {
     List<GroupAdmin> admins = [];
     for (var tag in event.tags) {
       if (tag[0] == "p" && isHexadecimalString(tag[1])) {
-        List<GroupActionKind> permissions = [];
-        for (int i = 3; i < tag.length; ++i) {
-          permissions.add(GroupActionKind.fromString(tag[i]));
+        if (tag[2] == "king") {
+          admins.add(GroupAdmin(tag[1], tag[2], GroupActionKind.king()));
+        } else if (tag[2] == "bishop") {
+          admins.add(GroupAdmin(tag[1], tag[2], GroupActionKind.bishop()));
+        } else {
+          List<GroupActionKind> permissions = [];
+          for (int i = 3; i < tag.length; ++i) {
+            permissions.add(GroupActionKind.fromString(tag[i]));
+          }
+          admins.add(GroupAdmin(tag[1], tag[2], permissions));
         }
-        admins.add(GroupAdmin(tag[1], tag[2], permissions));
       }
     }
     return admins;
@@ -350,13 +356,11 @@ class Nip29 {
       String privkey) async {
     List<List<String>> tags = [];
     for (var p in users) {
-      tags.add(['p', p]);
+      tags.add(['p', p, 'bishop']);
     }
-    for (var permission in permissions) {
-      tags.add(['permission', permission]);
-    }
+
     return _encodeGroupAction(
-        groupId, GroupActionKind.addPermission, content, tags, previous, pubkey, privkey);
+        groupId, GroupActionKind.addUser, content, tags, previous, pubkey, privkey);
   }
 
   static Future<Event> encodeRemovePermission(
@@ -371,11 +375,8 @@ class Nip29 {
     for (var p in users) {
       tags.add(['p', p]);
     }
-    for (var permission in permissions) {
-      tags.add(['permission', permission]);
-    }
     return _encodeGroupAction(
-        groupId, GroupActionKind.removePermission, content, tags, previous, pubkey, privkey);
+        groupId, GroupActionKind.addUser, content, tags, previous, pubkey, privkey);
   }
 
   static Future<Event> encodeDeleteEvent(String groupId, String eventId, String content,
@@ -447,7 +448,7 @@ class Nip29 {
 }
 
 enum GroupActionKind {
-  addUser(9000, 'add-user'),
+  addUser(9000, 'put-user'),
   removeUser(9001, 'remove-user'),
   editMetadata(9002, 'edit-metadata'),
   addPermission(9003, 'add-permission'),
@@ -483,6 +484,27 @@ enum GroupActionKind {
       GroupActionKind.editGroupStatus,
       GroupActionKind.deleteEvent,
       GroupActionKind.deleteGroup
+    ];
+  }
+
+  static List<GroupActionKind> king() {
+    return [
+      GroupActionKind.addUser,
+      GroupActionKind.removeUser,
+      GroupActionKind.editMetadata,
+      GroupActionKind.addPermission,
+      GroupActionKind.removePermission,
+      GroupActionKind.editGroupStatus,
+      GroupActionKind.deleteEvent,
+      GroupActionKind.deleteGroup
+    ];
+  }
+
+  static List<GroupActionKind> bishop() {
+    return [
+      GroupActionKind.addUser,
+      GroupActionKind.removeUser,
+      GroupActionKind.deleteEvent,
     ];
   }
 }
