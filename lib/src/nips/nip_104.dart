@@ -3,16 +3,8 @@ import 'package:nostr_core_dart/nostr.dart';
 import 'dart:typed_data';
 
 class Nip104 {
-  static Future<Event> encodeKeyPackageEvent(String encoded_key_package, String ciphersuite,
-      List<String> extensions, List<String> relays, String myPubkey, String privkey,
-      {String mlsVersion = '1.0', String client = '0xchat'}) async {
-    var tags = [
-      ['mls_protocol_version', mlsVersion],
-      ['ciphersuite', ciphersuite],
-      ['extensions', ...extensions],
-      ['relays', ...relays],
-      ['client', client]
-    ];
+  static Future<Event> encodeKeyPackageEvent(
+      String encoded_key_package, List<List<String>> tags, String myPubkey, String privkey) async {
     return await Event.from(
         kind: 443, tags: tags, content: encoded_key_package, pubkey: myPubkey, privkey: privkey);
   }
@@ -27,19 +19,19 @@ class Nip104 {
     late String mls_protocol_version;
     late String ciphersuite;
     late List<String> extensions;
-    late List<String> relays;
-    late String client;
+    List<String>? relays;
+    String? client;
     for (var tag in event.tags) {
       if (tag[0] == 'mls_protocol_version') mls_protocol_version = tag[1];
-      if (tag[0] == 'ciphersuite') ciphersuite = tag[1];
-      if (tag[0] == 'extensions') extensions = tag.sublist(1);
+      if (tag[0] == 'mls_ciphersuite') ciphersuite = tag[1];
+      if (tag[0] == 'mls_extensions') extensions = tag.sublist(1);
       if (tag[0] == 'relays') relays = tag.sublist(1);
       if (tag[0] == 'client') client = tag[1];
     }
     pubkey = event.pubkey;
     createTime = event.createdAt;
     return KeyPackageEvent(pubkey, createTime, mls_protocol_version, ciphersuite, extensions,
-        relays, client, event.content);
+        relays ?? [], client ?? '', event.content);
   }
 
   static Future<Event> encodeWelcomeEvent(List<int> serializedWelcomeMessage, List<String> relays,
