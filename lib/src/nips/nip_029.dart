@@ -28,7 +28,7 @@ class Nip29 {
       if (tag[0] == "about") {
         about = tag[1];
       }
-      if (tag[0] == "public" || tag[0] == "open") {
+      if (tag[0] == "public") {
         private = false;
       }
       if (tag[0] == "open") {
@@ -336,12 +336,23 @@ class Nip29 {
         groupId, GroupActionKind.removeUser, content, tags, previous, pubkey, privkey);
   }
 
-  static Future<Event> encodeEditMetadata(String groupId, String name, String about, String picture,
-      String content, List<String> previous, String pubkey, String privkey) async {
+  static Future<Event> encodeEditMetadata(
+      String groupId,
+      String name,
+      String about,
+      String picture,
+      String content,
+      bool closed,
+      bool private,
+      List<String> previous,
+      String pubkey,
+      String privkey) async {
     List<List<String>> tags = [];
     tags.add(['name', name]);
     tags.add(['about', about]);
     tags.add(['picture', picture]);
+    private ? tags.add(['private']) : tags.add(['public']);
+    closed ? tags.add(['closed']) : tags.add(['open']);
     return _encodeGroupAction(
         groupId, GroupActionKind.editMetadata, content, tags, previous, pubkey, privkey);
   }
@@ -422,8 +433,17 @@ class Nip29 {
         return encodeRemoveUser(moderation.groupId, moderation.users, moderation.content,
             moderation.previous, pubkey, privkey);
       case GroupActionKind.editMetadata:
-        return encodeEditMetadata(moderation.groupId, moderation.name, moderation.about,
-            moderation.picture, moderation.content, moderation.previous, pubkey, privkey);
+        return encodeEditMetadata(
+            moderation.groupId,
+            moderation.name,
+            moderation.about,
+            moderation.picture,
+            moderation.content,
+            moderation.closed,
+            moderation.private,
+            moderation.previous,
+            pubkey,
+            privkey);
       case GroupActionKind.addPermission:
         return encodeAddPermission(moderation.groupId, moderation.users, moderation.permissions,
             moderation.content, moderation.previous, pubkey, privkey);
@@ -652,14 +672,16 @@ class GroupModeration {
         actionKind: GroupActionKind.removeUser);
   }
 
-  factory GroupModeration.editMetadata(
-      String groupId, String name, String about, String picture, String reason) {
+  factory GroupModeration.editMetadata(String groupId, String name, String about, String picture,
+      bool closed, bool private, String reason) {
     return GroupModeration(
         groupId: groupId,
         name: name,
         about: about,
         picture: picture,
         content: reason,
+        closed: closed,
+        private: private,
         actionKind: GroupActionKind.editMetadata);
   }
 
