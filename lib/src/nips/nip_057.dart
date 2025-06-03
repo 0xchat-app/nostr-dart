@@ -113,23 +113,21 @@ class Nip57 {
 
     int createAt = currentUnixTimestampSeconds();
 
-    String derivedPrivkey = privkey;
-    if (privateZap) {
-      derivedPrivkey = generateKeyPair(recipient, createAt, privkey);
-      String privreq = await privateRequest(
-          recipient, myPubkey, privkey, derivedPrivkey,
-          eventId: eventId, coordinate: coordinate, content: content);
-      tags.add(['anon', privreq]);
-    }
+    // String derivedPrivkey = privkey;
+    // if (privateZap) {
+    //   derivedPrivkey = generateKeyPair(recipient, createAt, privkey);
+    //   String privreq = await privateRequest(
+    //       recipient, myPubkey, privkey, derivedPrivkey,
+    //       eventId: eventId, coordinate: coordinate, content: content);
+    //   tags.add(['anon', privreq]);
+    // }
 
     return await Event.from(
         kind: 9734,
         tags: tags,
         content: privateZap ? '' : content ?? '',
-        pubkey: derivedPrivkey.isEmpty
-            ? myPubkey
-            : bip340.getPublicKey(derivedPrivkey),
-        privkey: derivedPrivkey,
+        pubkey: myPubkey,
+        privkey: privkey,
         createdAt: createAt);
   }
 
