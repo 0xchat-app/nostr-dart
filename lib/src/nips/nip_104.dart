@@ -16,9 +16,9 @@ class Nip104 {
 
     String pubkey;
     int createTime;
-    late String mls_protocol_version;
-    late String ciphersuite;
-    late List<String> extensions;
+    String? mls_protocol_version;
+    String? ciphersuite;
+    List<String>? extensions;
     List<String>? relays;
     String? client;
     for (var tag in event.tags) {
@@ -30,8 +30,8 @@ class Nip104 {
     }
     pubkey = event.pubkey;
     createTime = event.createdAt;
-    return KeyPackageEvent(pubkey, createTime, mls_protocol_version, ciphersuite, extensions,
-        relays ?? [], client ?? '', event.content);
+    return KeyPackageEvent(pubkey, createTime, mls_protocol_version ?? '', ciphersuite ?? '',
+        extensions ?? [], relays ?? [], client ?? '', event.content);
   }
 
   static Future<Event> encodeWelcomeEvent(List<int> serializedWelcomeMessage, List<String> relays,
