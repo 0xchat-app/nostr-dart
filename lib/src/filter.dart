@@ -30,6 +30,9 @@ class Filter {
   /// a list of bolt11 in a "bolt11" tag
   List<String>? bolt11;
 
+  /// a list of client identifiers that are referenced in a "client" tag
+  List<String>? client;
+
   /// a timestamp, events must be newer than this to pass
   int? since;
 
@@ -51,6 +54,7 @@ class Filter {
       this.t,
       this.h,
       this.bolt11,
+      this.client,
       this.since,
       this.until,
       this.limit});
@@ -69,6 +73,8 @@ class Filter {
     h = json['#h'] == null ? null : List<String>.from(json['#h']);
     bolt11 =
         json['#bolt11'] == null ? null : List<String>.from(json['#bolt11']);
+    client =
+        json['#client'] == null ? null : List<String>.from(json['#client']);
 
     since = json['since'];
     until = json['until'];
@@ -107,6 +113,9 @@ class Filter {
     }
     if (bolt11 != null) {
       data['#bolt11'] = bolt11;
+    }
+    if (client != null) {
+      data['#client'] = client;
     }
     if (since != null) {
       data['since'] = since;
