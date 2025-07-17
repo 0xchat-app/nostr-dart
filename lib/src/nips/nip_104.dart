@@ -21,17 +21,19 @@ class Nip104 {
     List<String>? extensions;
     List<String>? relays;
     String? client;
+    String? eventId;
     for (var tag in event.tags) {
       if (tag[0] == 'mls_protocol_version') mls_protocol_version = tag[1];
       if (tag[0] == 'mls_ciphersuite') ciphersuite = tag[1];
       if (tag[0] == 'mls_extensions') extensions = tag.sublist(1);
       if (tag[0] == 'relays') relays = tag.sublist(1);
       if (tag[0] == 'client') client = tag[1];
+      if (tag[0] == 'event_id') eventId = tag[1];
     }
     pubkey = event.pubkey;
     createTime = event.createdAt;
     return KeyPackageEvent(pubkey, createTime, mls_protocol_version ?? '', ciphersuite ?? '',
-        extensions ?? [], relays ?? [], client ?? '', event.content);
+        extensions ?? [], relays ?? [], client ?? '', event.content, eventId ?? '');
   }
 
   static Future<Event> encodeWelcomeEvent(List<int> serializedWelcomeMessage, List<String> relays,
@@ -130,9 +132,38 @@ class KeyPackageEvent {
   List<String> relays;
   String client;
   String encoded_key_package;
+  String eventId; // Add eventId field
 
   KeyPackageEvent(this.pubkey, this.createTime, this.mls_protocol_version, this.ciphersuite,
-      this.extensions, this.relays, this.client, this.encoded_key_package);
+      this.extensions, this.relays, this.client, this.encoded_key_package, this.eventId);
+
+  Map<String, dynamic> toJson() {
+    return {
+      'pubkey': pubkey,
+      'createTime': createTime,
+      'mls_protocol_version': mls_protocol_version,
+      'ciphersuite': ciphersuite,
+      'extensions': extensions,
+      'relays': relays,
+      'client': client,
+      'encoded_key_package': encoded_key_package,
+      'eventId': eventId,
+    };
+  }
+
+  factory KeyPackageEvent.fromJson(Map<String, dynamic> json) {
+    return KeyPackageEvent(
+      json['pubkey'] ?? '',
+      json['createTime'] ?? 0,
+      json['mls_protocol_version'] ?? '',
+      json['ciphersuite'] ?? '',
+      List<String>.from(json['extensions'] ?? []),
+      List<String>.from(json['relays'] ?? []),
+      json['client'] ?? '',
+      json['encoded_key_package'] ?? '',
+      json['eventId'] ?? '',
+    );
+  }
 }
 
 class WelcomeEvent {
