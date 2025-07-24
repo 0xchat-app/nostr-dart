@@ -21,19 +21,18 @@ class Nip104 {
     List<String>? extensions;
     List<String>? relays;
     String? client;
-    String? eventId;
+    String eventId = event.id;
     for (var tag in event.tags) {
       if (tag[0] == 'mls_protocol_version') mls_protocol_version = tag[1];
       if (tag[0] == 'mls_ciphersuite') ciphersuite = tag[1];
       if (tag[0] == 'mls_extensions') extensions = tag.sublist(1);
       if (tag[0] == 'relays') relays = tag.sublist(1);
       if (tag[0] == 'client') client = tag[1];
-      if (tag[0] == 'event_id') eventId = tag[1];
     }
     pubkey = event.pubkey;
     createTime = event.createdAt;
     return KeyPackageEvent(pubkey, createTime, mls_protocol_version ?? '', ciphersuite ?? '',
-        extensions ?? [], relays ?? [], client ?? '', event.content, eventId ?? '');
+        extensions ?? [], relays ?? [], client ?? '', event.content, eventId);
   }
 
   static Future<Event> encodeWelcomeEvent(List<int> serializedWelcomeMessage, List<String> relays,
