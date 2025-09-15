@@ -38,7 +38,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     private lateinit var mActivity: Activity
     private var mMethodChannelResultMap: HashMap<Int, Result?> = HashMap<Int, Result?>()
     private var mSignatureRequestCodeList: MutableSet<Int> = mutableSetOf()
-    private val mSignerPackageName: String = "com.greenart7c3.nostrsigner"
+    private val mDefaultSignerPackageName: String = "com.greenart7c3.nostrsigner"
     private val secp256k1 = Secp256k1.get()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -82,7 +82,16 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 paramsMap?.let { map ->
                     val packageName: String? = map["packageName"] as? String
                     if (packageName != null) {
+                        Log.d("ChatcorePlugin", "Checking if app is installed: $packageName")
                         val isInstalled: Boolean = PackageUtils.isPackageInstalled(mContext, packageName)
+                        Log.d("ChatcorePlugin", "App installation result: $isInstalled")
+                        
+                        // Debug: List all installed packages to help troubleshoot
+                        val installedPackages = mContext.packageManager.getInstalledApplications(0)
+                        Log.d("ChatcorePlugin", "Total installed packages: ${installedPackages.size}")
+                        val matchingPackages = installedPackages.filter { it.packageName.contains("nostr") || it.packageName.contains("amber") || it.packageName.contains("signer") }
+                        Log.d("ChatcorePlugin", "Matching packages: ${matchingPackages.map { it.packageName }}")
+                        
                         result.success(isInstalled)
                     }
                 }
@@ -90,6 +99,10 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             }
             "nostrsigner" -> {
                 if (paramsMap != null) nostrsigner(paramsMap, result)
+                return
+            }
+            "nostrsigner_content_provider" -> {
+                if (paramsMap != null) nostrsignerContentProvider(paramsMap, result)
                 return
             }
             else -> {
@@ -143,7 +156,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 "nostrsigner:$extendParse"
             )
         )
-        intent.`package` = mSignerPackageName
+        intent.`package` = paramsMap["packageName"] as? String ?: mDefaultSignerPackageName
         paramsMap["permissions"]?.let { permissions ->
             if (permissions is String) intent.putExtra("permissions", permissions)
         }
@@ -180,15 +193,16 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         paramsMap["current_user"]?.let { currentUser ->
             if (currentUser is String) data += currentUser
         }
-        return getDataFromResolver(type, data, mContext.contentResolver);
+        val packageName = paramsMap["packageName"] as? String ?: mDefaultSignerPackageName
+        return getDataFromResolver(type, data, mContext.contentResolver, packageName);
     }
 
     fun getDataFromResolver(
-        signerType: String, data: Array<out String>, contentResolver: ContentResolver
+        signerType: String, data: Array<out String>, contentResolver: ContentResolver, packageName: String = mDefaultSignerPackageName
     ): HashMap<String, String?>? {
         try {
             contentResolver.query(
-                Uri.parse("content://${mSignerPackageName}.${signerType.uppercase()}"),
+                Uri.parse("content://${packageName}.${signerType.uppercase()}"),
                 data,
                 null,
                 null,
@@ -218,6 +232,93 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             }
         } catch (e: Exception) {
             Log.e("ExternalSignerLauncher", "Failed to query the Signer app in the background")
+            return null
+        }
+
+        return null
+    }
+
+    fun nostrsignerContentProvider(paramsMap: HashMap<*, *>, result: Result) {
+        try {
+            val packageName = paramsMap["packageName"] as? String ?: mDefaultSignerPackageName
+            val contentProviderUri = paramsMap["contentProviderUri"] as? String
+            val data = paramsMap["data"] as? List<*> ?: emptyList<Any>()
+            val type = paramsMap["type"] as? String ?: "get_public_key"
+
+            if (contentProviderUri == null) {
+                result.error("InvalidConfig", "Content Provider URI is required", null)
+                return
+            }
+
+            val dataArray = data.mapNotNull { it as? String }.toTypedArray()
+            val resultMap = getDataFromResolverWithUri(contentProviderUri, dataArray, mContext.contentResolver)
+
+            if (resultMap != null) {
+                // Convert signature to result for consistency
+                val convertedMap = HashMap<String, String?>()
+                resultMap["signature"]?.let { convertedMap["result"] = it }
+                resultMap["event"]?.let { convertedMap["event"] = it }
+                result.success(convertedMap)
+            } else {
+                result.success(null)
+            }
+        } catch (e: Exception) {
+            Log.e("nostrsignerContentProvider", "Failed to query Content Provider: ${e.message}")
+            result.error("ContentProviderError", "Failed to query Content Provider: ${e.message}", null)
+        }
+    }
+
+    fun getDataFromResolverWithUri(
+        contentProviderUri: String, data: Array<out String>, contentResolver: ContentResolver
+    ): HashMap<String, String?>? {
+        try {
+            contentResolver.query(
+                Uri.parse(contentProviderUri),
+                data,
+                null,
+                null,
+                null
+            ).use { cursor ->
+                if (cursor == null) {
+                    return null
+                }
+                
+                // Check for rejection
+                val rejectedIndex = cursor.getColumnIndex("rejected")
+                if (rejectedIndex >= 0) {
+                    Log.d("getDataFromResolverWithUri", "User rejected the request")
+                    return null
+                }
+                
+                if (cursor.moveToFirst()) {
+                    val dataMap: HashMap<String, String?> = HashMap()
+                    
+                    // Get result column
+                    val resultIndex = cursor.getColumnIndex("result")
+                    if (resultIndex >= 0) {
+                        val resultValue = cursor.getString(resultIndex)
+                        dataMap["result"] = resultValue
+                    }
+                    
+                    // Get signature column (for backward compatibility)
+                    val signatureIndex = cursor.getColumnIndex("signature")
+                    if (signatureIndex >= 0) {
+                        val signature = cursor.getString(signatureIndex)
+                        dataMap["signature"] = signature
+                    }
+                    
+                    // Get event column
+                    val eventIndex = cursor.getColumnIndex("event")
+                    if (eventIndex >= 0) {
+                        val eventJson = cursor.getString(eventIndex)
+                        dataMap["event"] = eventJson
+                    }
+                    
+                    return dataMap
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("getDataFromResolverWithUri", "Failed to query Content Provider: ${e.message}")
             return null
         }
 
