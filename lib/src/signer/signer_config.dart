@@ -35,7 +35,7 @@ class SignerConfigs {
       packageName: 'com.greenart7c3.nostrsigner',
       displayName: 'Amber',
       iconName: 'icon_login_amber.png',
-      callMethod: SignerCallMethod.contentProvider,
+      callMethod: SignerCallMethod.intent,
       contentProviderUris: {
         'get_public_key': 'content://com.greenart7c3.nostrsigner.GET_PUBLIC_KEY',
         'sign_event': 'content://com.greenart7c3.nostrsigner.SIGN_EVENT',
@@ -67,7 +67,7 @@ class SignerConfigs {
       packageName: 'com.github.haorendashu.nowser',
       displayName: 'Nowser',
       iconName: 'nowser.png',
-      callMethod: SignerCallMethod.contentProvider,
+      callMethod: SignerCallMethod.intent,
       contentProviderUris: {
         'get_public_key': 'content://com.github.haorendashu.nowser.GET_PUBLIC_KEY',
         'sign_event': 'content://com.github.haorendashu.nowser.SIGN_EVENT',
