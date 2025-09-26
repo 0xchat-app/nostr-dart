@@ -26,32 +26,24 @@ class ExternalSignerTool {
 
   ///get_public_key
   static Future<String?> getPubKey() async {
-    print('ExternalSignerTool: Getting public key...');
     final config = getCurrentConfig();
-    print('ExternalSignerTool: Config: ${config?.displayName} (${config?.packageName}), Method: ${config?.callMethod}');
     
     if (config == null) {
-      print('ExternalSignerTool: No config found, falling back to Intent');
       // Fallback to default behavior
       return _getPubKeyWithIntent();
     }
 
     switch (config.callMethod) {
       case SignerCallMethod.intent:
-        print('ExternalSignerTool: Using Intent method');
         return _getPubKeyWithIntent();
       case SignerCallMethod.contentProvider:
-        print('ExternalSignerTool: Using Content Provider method');
         return _getPubKeyWithContentProvider(config);
       case SignerCallMethod.auto:
-        print('ExternalSignerTool: Using Auto method (Content Provider first, then Intent)');
         // Try Content Provider first, fallback to Intent
         final result = await _getPubKeyWithContentProvider(config);
         if (result != null) {
-          print('ExternalSignerTool: Content Provider succeeded');
           return result;
         } else {
-          print('ExternalSignerTool: Content Provider failed, trying Intent');
           return await _getPubKeyWithIntent();
         }
     }
@@ -67,21 +59,19 @@ class ExternalSignerTool {
         'requestCode': SignerType.GET_PUBLIC_KEY.requestCode,
         'permissions': SignerPermissionModel.defaultPermissions(),
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;
     final Map<String, String> resultMap = (result as Map).map((key, value) {
       return MapEntry(key as String, value as String);
     });
-    return resultMap['signature'];
+    return resultMap['result'] ?? resultMap['signature'];
   }
 
   /// Get public key using Content Provider method
   static Future<String?> _getPubKeyWithContentProvider(SignerConfig config) async {
-    print('ExternalSignerTool: Calling Content Provider for get_public_key');
-    print('ExternalSignerTool: Package: ${config.packageName}');
-    print('ExternalSignerTool: URI: ${config.getContentProviderUri('get_public_key')}');
-    
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner_content_provider',
       {
@@ -92,16 +82,13 @@ class ExternalSignerTool {
       },
     );
     
-    print('ExternalSignerTool: Content Provider result: $result');
     if (result == null) {
-      print('ExternalSignerTool: Content Provider returned null');
       return null;
     }
     
     final Map<String, String> resultMap = (result as Map).map((key, value) {
       return MapEntry(key as String, value as String);
     });
-    print('ExternalSignerTool: Content Provider result map: $resultMap');
     return resultMap['result'];
   }
 
@@ -137,6 +124,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.SIGN_EVENT.requestCode,
         'extendParse': eventJson,
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;
@@ -178,6 +167,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.SIGN_MESSAGE.requestCode,
         'extendParse': eventJson,
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;
@@ -201,6 +192,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP04_ENCRYPT.requestCode,
         'extendParse': plaintext,
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;
@@ -224,6 +217,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP44_ENCRYPT.requestCode,
         'extendParse': plaintext,
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;
@@ -247,6 +242,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP04_DECRYPT.requestCode,
         'extendParse': encryptedText,
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;
@@ -270,6 +267,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP44_DECRYPT.requestCode,
         'extendParse': encryptedText,
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;
@@ -292,6 +291,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.DECRYPT_ZAP_EVENT.requestCode,
         'extendParse': encryptedText,
         'packageName': config?.packageName, // Pass the correct package name
+        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
+        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
     if (result == null) return null;

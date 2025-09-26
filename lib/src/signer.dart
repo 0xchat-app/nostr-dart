@@ -54,7 +54,7 @@ class SignerHelper {
       case SignerApplication.androidSigner:
         Map<String, String>? map = await ExternalSignerTool.signMessage(
             hexMessage, hexMessage, Nip19.encodePubkey(currentUser));
-        String? sign = map?['signature'];
+        String? sign = map?['result'] ?? map?['signature'];
         return sign;
       case SignerApplication.remoteSigner:
       default:
@@ -88,7 +88,7 @@ class SignerHelper {
       case SignerApplication.androidSigner:
         Map<String, String>? map = await ExternalSignerTool.nip04Encrypt(
             plainText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
-        String? encryptedText = map?['signature'];
+        String? encryptedText = map?['result'] ?? map?['signature'];
         if (encryptedText != null) {
           plainText = encryptedText;
         }
@@ -107,7 +107,7 @@ class SignerHelper {
       case SignerApplication.androidSigner:
         Map<String, String>? map = await ExternalSignerTool.nip04Decrypt(
             encryptedText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
-        String? plainText = map?['signature'];
+        String? plainText = map?['result'] ?? map?['signature'];
         if (plainText != null) {
           encryptedText = plainText;
         }
@@ -126,7 +126,7 @@ class SignerHelper {
       case SignerApplication.androidSigner:
         Map<String, String>? map = await ExternalSignerTool.nip44Encrypt(
             plainText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
-        String? encryptedText = map?['signature'];
+        String? encryptedText = map?['result'] ?? map?['signature'];
         if (encryptedText != null) {
           plainText = encryptedText;
         }
@@ -145,7 +145,7 @@ class SignerHelper {
       case SignerApplication.androidSigner:
         Map<String, String>? map = await ExternalSignerTool.nip44Decrypt(
             encryptedText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
-        String? plainText = map?['signature'];
+        String? plainText = map?['result'] ?? map?['signature'];
         if (plainText != null) {
           encryptedText = plainText;
         }

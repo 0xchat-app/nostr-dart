@@ -120,6 +120,10 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 if (result.extras != null){
                     Log.e("Michael", "${result.extras!!.keySet()}")
                 }
+                if (result.hasExtra("result")) {
+                    val resultValue = result.getStringExtra("result")
+                    dataMap["result"] = resultValue
+                }
                 if (result.hasExtra("signature")) {
                     val signature = result.getStringExtra("signature")
                     dataMap["signature"] = signature
@@ -141,12 +145,20 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     }
 
     private fun nostrsigner (paramsMap: HashMap<*, *>, result: Result){
-
-        val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
-        if (!resultFromCR.isNullOrEmpty()) {
-            result.success(resultFromCR)
-            return
+        // Check if we should use Content Provider first
+        val useContentProvider = paramsMap["useContentProvider"] as? Boolean ?: false
+        val callMethod = paramsMap["callMethod"] as? String ?: "intent"
+        
+        // For auto mode, try Content Provider first
+        if (callMethod == "auto" || useContentProvider) {
+            val resultFromCR: HashMap<String, String?>? = getDataContentResolver(paramsMap)
+            if (!resultFromCR.isNullOrEmpty()) {
+                result.success(resultFromCR)
+                return
+            }
         }
+        
+        // Use Intent method
         val requestCode = result.hashCode()
         mSignatureRequestCodeList.add(requestCode)
         mMethodChannelResultMap[requestCode] = result
