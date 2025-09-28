@@ -27,4 +27,12 @@ class CoreMethodChannel{
     final bool result = await isAppInstalled('com.greenart7c3.nostrsigner');
     return result;
   }
+
+  /// Check if nostrsigner scheme is supported by any installed app
+  /// This method doesn't require QUERY_ALL_PACKAGES permission
+  static Future<bool> isNostrSignerSupported() async {
+    if (Platform.isIOS) return false;
+    final bool result = await channelChatCore.invokeMethod('isNostrSignerSupported');
+    return result;
+  }
 }

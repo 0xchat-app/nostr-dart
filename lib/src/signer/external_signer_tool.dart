@@ -1,6 +1,7 @@
 import 'package:nostr_core_dart/src/channel/core_method_channel.dart';
 import 'package:nostr_core_dart/src/signer/signer_permission_model.dart';
 import 'package:nostr_core_dart/src/signer/signer_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 ///Title: external_signer_tool
 ///Description: External signer tool with support for both Intent and Content Provider communication
@@ -10,19 +11,55 @@ import 'package:nostr_core_dart/src/signer/signer_config.dart';
 class ExternalSignerTool {
   
   /// Initialize signer configuration
-  static void initialize() {
+  static Future<void> initialize() async {
     SignerConfigManager.instance.initialize();
+    // Try to restore signer config from storage
+    final config = await _getSignerConfigFromStorage();
+    if (config != null) {
+      SignerConfigManager.instance.setSigner(config.packageName == 'com.aegis.app' ? 'nostr_aegis' : 
+                                            config.packageName == 'com.greenart7c3.nostrsigner' ? 'amber' : 
+                                            config.packageName == 'com.github.haorendashu.nowser' ? 'nowser' : '');
+    }
   }
 
   /// Set current signer
-  static void setSigner(String signerKey) {
+  static Future<void> setSigner(String signerKey) async {
     SignerConfigManager.instance.setSigner(signerKey);
+    await _saveSignerConfigToStorage(signerKey);
+  }
+
+
+  /// Get signer config from SharedPreferences
+  static Future<SignerConfig?> _getSignerConfigFromStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final signerKey = prefs.getString('current_signer');
+      if (signerKey != null && signerKey.isNotEmpty) {
+        final config = SignerConfigs.getConfig(signerKey);
+        return config;
+      }
+    } catch (e) {
+      // Silent fail
+    }
+    return null;
+  }
+
+  /// Save signer config to SharedPreferences
+  static Future<void> _saveSignerConfigToStorage(String signerKey) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('current_signer', signerKey);
+    } catch (e) {
+      // Silent fail
+    }
   }
 
   /// Get current signer configuration
   static SignerConfig? getCurrentConfig() {
     return SignerConfigManager.instance.currentConfig;
   }
+
+
 
   ///get_public_key
   static Future<String?> getPubKey() async {
@@ -63,11 +100,17 @@ class ExternalSignerTool {
         'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
       },
     );
-    if (result == null) return null;
-    final Map<String, String> resultMap = (result as Map).map((key, value) {
-      return MapEntry(key as String, value as String);
-    });
-    return resultMap['result'] ?? resultMap['signature'];
+    
+    if (result == null) {
+      return null;
+    }
+    
+    try {
+      final Map<String, dynamic> resultMap = Map<String, dynamic>.from(result as Map);
+      return resultMap['result']?.toString() ?? resultMap['signature']?.toString();
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Get public key using Content Provider method
@@ -231,7 +274,11 @@ class ExternalSignerTool {
   ///nip04_decrypt
   ///@return signature、id
   static Future<Map<String, String>?> nip04Decrypt(String encryptedText, String id, String current_user, String pubKey) async {
-    final config = getCurrentConfig();
+    // Try to get config from SharedPreferences first
+    SignerConfig? config = await _getSignerConfigFromStorage();
+    if (config == null) {
+      config = getCurrentConfig();
+    }
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -256,7 +303,12 @@ class ExternalSignerTool {
   ///nip44_decrypt
   ///@return signature、id
   static Future<Map<String, String>?> nip44Decrypt(String encryptedText, String id, String current_user, String pubKey) async {
-    final config = getCurrentConfig();
+    // Try to get config from SharedPreferences first
+    SignerConfig? config = await _getSignerConfigFromStorage();
+    if (config == null) {
+      config = getCurrentConfig();
+    }
+    
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {

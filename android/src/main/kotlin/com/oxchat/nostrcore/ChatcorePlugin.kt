@@ -83,18 +83,19 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                     val packageName: String? = map["packageName"] as? String
                     if (packageName != null) {
                         Log.d("ChatcorePlugin", "Checking if app is installed: $packageName")
-                        val isInstalled: Boolean = PackageUtils.isPackageInstalled(mContext, packageName)
+                        // Use the new method that doesn't require QUERY_ALL_PACKAGES permission
+                        val isInstalled: Boolean = PackageUtils.isPackageInstalledWithoutPermission(mContext, packageName)
                         Log.d("ChatcorePlugin", "App installation result: $isInstalled")
-                        
-                        // Debug: List all installed packages to help troubleshoot
-                        val installedPackages = mContext.packageManager.getInstalledApplications(0)
-                        Log.d("ChatcorePlugin", "Total installed packages: ${installedPackages.size}")
-                        val matchingPackages = installedPackages.filter { it.packageName.contains("nostr") || it.packageName.contains("amber") || it.packageName.contains("signer") }
-                        Log.d("ChatcorePlugin", "Matching packages: ${matchingPackages.map { it.packageName }}")
-                        
                         result.success(isInstalled)
                     }
                 }
+                return
+            }
+            "isNostrSignerSupported" -> {
+                Log.d("ChatcorePlugin", "Checking if nostrsigner scheme is supported")
+                val isSupported: Boolean = PackageUtils.isNostrSignerSupported(mContext)
+                Log.d("ChatcorePlugin", "NostrSigner support result: $isSupported")
+                result.success(isSupported)
                 return
             }
             "nostrsigner" -> {
@@ -225,20 +226,28 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 }
                 if (it.moveToFirst()) {
                     val dataMap: HashMap<String, String?> = HashMap()
-                    val index = it.getColumnIndex("signature")
-                    if (index < 0) {
-                        Log.d("getDataFromResolver", "column 'signature' not found")
-                    } else {
-                        val signature = it.getString(index)
+                    
+                    // Try to get 'result' field first (preferred by Aegis)
+                    val resultIndex = it.getColumnIndex("result")
+                    if (resultIndex >= 0) {
+                        val result = it.getString(resultIndex)
+                        dataMap["result"] = result
+                    }
+                    
+                    // Try to get 'signature' field (fallback)
+                    val signatureIndex = it.getColumnIndex("signature")
+                    if (signatureIndex >= 0) {
+                        val signature = it.getString(signatureIndex)
                         dataMap["signature"] = signature
                     }
-                    val indexJson = it.getColumnIndex("event")
-                    if (indexJson < 0) {
-                        Log.d("getDataFromResolver", "column 'event' not found")
-                    } else {
-                        val eventJson = it.getString(indexJson)
+                    
+                    // Try to get 'event' field
+                    val eventIndex = it.getColumnIndex("event")
+                    if (eventIndex >= 0) {
+                        val eventJson = it.getString(eventIndex)
                         dataMap["event"] = eventJson
                     }
+                    
                     return dataMap;
                 }
             }
@@ -266,10 +275,13 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             val resultMap = getDataFromResolverWithUri(contentProviderUri, dataArray, mContext.contentResolver)
 
             if (resultMap != null) {
-                // Convert signature to result for consistency
+                // Convert signature to result for consistency, but prioritize result field
                 val convertedMap = HashMap<String, String?>()
-                resultMap["signature"]?.let { convertedMap["result"] = it }
+                // Prioritize 'result' field, fallback to 'signature'
+                val resultValue = resultMap["result"] ?: resultMap["signature"]
+                resultValue?.let { convertedMap["result"] = it }
                 resultMap["event"]?.let { convertedMap["event"] = it }
+                resultMap["id"]?.let { convertedMap["id"] = it }
                 result.success(convertedMap)
             } else {
                 result.success(null)

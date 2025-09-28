@@ -112,7 +112,7 @@ class SignerConfigManager {
 
   SignerConfigManager._internal();
 
-  String _currentSigner = 'amber';
+  String _currentSigner = '';
   SignerConfig? _currentConfig;
 
   /// Get current signer key
@@ -127,16 +127,9 @@ class SignerConfigManager {
     _currentConfig = SignerConfigs.getConfig(signerKey);
   }
 
-  /// Get signer configuration for specific signer
-  SignerConfig? getConfigForSigner(String signerKey) {
-    return SignerConfigs.getConfig(signerKey);
-  }
-
-  /// Initialize with default signer
+  /// Initialize signer configuration
   void initialize() {
-    // Only set default if no signer is currently set
-    if (_currentSigner.isEmpty) {
-      setSigner('amber');
-    }
+    // Don't set a default signer automatically
+    // Let the caller explicitly set the signer based on user context
   }
 }
