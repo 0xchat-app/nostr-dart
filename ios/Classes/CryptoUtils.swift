@@ -10,9 +10,9 @@ import secp256k1Swift
 
 class CryptoUtils {
     static func schnorrVerify(publicKey: Data, message: Data, signature: Data) -> Bool {
-        let pubkeyBytes = [0x02] + publicKey.bytes
-        var messageBytes = message.bytes
-        let signatureBytes = signature.bytes
+        let pubkeyBytes: [UInt8] = [0x02] + [UInt8](publicKey)
+        var messageBytes: [UInt8] = [UInt8](message)
+        let signatureBytes: [UInt8] = [UInt8](signature)
         
         guard let publicKey = try? secp256k1.Signing.PublicKey(rawRepresentation: pubkeyBytes, format: .compressed),
               let signature = try? secp256k1.Signing.SchnorrSignature(rawRepresentation: signatureBytes) else {
