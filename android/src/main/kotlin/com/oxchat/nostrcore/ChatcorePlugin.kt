@@ -149,6 +149,8 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         // Check if we should use Content Provider first
         val useContentProvider = paramsMap["useContentProvider"] as? Boolean ?: false
         val callMethod = paramsMap["callMethod"] as? String ?: "intent"
+        val type = paramsMap["type"] as? String ?: "get_public_key"
+        val packageName = paramsMap["packageName"] as? String ?: mDefaultSignerPackageName
         
         // For auto mode, try Content Provider first
         if (callMethod == "auto" || useContentProvider) {
@@ -169,12 +171,11 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 "nostrsigner:$extendParse"
             )
         )
-        intent.`package` = paramsMap["packageName"] as? String ?: mDefaultSignerPackageName
+        intent.`package` = packageName
         paramsMap["permissions"]?.let { permissions ->
             if (permissions is String) intent.putExtra("permissions", permissions)
         }
 
-        var type: String? = paramsMap["type"] as? String ?: "get_public_key"
         intent.putExtra("type", type)
 
         paramsMap["id"]?.let { id ->
@@ -190,6 +191,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
         try {
             mActivity.startActivityForResult(intent, requestCode)
         } catch (e: Exception) {
+            Log.e("ChatcorePlugin", "[nostrsigner] Failed to start Activity: ${e.message}")
             mMethodChannelResultMap.remove(requestCode)
             mSignatureRequestCodeList.remove(requestCode)
             result.error("ActivityStartError", "Failed to start amber sign", null)
@@ -213,9 +215,10 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
     fun getDataFromResolver(
         signerType: String, data: Array<out String>, contentResolver: ContentResolver, packageName: String = mDefaultSignerPackageName
     ): HashMap<String, String?>? {
+        val uri = "content://${packageName}.${signerType.uppercase()}"
         try {
             contentResolver.query(
-                Uri.parse("content://${packageName}.${signerType.uppercase()}"),
+                Uri.parse(uri),
                 data,
                 null,
                 null,
@@ -252,7 +255,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 }
             }
         } catch (e: Exception) {
-            Log.e("ExternalSignerLauncher", "Failed to query the Signer app in the background")
+            Log.e("ChatcorePlugin", "[getDataFromResolver] Failed to query the Signer app: ${e.message}")
             return null
         }
 
@@ -287,7 +290,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 result.success(null)
             }
         } catch (e: Exception) {
-            Log.e("nostrsignerContentProvider", "Failed to query Content Provider: ${e.message}")
+            Log.e("ChatcorePlugin", "[nostrsignerContentProvider] Failed to query Content Provider: ${e.message}")
             result.error("ContentProviderError", "Failed to query Content Provider: ${e.message}", null)
         }
     }
@@ -310,7 +313,6 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 // Check for rejection
                 val rejectedIndex = cursor.getColumnIndex("rejected")
                 if (rejectedIndex >= 0) {
-                    Log.d("getDataFromResolverWithUri", "User rejected the request")
                     return null
                 }
                 
@@ -342,7 +344,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 }
             }
         } catch (e: Exception) {
-            Log.e("getDataFromResolverWithUri", "Failed to query Content Provider: ${e.message}")
+            Log.e("ChatcorePlugin", "[getDataFromResolverWithUri] Failed to query Content Provider: ${e.message}")
             return null
         }
 

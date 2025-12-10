@@ -59,14 +59,35 @@ class ExternalSignerTool {
     return SignerConfigManager.instance.currentConfig;
   }
 
+  /// Get signer config with fallback to amber if null
+  /// If config is null, automatically fallback to amber with auto mode
+  static Future<SignerConfig?> _getConfigWithAmberFallback() async {
+    // Try to get config from SharedPreferences first
+    SignerConfig? config = await _getSignerConfigFromStorage();
+    if (config == null) {
+      config = getCurrentConfig();
+    }
+    
+    // If still null, fallback to amber with auto mode
+    if (config == null) {
+      config = SignerConfigs.getConfig('amber');
+      if (config != null) {
+        // Set the signer to amber so it persists
+        await setSigner('amber');
+      }
+    }
+    
+    return config;
+  }
+
 
 
   ///get_public_key
   static Future<String?> getPubKey() async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
     
     if (config == null) {
-      // Fallback to default behavior
+      // Fallback to default behavior (should not happen as amber fallback is set)
       return _getPubKeyWithIntent();
     }
 
@@ -90,7 +111,9 @@ class ExternalSignerTool {
   /// Get public key using Intent method
   /// [forceIntent] if true, force using Intent method without trying Content Provider first
   static Future<String?> _getPubKeyWithIntent({bool forceIntent = false}) async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
+    final useContentProvider = !forceIntent && config?.callMethod == SignerCallMethod.auto;
+    final callMethod = forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -98,8 +121,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.GET_PUBLIC_KEY.requestCode,
         'permissions': SignerPermissionModel.defaultPermissions(),
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': !forceIntent && config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode (unless forced to use Intent)
-        'callMethod': forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent'), // Pass the call method, force intent if needed
+        'useContentProvider': useContentProvider, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': callMethod, // Pass the call method, force intent if needed
       },
     );
     
@@ -117,12 +140,13 @@ class ExternalSignerTool {
 
   /// Get public key using Content Provider method
   static Future<String?> _getPubKeyWithContentProvider(SignerConfig config) async {
+    final uri = config.getContentProviderUri('get_public_key');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner_content_provider',
       {
         'type': SignerType.GET_PUBLIC_KEY.name,
         'packageName': config.packageName,
-        'contentProviderUri': config.getContentProviderUri('get_public_key'),
+        'contentProviderUri': uri,
         'data': ['login'], // Content Provider parameters
       },
     );
@@ -140,8 +164,9 @@ class ExternalSignerTool {
   ///sign_event
   ///@return signature、id、event
   static Future<Map<String, String>?> signEvent(String eventJson, String id, String current_user) async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
     if (config == null) {
+      // Fallback to default behavior (should not happen as amber fallback is set)
       return _signEventWithIntent(eventJson, id, current_user);
     }
 
@@ -165,7 +190,9 @@ class ExternalSignerTool {
   /// Sign event using Intent method
   /// [forceIntent] if true, force using Intent method without trying Content Provider first
   static Future<Map<String, String>?> _signEventWithIntent(String eventJson, String id, String current_user, {bool forceIntent = false}) async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
+    final useContentProvider = !forceIntent && config?.callMethod == SignerCallMethod.auto;
+    final callMethod = forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -176,8 +203,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.SIGN_EVENT.requestCode,
         'extendParse': eventJson,
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': !forceIntent && config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode (unless forced to use Intent)
-        'callMethod': forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent'), // Pass the call method, force intent if needed
+        'useContentProvider': useContentProvider, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': callMethod, // Pass the call method, force intent if needed
       },
     );
     if (result == null) return null;
@@ -190,12 +217,13 @@ class ExternalSignerTool {
   /// Sign event using Content Provider method
   static Future<Map<String, String>?> _signEventWithContentProvider(
     SignerConfig config, String eventJson, String id, String current_user) async {
+    final uri = config.getContentProviderUri('sign_event');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner_content_provider',
       {
         'type': SignerType.SIGN_EVENT.name,
         'packageName': config.packageName,
-        'contentProviderUri': config.getContentProviderUri('sign_event'),
+        'contentProviderUri': uri,
         'data': [eventJson, '', current_user], // Content Provider parameters
       },
     );
@@ -208,7 +236,7 @@ class ExternalSignerTool {
 
   ///sign_message
   static Future<Map<String, String>?> signMessage(String eventJson, String id, String current_user) async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -233,7 +261,56 @@ class ExternalSignerTool {
   ///nip04_encrypt
   ///@return signature、id
   static Future<Map<String, String>?> nip04Encrypt(String plaintext, String id, String current_user, String pubKey) async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
+    
+    if (config == null) {
+      // Fallback to default behavior (should not happen as amber fallback is set)
+      return _nip04EncryptWithIntent(plaintext, id, current_user, pubKey);
+    }
+
+    switch (config.callMethod) {
+      case SignerCallMethod.intent:
+        return _nip04EncryptWithIntent(plaintext, id, current_user, pubKey);
+      case SignerCallMethod.contentProvider:
+        return _nip04EncryptWithContentProvider(config, plaintext, id, current_user, pubKey);
+      case SignerCallMethod.auto:
+        // Try Content Provider first, fallback to Intent
+        final result = await _nip04EncryptWithContentProvider(config, plaintext, id, current_user, pubKey);
+        if (result != null) {
+          return result;
+        } else {
+          // Content Provider failed, use Intent method directly
+          return await _nip04EncryptWithIntent(plaintext, id, current_user, pubKey, forceIntent: true);
+        }
+    }
+  }
+
+  /// NIP04 encrypt using Content Provider method
+  static Future<Map<String, String>?> _nip04EncryptWithContentProvider(
+    SignerConfig config, String plaintext, String id, String current_user, String pubKey) async {
+    final uri = config.getContentProviderUri('nip04_encrypt');
+    final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
+      'nostrsigner_content_provider',
+      {
+        'type': SignerType.NIP04_ENCRYPT.name,
+        'packageName': config.packageName,
+        'contentProviderUri': uri,
+        'data': [plaintext, pubKey, current_user], // Content Provider parameters: plainText, hex_pub_key, logged_in_user_pubkey
+      },
+    );
+    if (result == null) return null;
+    final Map<String, String> resultMap = (result as Map).map((key, value) {
+      return MapEntry(key as String, value as String);
+    });
+    return resultMap;
+  }
+
+  /// NIP04 encrypt using Intent method
+  /// [forceIntent] if true, force using Intent method without trying Content Provider first
+  static Future<Map<String, String>?> _nip04EncryptWithIntent(String plaintext, String id, String current_user, String pubKey, {bool forceIntent = false}) async {
+    final config = await _getConfigWithAmberFallback();
+    final useContentProvider = !forceIntent && config?.callMethod == SignerCallMethod.auto;
+    final callMethod = forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -244,8 +321,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP04_ENCRYPT.requestCode,
         'extendParse': plaintext,
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
-        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
+        'useContentProvider': useContentProvider, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': callMethod, // Pass the call method, force intent if needed
       },
     );
     if (result == null) return null;
@@ -258,7 +335,56 @@ class ExternalSignerTool {
   ///nip44_encrypt
   ///@return signature、id
   static Future<Map<String, String>?> nip44Encrypt(String plaintext, String id, String current_user, String pubKey) async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
+    
+    if (config == null) {
+      // Fallback to default behavior (should not happen as amber fallback is set)
+      return _nip44EncryptWithIntent(plaintext, id, current_user, pubKey);
+    }
+
+    switch (config.callMethod) {
+      case SignerCallMethod.intent:
+        return _nip44EncryptWithIntent(plaintext, id, current_user, pubKey);
+      case SignerCallMethod.contentProvider:
+        return _nip44EncryptWithContentProvider(config, plaintext, id, current_user, pubKey);
+      case SignerCallMethod.auto:
+        // Try Content Provider first, fallback to Intent
+        final result = await _nip44EncryptWithContentProvider(config, plaintext, id, current_user, pubKey);
+        if (result != null) {
+          return result;
+        } else {
+          // Content Provider failed, use Intent method directly
+          return await _nip44EncryptWithIntent(plaintext, id, current_user, pubKey, forceIntent: true);
+        }
+    }
+  }
+
+  /// NIP44 encrypt using Content Provider method
+  static Future<Map<String, String>?> _nip44EncryptWithContentProvider(
+    SignerConfig config, String plaintext, String id, String current_user, String pubKey) async {
+    final uri = config.getContentProviderUri('nip44_encrypt');
+    final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
+      'nostrsigner_content_provider',
+      {
+        'type': SignerType.NIP44_ENCRYPT.name,
+        'packageName': config.packageName,
+        'contentProviderUri': uri,
+        'data': [plaintext, pubKey, current_user], // Content Provider parameters: plainText, hex_pub_key, logged_in_user_pubkey
+      },
+    );
+    if (result == null) return null;
+    final Map<String, String> resultMap = (result as Map).map((key, value) {
+      return MapEntry(key as String, value as String);
+    });
+    return resultMap;
+  }
+
+  /// NIP44 encrypt using Intent method
+  /// [forceIntent] if true, force using Intent method without trying Content Provider first
+  static Future<Map<String, String>?> _nip44EncryptWithIntent(String plaintext, String id, String current_user, String pubKey, {bool forceIntent = false}) async {
+    final config = await _getConfigWithAmberFallback();
+    final useContentProvider = !forceIntent && config?.callMethod == SignerCallMethod.auto;
+    final callMethod = forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -269,8 +395,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP44_ENCRYPT.requestCode,
         'extendParse': plaintext,
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
-        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
+        'useContentProvider': useContentProvider, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': callMethod, // Pass the call method, force intent if needed
       },
     );
     if (result == null) return null;
@@ -283,11 +409,56 @@ class ExternalSignerTool {
   ///nip04_decrypt
   ///@return signature、id
   static Future<Map<String, String>?> nip04Decrypt(String encryptedText, String id, String current_user, String pubKey) async {
-    // Try to get config from SharedPreferences first
-    SignerConfig? config = await _getSignerConfigFromStorage();
+    final config = await _getConfigWithAmberFallback();
+    
     if (config == null) {
-      config = getCurrentConfig();
+      // Fallback to default behavior (should not happen as amber fallback is set)
+      return _nip04DecryptWithIntent(encryptedText, id, current_user, pubKey);
     }
+
+    switch (config.callMethod) {
+      case SignerCallMethod.intent:
+        return _nip04DecryptWithIntent(encryptedText, id, current_user, pubKey);
+      case SignerCallMethod.contentProvider:
+        return _nip04DecryptWithContentProvider(config, encryptedText, id, current_user, pubKey);
+      case SignerCallMethod.auto:
+        // Try Content Provider first, fallback to Intent
+        final result = await _nip04DecryptWithContentProvider(config, encryptedText, id, current_user, pubKey);
+        if (result != null) {
+          return result;
+        } else {
+          // Content Provider failed, use Intent method directly
+          return await _nip04DecryptWithIntent(encryptedText, id, current_user, pubKey, forceIntent: true);
+        }
+    }
+  }
+
+  /// NIP04 decrypt using Content Provider method
+  static Future<Map<String, String>?> _nip04DecryptWithContentProvider(
+    SignerConfig config, String encryptedText, String id, String current_user, String pubKey) async {
+    final uri = config.getContentProviderUri('nip04_decrypt');
+    final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
+      'nostrsigner_content_provider',
+      {
+        'type': SignerType.NIP04_DECRYPT.name,
+        'packageName': config.packageName,
+        'contentProviderUri': uri,
+        'data': [encryptedText, pubKey, current_user], // Content Provider parameters: encryptedText, hex_pub_key, logged_in_user_pubkey
+      },
+    );
+    if (result == null) return null;
+    final Map<String, String> resultMap = (result as Map).map((key, value) {
+      return MapEntry(key as String, value as String);
+    });
+    return resultMap;
+  }
+
+  /// NIP04 decrypt using Intent method
+  /// [forceIntent] if true, force using Intent method without trying Content Provider first
+  static Future<Map<String, String>?> _nip04DecryptWithIntent(String encryptedText, String id, String current_user, String pubKey, {bool forceIntent = false}) async {
+    final config = await _getConfigWithAmberFallback();
+    final useContentProvider = !forceIntent && config?.callMethod == SignerCallMethod.auto;
+    final callMethod = forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -298,8 +469,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP04_DECRYPT.requestCode,
         'extendParse': encryptedText,
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
-        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
+        'useContentProvider': useContentProvider, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': callMethod, // Pass the call method, force intent if needed
       },
     );
     if (result == null) return null;
@@ -312,12 +483,56 @@ class ExternalSignerTool {
   ///nip44_decrypt
   ///@return signature、id
   static Future<Map<String, String>?> nip44Decrypt(String encryptedText, String id, String current_user, String pubKey) async {
-    // Try to get config from SharedPreferences first
-    SignerConfig? config = await _getSignerConfigFromStorage();
-    if (config == null) {
-      config = getCurrentConfig();
-    }
+    final config = await _getConfigWithAmberFallback();
     
+    if (config == null) {
+      // Fallback to default behavior (should not happen as amber fallback is set)
+      return _nip44DecryptWithIntent(encryptedText, id, current_user, pubKey);
+    }
+
+    switch (config.callMethod) {
+      case SignerCallMethod.intent:
+        return _nip44DecryptWithIntent(encryptedText, id, current_user, pubKey);
+      case SignerCallMethod.contentProvider:
+        return _nip44DecryptWithContentProvider(config, encryptedText, id, current_user, pubKey);
+      case SignerCallMethod.auto:
+        // Try Content Provider first, fallback to Intent
+        final result = await _nip44DecryptWithContentProvider(config, encryptedText, id, current_user, pubKey);
+        if (result != null) {
+          return result;
+        } else {
+          // Content Provider failed, use Intent method directly
+          return await _nip44DecryptWithIntent(encryptedText, id, current_user, pubKey, forceIntent: true);
+        }
+    }
+  }
+
+  /// NIP44 decrypt using Content Provider method
+  static Future<Map<String, String>?> _nip44DecryptWithContentProvider(
+    SignerConfig config, String encryptedText, String id, String current_user, String pubKey) async {
+    final uri = config.getContentProviderUri('nip44_decrypt');
+    final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
+      'nostrsigner_content_provider',
+      {
+        'type': SignerType.NIP44_DECRYPT.name,
+        'packageName': config.packageName,
+        'contentProviderUri': uri,
+        'data': [encryptedText, pubKey, current_user], // Content Provider parameters: encryptedText, hex_pub_key, logged_in_user_pubkey
+      },
+    );
+    if (result == null) return null;
+    final Map<String, String> resultMap = (result as Map).map((key, value) {
+      return MapEntry(key as String, value as String);
+    });
+    return resultMap;
+  }
+
+  /// NIP44 decrypt using Intent method
+  /// [forceIntent] if true, force using Intent method without trying Content Provider first
+  static Future<Map<String, String>?> _nip44DecryptWithIntent(String encryptedText, String id, String current_user, String pubKey, {bool forceIntent = false}) async {
+    final config = await _getConfigWithAmberFallback();
+    final useContentProvider = !forceIntent && config?.callMethod == SignerCallMethod.auto;
+    final callMethod = forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
@@ -328,8 +543,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.NIP44_DECRYPT.requestCode,
         'extendParse': encryptedText,
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
-        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
+        'useContentProvider': useContentProvider, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': callMethod, // Pass the call method, force intent if needed
       },
     );
     if (result == null) return null;
@@ -342,7 +557,7 @@ class ExternalSignerTool {
   ///decrypt_zap_event
   ///@return signature、id
   static Future<Map<String, String>?> decryptZapEvent(String encryptedText, String id, String current_user) async {
-    final config = getCurrentConfig();
+    final config = await _getConfigWithAmberFallback();
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
       {
