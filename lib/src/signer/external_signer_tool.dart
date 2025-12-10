@@ -81,13 +81,15 @@ class ExternalSignerTool {
         if (result != null) {
           return result;
         } else {
-          return await _getPubKeyWithIntent();
+          // Content Provider failed, use Intent method directly
+          return await _getPubKeyWithIntent(forceIntent: true);
         }
     }
   }
 
   /// Get public key using Intent method
-  static Future<String?> _getPubKeyWithIntent() async {
+  /// [forceIntent] if true, force using Intent method without trying Content Provider first
+  static Future<String?> _getPubKeyWithIntent({bool forceIntent = false}) async {
     final config = getCurrentConfig();
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
@@ -96,8 +98,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.GET_PUBLIC_KEY.requestCode,
         'permissions': SignerPermissionModel.defaultPermissions(),
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
-        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
+        'useContentProvider': !forceIntent && config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent'), // Pass the call method, force intent if needed
       },
     );
     
@@ -149,13 +151,20 @@ class ExternalSignerTool {
       case SignerCallMethod.contentProvider:
         return _signEventWithContentProvider(config, eventJson, id, current_user);
       case SignerCallMethod.auto:
+        // Try Content Provider first, fallback to Intent
         final result = await _signEventWithContentProvider(config, eventJson, id, current_user);
-        return result ?? await _signEventWithIntent(eventJson, id, current_user);
+        if (result != null) {
+          return result;
+        } else {
+          // Content Provider failed, use Intent method directly
+          return await _signEventWithIntent(eventJson, id, current_user, forceIntent: true);
+        }
     }
   }
 
   /// Sign event using Intent method
-  static Future<Map<String, String>?> _signEventWithIntent(String eventJson, String id, String current_user) async {
+  /// [forceIntent] if true, force using Intent method without trying Content Provider first
+  static Future<Map<String, String>?> _signEventWithIntent(String eventJson, String id, String current_user, {bool forceIntent = false}) async {
     final config = getCurrentConfig();
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner',
@@ -167,8 +176,8 @@ class ExternalSignerTool {
         'requestCode': SignerType.SIGN_EVENT.requestCode,
         'extendParse': eventJson,
         'packageName': config?.packageName, // Pass the correct package name
-        'useContentProvider': config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode
-        'callMethod': config?.callMethod.name ?? 'intent', // Pass the call method
+        'useContentProvider': !forceIntent && config?.callMethod == SignerCallMethod.auto, // Use Content Provider first for auto mode (unless forced to use Intent)
+        'callMethod': forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent'), // Pass the call method, force intent if needed
       },
     );
     if (result == null) return null;
