@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:nostr_core_dart/nostr.dart';
 
 /// Encrypted Direct Message
@@ -36,11 +34,16 @@ class Nip4 {
     String content = "";
     String subContent = event.content;
     String? expiration;
+    Map<String, String> emojiMap = {};
     for (var tag in event.tags) {
       if (tag[0] == "p") receiver = tag[1];
       if (tag[0] == "e") replyId = tag[1];
       if (tag[0] == "subContent") subContent = tag[1];
       if (tag[0] == "expiration") expiration = tag[1];
+      // Extract emoji tags (NIP-30)
+      if (tag[0] == 'emoji' && tag.length >= 3) {
+        emojiMap[tag[1]] = tag[2];
+      }
     }
     if (receiver.compareTo(myPubkey) == 0) {
       content = await decryptContent(subContent, sender, myPubkey, privkey);
@@ -50,7 +53,7 @@ class Nip4 {
       throw Exception("not correct receiver, is not nip4 compatible");
     }
 
-    return EDMessage(sender, receiver, createdAt, content, replyId, expiration);
+    return EDMessage(sender, receiver, createdAt, content, replyId, expiration, emojiShortcodes: emojiMap);
   }
 
   static Future<String> decryptContent(
@@ -75,12 +78,18 @@ class Nip4 {
 
   static Future<Event> encode(
       String sender, String receiver, String content, String replyId, String replyUser, String privkey,
-      {String? subContent, int? expiration}) async {
+      {String? subContent, int? expiration, Map<String, String>? emojiShortcodes}) async {
     String enContent = await encryptContent(content, receiver, sender, privkey);
     List<List<String>> tags = toTags(receiver, replyId, replyUser, expiration);
     if (subContent != null && subContent.isNotEmpty) {
       String enSubContent = await encryptContent(subContent, receiver, sender, privkey);
       tags.add(['subContent', enSubContent]);
+    }
+    // Add emoji tags for custom emojis (NIP-30)
+    if (emojiShortcodes != null) {
+      emojiShortcodes.forEach((shortcode, url) {
+        tags.add(['emoji', shortcode, url]);
+      });
     }
     Event event =
         await Event.from(kind: 4, tags: tags, content: enContent, pubkey: sender, privkey: privkey);
@@ -117,6 +126,7 @@ class EDMessage {
   String replyId;
   String? expiration;
   String? groupId;
+  Map<String, String>? emojiShortcodes; // Custom emoji shortcode to URL map (NIP-30)
   String? subject;
   List<String>? members;
   String? mimeType;
@@ -132,7 +142,8 @@ class EDMessage {
       this.mimeType,
       this.algorithm,
       this.secret,
-      this.nonce});
+      this.nonce,
+      this.emojiShortcodes});
 
   /// Creates an instance of EDMessage from a Map
   factory EDMessage.fromMap(Map<String, dynamic> map) {

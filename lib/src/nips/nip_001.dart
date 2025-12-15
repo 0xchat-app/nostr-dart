@@ -18,7 +18,8 @@ class Nip1 {
       String? replyEventRelay,
       List<String>? replyUsers,
       List<String>? replyUserRelays,
-      List<String>? hashTags}) async {
+      List<String>? hashTags,
+      Map<String, String>? emojiShortcodes}) async {
     List<List<String>> tags = [];
     if (rootEvent != null) {
       ETag root = Nip10.rootTag(rootEvent, rootEventRelay ?? '');
@@ -37,6 +38,12 @@ class Nip1 {
         tags.add(['t', t]);
       }
     }
+    // Add emoji tags for custom emojis (NIP-30)
+    if (emojiShortcodes != null) {
+      emojiShortcodes.forEach((shortcode, url) {
+        tags.add(['emoji', shortcode, url]);
+      });
+    }
 
     return await Event.from(
         kind: 1,
@@ -52,6 +59,17 @@ class Nip1 {
       if (tag[0] == 't') hashTags.add(tag[1]);
     }
     return hashTags;
+  }
+
+  // Extract custom emoji tags (NIP-30)
+  static Map<String, String> emojiTags(List<List<String>> tags) {
+    Map<String, String> emojiMap = {};
+    for (var tag in tags) {
+      if (tag[0] == 'emoji' && tag.length >= 3) {
+        emojiMap[tag[1]] = tag[2];
+      }
+    }
+    return emojiMap;
   }
 
   static String? quoteRepostId(List<List<String>> tags) {
@@ -78,7 +96,8 @@ class Nip1 {
           event.content,
           hashTags(event.tags),
           quoteRepostId(event.tags),
-          groupId(event.tags));
+          groupId(event.tags),
+          emojiTags(event.tags));
     }
     throw Exception("${event.kind} is not nip1 compatible");
   }
@@ -99,7 +118,8 @@ class Note {
   List<String>? hashTags;
   String? quoteRepostId;
   String groupId;
+  Map<String, String>? emojiShortcodes; // Custom emoji shortcode to URL map (NIP-30)
 
   Note(this.nodeId, this.pubkey, this.createdAt, this.thread, this.content,
-      this.hashTags, this.quoteRepostId, this.groupId);
+      this.hashTags, this.quoteRepostId, this.groupId, [this.emojiShortcodes]);
 }

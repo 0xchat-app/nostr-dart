@@ -57,13 +57,18 @@ class Nip18 {
     if (event.kind == 1) {
       String quoteRepostId = '';
       List<String> hashTags = [];
+      Map<String, String> emojiMap = {};
       for (var tag in event.tags) {
         if (tag[0] == "q") quoteRepostId = tag[1];
         if (tag[0] == 't') hashTags.add(tag[1]);
+        // Extract emoji tags (NIP-30)
+        if (tag[0] == 'emoji' && tag.length >= 3) {
+          emojiMap[tag[1]] = tag[2];
+        }
       }
 
       return QuoteReposts(event.id, event.pubkey, event.createdAt,
-          event.content, quoteRepostId, Nip10.fromTags(event.tags), hashTags);
+          event.content, quoteRepostId, Nip10.fromTags(event.tags), hashTags, emojiMap);
     }
     throw Exception("${event.kind} is not nip18 compatible");
   }
@@ -75,7 +80,8 @@ class Nip18 {
       List<String>? hashTags,
       String pubkey,
       String privkey,
-      {String? relayGroupId}) {
+      {String? relayGroupId,
+      Map<String, String>? emojiShortcodes}) {
     List<List<String>> tags = [];
     tags.add(['q', quoteRepostId]);
     if (relayGroupId != null) tags.add(["h", relayGroupId]);
@@ -86,6 +92,12 @@ class Nip18 {
       for (var t in hashTags) {
         tags.add(['t', t]);
       }
+    }
+    // Add emoji tags for custom emojis (NIP-30)
+    if (emojiShortcodes != null) {
+      emojiShortcodes.forEach((shortcode, url) {
+        tags.add(['emoji', shortcode, url]);
+      });
     }
     return Event.from(
         kind: 1,
@@ -117,7 +129,8 @@ class QuoteReposts {
   String quoteRepostsId;
   Thread thread;
   List<String>? hashTags;
+  Map<String, String>? emojiShortcodes; // Custom emoji shortcode to URL map (NIP-30)
 
   QuoteReposts(this.eventId, this.pubkey, this.createAt, this.content,
-      this.quoteRepostsId, this.thread, this.hashTags);
+      this.quoteRepostsId, this.thread, this.hashTags, [this.emojiShortcodes]);
 }
