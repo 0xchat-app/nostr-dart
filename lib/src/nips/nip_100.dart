@@ -21,12 +21,18 @@ class Signaling {
 }
 
 class Nip100 {
+  static String _getExpirationTimestamp() {
+    final expirationTime = DateTime.now().add(Duration(minutes: 1));
+    return (expirationTime.millisecondsSinceEpoch ~/ 1000).toString();
+  }
+
   static Future<Event> close(
       String friend, String content, String offerId, String pubkey, String privkey) async {
     List<List<String>> tags = [];
     tags.add(['type', 'disconnect']);
     tags.add(['p', friend]);
     tags.add(['e', offerId]);
+    tags.add(['expiration', _getExpirationTimestamp()]);
     return await Event.from(
         kind: 25050, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
@@ -35,6 +41,7 @@ class Nip100 {
     List<List<String>> tags = [];
     tags.add(['type', 'offer']);
     tags.add(['p', friend]);
+    tags.add(['expiration', _getExpirationTimestamp()]);
     return await Event.from(
         kind: 25050, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
@@ -45,6 +52,7 @@ class Nip100 {
     tags.add(['type', 'answer']);
     tags.add(['p', friend]);
     tags.add(['e', offerId]);
+    tags.add(['expiration', _getExpirationTimestamp()]);
     return await Event.from(
         kind: 25050, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
@@ -55,6 +63,7 @@ class Nip100 {
     tags.add(['type', 'candidate']);
     tags.add(['p', friend]);
     tags.add(['e', offerId]);
+    tags.add(['expiration', _getExpirationTimestamp()]);
     return await Event.from(
         kind: 25050, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
