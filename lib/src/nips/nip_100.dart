@@ -36,11 +36,12 @@ class Nip100 {
         kind: 25050, tags: tags, content: content, pubkey: pubkey, privkey: privkey);
   }
 
-  static Future<Event> offer(String friend, String content, String pubkey, String privkey,
+  static Future<Event> offer(String friend, String content, String offerId, String pubkey, String privkey,
       {String? groupid}) async {
     List<List<String>> tags = [];
     tags.add(['type', 'offer']);
     tags.add(['p', friend]);
+    tags.add(['e', offerId]);
     if (groupid != null) {
       tags.add(['h', groupid]);
     }
