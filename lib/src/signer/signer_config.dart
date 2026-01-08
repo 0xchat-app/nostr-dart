@@ -100,6 +100,26 @@ class SignerConfigs {
   static void addCustomConfig(String key, SignerConfig config) {
     _configs[key] = config;
   }
+
+  /// Get signer key by package name
+  static String? getSignerKeyByPackageName(String packageName) {
+    for (var entry in _configs.entries) {
+      if (entry.value.packageName == packageName) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
+  /// Get signer configuration by package name
+  static SignerConfig? getConfigByPackageName(String packageName) {
+    for (var config in _configs.values) {
+      if (config.packageName == packageName) {
+        return config;
+      }
+    }
+    return null;
+  }
 }
 
 /// Signer configuration manager

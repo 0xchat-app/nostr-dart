@@ -98,6 +98,13 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                 result.success(isSupported)
                 return
             }
+            "getInstalledExternalSigners" -> {
+                Log.d("ChatcorePlugin", "Getting installed external signers")
+                val signers = PackageUtils.getInstalledExternalSigners(mContext)
+                Log.d("ChatcorePlugin", "Found ${signers.size} external signers")
+                result.success(signers)
+                return
+            }
             "nostrsigner" -> {
                 if (paramsMap != null) nostrsigner(paramsMap, result)
                 return

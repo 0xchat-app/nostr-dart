@@ -22,12 +22,44 @@ class ExternalSignerTool {
     }
   }
 
-  /// Set current signer
+  /// Set current signer by signer key (e.g. 'amber', 'nostr_aegis', 'nowser')
   static Future<void> setSigner(String signerKey) async {
     SignerConfigManager.instance.setSigner(signerKey);
     await _saveSignerConfigToStorage(signerKey);
   }
 
+  /// Set current signer by package name (NIP-55 compliant)
+  /// This method is used when user selects a signer from the installed signers list
+  static Future<void> setSignerByPackageName(String packageName) async {
+    // First try to find a known signer key for this package name
+    String? signerKey = SignerConfigs.getSignerKeyByPackageName(packageName);
+    
+    if (signerKey != null) {
+      // Known signer, use existing configuration
+      await setSigner(signerKey);
+    } else {
+      // Unknown signer, create a dynamic configuration
+      final dynamicConfig = SignerConfig(
+        packageName: packageName,
+        displayName: packageName.split('.').last,
+        iconName: 'icon_login_amber.png',
+        callMethod: SignerCallMethod.auto,
+        contentProviderUris: {
+          'get_public_key': 'content://$packageName.GET_PUBLIC_KEY',
+          'sign_event': 'content://$packageName.SIGN_EVENT',
+          'sign_message': 'content://$packageName.SIGN_MESSAGE',
+          'nip04_encrypt': 'content://$packageName.NIP04_ENCRYPT',
+          'nip04_decrypt': 'content://$packageName.NIP04_DECRYPT',
+          'nip44_encrypt': 'content://$packageName.NIP44_ENCRYPT',
+          'nip44_decrypt': 'content://$packageName.NIP44_DECRYPT',
+          'decrypt_zap_event': 'content://$packageName.DECRYPT_ZAP_EVENT',
+        },
+      );
+      // Register the dynamic config and set it as current
+      SignerConfigs.addCustomConfig(packageName, dynamicConfig);
+      await setSigner(packageName);
+    }
+  }
 
   /// Get signer config from SharedPreferences
   static Future<SignerConfig?> _getSignerConfigFromStorage() async {

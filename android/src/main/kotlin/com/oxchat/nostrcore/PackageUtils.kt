@@ -45,4 +45,24 @@ object PackageUtils {
             false
         }
     }
+    
+    /**
+     * Get all installed apps that support nostrsigner:// scheme
+     * Returns a list of maps containing packageName and appName
+     * Reference: NIP-55 https://github.com/nostr-protocol/nips/blob/master/55.md
+     */
+    fun getInstalledExternalSigners(context: Context): List<Map<String, String>> {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"))
+            val resolveInfoList = context.packageManager.queryIntentActivities(intent, 0)
+            resolveInfoList.map { info ->
+                mapOf(
+                    "packageName" to info.activityInfo.packageName,
+                    "appName" to info.loadLabel(context.packageManager).toString()
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }

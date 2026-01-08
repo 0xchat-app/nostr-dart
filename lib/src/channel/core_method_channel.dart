@@ -35,4 +35,13 @@ class CoreMethodChannel{
     final bool result = await channelChatCore.invokeMethod('isNostrSignerSupported');
     return result;
   }
+
+  /// Get all installed external signers that support nostrsigner:// scheme
+  /// Returns a list of maps containing packageName and appName
+  /// Reference: NIP-55 https://github.com/nostr-protocol/nips/blob/master/55.md
+  static Future<List<Map<String, String>>> getInstalledExternalSigners() async {
+    if (Platform.isIOS) return [];
+    final List<dynamic> result = await channelChatCore.invokeMethod('getInstalledExternalSigners');
+    return result.map((e) => Map<String, String>.from(e as Map)).toList();
+  }
 }

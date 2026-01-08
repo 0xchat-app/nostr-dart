@@ -52,8 +52,9 @@ class SignerHelper {
     SignerApplication signerApplication = getSignerApplication(privkey);
     switch (signerApplication) {
       case SignerApplication.androidSigner:
+        // NIP 55: current_user should be hex pubkey, not npub
         Map<String, String>? map = await ExternalSignerTool.signMessage(
-            hexMessage, hexMessage, Nip19.encodePubkey(currentUser));
+            hexMessage, hexMessage, currentUser);
         String? sign = map?['result'] ?? map?['signature'];
         return sign;
       case SignerApplication.remoteSigner:
@@ -67,8 +68,9 @@ class SignerHelper {
     final eventString = jsonEncode(event.toJson());
     switch (signerApplication) {
       case SignerApplication.androidSigner:
+        // NIP 55: current_user should be hex pubkey, not npub
         Map<String, String>? map = await ExternalSignerTool.signEvent(
-            eventString, event.id, Nip19.encodePubkey(currentUser));
+            eventString, event.id, currentUser);
         String? eventJson = map?['event'];
         if (eventJson != null) {
           event = await Event.fromJson(jsonDecode(eventJson));
@@ -86,8 +88,9 @@ class SignerHelper {
     SignerApplication signerApplication = getSignerApplication(privkey);
     switch (signerApplication) {
       case SignerApplication.androidSigner:
+        // NIP 55: current_user and pubkey should be hex pubkey, not npub
         Map<String, String>? map = await ExternalSignerTool.nip04Encrypt(
-            plainText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
+            plainText, generate64RandomHexChars(), myPubkey, peerPubkey);
         String? encryptedText = map?['result'] ?? map?['signature'];
         if (encryptedText != null) {
           plainText = encryptedText;
@@ -105,8 +108,9 @@ class SignerHelper {
     SignerApplication signerApplication = getSignerApplication(privkey);
     switch (signerApplication) {
       case SignerApplication.androidSigner:
+        // NIP 55: current_user and pubkey should be hex pubkey, not npub
         Map<String, String>? map = await ExternalSignerTool.nip04Decrypt(
-            encryptedText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
+            encryptedText, generate64RandomHexChars(), myPubkey, peerPubkey);
         String? plainText = map?['result'] ?? map?['signature'];
         if (plainText != null) {
           encryptedText = plainText;
@@ -124,8 +128,9 @@ class SignerHelper {
     SignerApplication signerApplication = getSignerApplication(privkey);
     switch (signerApplication) {
       case SignerApplication.androidSigner:
+        // NIP 55: current_user and pubkey should be hex pubkey, not npub
         Map<String, String>? map = await ExternalSignerTool.nip44Encrypt(
-            plainText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
+            plainText, generate64RandomHexChars(), myPubkey, peerPubkey);
         String? encryptedText = map?['result'] ?? map?['signature'];
         if (encryptedText != null) {
           plainText = encryptedText;
@@ -143,8 +148,9 @@ class SignerHelper {
     SignerApplication signerApplication = getSignerApplication(privkey);
     switch (signerApplication) {
       case SignerApplication.androidSigner:
+        // NIP 55: current_user and pubkey should be hex pubkey, not npub
         Map<String, String>? map = await ExternalSignerTool.nip44Decrypt(
-            encryptedText, generate64RandomHexChars(), Nip19.encodePubkey(myPubkey), peerPubkey);
+            encryptedText, generate64RandomHexChars(), myPubkey, peerPubkey);
         String? plainText = map?['result'] ?? map?['signature'];
         if (plainText != null) {
           encryptedText = plainText;
