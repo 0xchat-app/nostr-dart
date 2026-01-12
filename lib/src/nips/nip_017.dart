@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_core_dart/nostr.dart';
+import 'package:nostr_core_dart/nip_019.dart';
 
 /// Private Direct Messages
 /// https://github.com/nostr-protocol/nips/blob/master/17.md
@@ -143,8 +144,29 @@ class Nip17 {
         if (tag[0] == "p") {
           if (!receivers.contains(tag[1])) receivers.add(tag[1]);
         }
-        if (tag[0] == "e") replyId = tag[1];
-        if (tag[0] == "q") replyId = tag[1];
+        if (tag[0] == "e") {
+          replyId = tag[1];
+        } else if (tag[0] == "q" && replyId.isEmpty) {
+          // Only parse q tag if e tag is not present
+          String qValue = tag[1];
+          // Check if qValue is nevent or naddr, decode it to event-id
+          if (qValue.startsWith("nevent") || qValue.startsWith("naddr")) {
+            try {
+              Map<String, dynamic> decoded = Nip19.decodeShareableEntity(qValue);
+              String prefix = decoded['prefix'] ?? '';
+              if (prefix == 'nevent') {
+                replyId = decoded['special'] ?? '';
+              } else if (prefix == 'naddr') {
+                replyId = decoded['special'] ?? '';
+              }
+            } catch (e) {
+              replyId = '';
+            }
+          } else {
+            // Direct event-id (64 hex characters)
+            replyId = qValue;
+          }
+        }
         if (tag[0] == "subContent") subContent = tag[1];
         if (tag[0] == "expiration") expiration = tag[1];
         if (tag[0] == "subject") subject = tag[1];

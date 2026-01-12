@@ -111,7 +111,9 @@ class Nip4 {
     for (var m in members ?? []) {
       if (m != p) result.add(["p", m]);
     }
-    if (q.isNotEmpty) result.add(["q", q, '', '']);
+    // Use 'e' tag for replies per NIP-17: ["e", "<kind-14-id>", "<relay-url>"]
+    // relay-url can be empty string if not available
+    if (q.isNotEmpty) result.add(["e", q, '']);
     if (expiration != null) result.add(['expiration', expiration.toString()]);
     return result;
   }
