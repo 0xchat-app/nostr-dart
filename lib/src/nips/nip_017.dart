@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_core_dart/nostr.dart';
-import 'package:nostr_core_dart/nip_019.dart';
 
 /// Private Direct Messages
 /// https://github.com/nostr-protocol/nips/blob/master/17.md
