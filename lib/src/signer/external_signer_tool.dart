@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:nostr_core_dart/src/channel/core_method_channel.dart';
 import 'package:nostr_core_dart/src/signer/signer_permission_model.dart';
 import 'package:nostr_core_dart/src/signer/signer_config.dart';
@@ -9,6 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///@author Michael
 ///CreateTime: 2023/11/29 11:21
 class ExternalSignerTool {
+  // In-memory cache of rejected kinds (cleared on app restart)
+  // Key: kind (int), Value: true if rejected
+  static final Map<int, bool> _rejectedKinds = {};
   
   /// Initialize signer configuration
   static Future<void> initialize() async {
@@ -196,32 +200,64 @@ class ExternalSignerTool {
   ///sign_event
   ///@return signature、id、event
   static Future<Map<String, String>?> signEvent(String eventJson, String id, String current_user) async {
+    // Extract kind from eventJson and check if it's been rejected
+    final kind = _extractKindFromEventJson(eventJson);
+    if (kind != null && _rejectedKinds[kind] == true) {
+      // This kind has been rejected before, skip the request
+      return null;
+    }
+    
     final config = await _getConfigWithAmberFallback();
     if (config == null) {
       // Fallback to default behavior (should not happen as amber fallback is set)
       return _signEventWithIntent(eventJson, id, current_user);
     }
 
+    Map<String, String>? result;
     switch (config.callMethod) {
       case SignerCallMethod.intent:
-        return _signEventWithIntent(eventJson, id, current_user);
+        result = await _signEventWithIntent(eventJson, id, current_user, kind: kind);
+        break;
       case SignerCallMethod.contentProvider:
-        return _signEventWithContentProvider(config, eventJson, id, current_user);
+        result = await _signEventWithContentProvider(config, eventJson, id, current_user, kind: kind);
+        break;
       case SignerCallMethod.auto:
         // Try Content Provider first, fallback to Intent
-        final result = await _signEventWithContentProvider(config, eventJson, id, current_user);
-        if (result != null) {
-          return result;
-        } else {
-          // Content Provider failed, use Intent method directly
-          return await _signEventWithIntent(eventJson, id, current_user, forceIntent: true);
+        result = await _signEventWithContentProvider(config, eventJson, id, current_user, kind: kind);
+        if (result != null && result['rejected'] == 'true') {
+          // Content Provider returned rejected, user chose to always reject
+          // No need to try Intent method, it will also be rejected
+          // The kind has already been recorded in _signEventWithContentProvider
+          return null;
         }
+        // Content Provider failed (not rejected), try Intent method as fallback
+        result ??= await _signEventWithIntent(eventJson, id, current_user, forceIntent: true, kind: kind);
+        break;
+    }
+    
+    // Check if the result indicates rejection and record it
+    if (result != null && result['rejected'] == 'true' && kind != null) {
+      _rejectedKinds[kind] = true;
+      return null; // Return null to indicate rejection
+    }
+    
+    return result;
+  }
+  
+  /// Extract kind from eventJson
+  static int? _extractKindFromEventJson(String eventJson) {
+    try {
+      final json = jsonDecode(eventJson) as Map<String, dynamic>;
+      return json['kind'] as int?;
+    } catch (e) {
+      return null;
     }
   }
 
   /// Sign event using Intent method
   /// [forceIntent] if true, force using Intent method without trying Content Provider first
-  static Future<Map<String, String>?> _signEventWithIntent(String eventJson, String id, String current_user, {bool forceIntent = false}) async {
+  /// [kind] the event kind, used for rejection tracking
+  static Future<Map<String, String>?> _signEventWithIntent(String eventJson, String id, String current_user, {bool forceIntent = false, int? kind}) async {
     final config = await _getConfigWithAmberFallback();
     final useContentProvider = !forceIntent && config?.callMethod == SignerCallMethod.auto;
     final callMethod = forceIntent ? 'intent' : (config?.callMethod.name ?? 'intent');
@@ -241,14 +277,36 @@ class ExternalSignerTool {
     );
     if (result == null) return null;
     final Map<String, String> resultMap = (result as Map).map((key, value) {
-      return MapEntry(key as String, value as String);
+      return MapEntry(key as String, value?.toString() ?? '');
     });
+    
+    // Check if rejected and record the kind
+    if (resultMap['rejected'] == 'true') {
+      final kindStr = resultMap['rejected_kind'];
+      if (kindStr != null) {
+        final rejectedKind = int.tryParse(kindStr);
+        if (rejectedKind != null) {
+          _rejectedKinds[rejectedKind] = true;
+        }
+      } else if (kind != null) {
+        // Fallback: use the kind passed as parameter
+        _rejectedKinds[kind] = true;
+      } else {
+        // Last resort: extract kind from eventJson
+        final extractedKind = _extractKindFromEventJson(eventJson);
+        if (extractedKind != null) {
+          _rejectedKinds[extractedKind] = true;
+        }
+      }
+    }
+    
     return resultMap;
   }
 
   /// Sign event using Content Provider method
+  /// [kind] the event kind, used for rejection tracking
   static Future<Map<String, String>?> _signEventWithContentProvider(
-    SignerConfig config, String eventJson, String id, String current_user) async {
+    SignerConfig config, String eventJson, String id, String current_user, {int? kind}) async {
     final uri = config.getContentProviderUri('sign_event');
     final Object? result = await CoreMethodChannel.channelChatCore.invokeMethod(
       'nostrsigner_content_provider',
@@ -261,8 +319,29 @@ class ExternalSignerTool {
     );
     if (result == null) return null;
     final Map<String, String> resultMap = (result as Map).map((key, value) {
-      return MapEntry(key as String, value as String);
+      return MapEntry(key as String, value?.toString() ?? '');
     });
+    
+    // Check if rejected and record the kind
+    if (resultMap['rejected'] == 'true') {
+      final kindStr = resultMap['rejected_kind'];
+      if (kindStr != null) {
+        final rejectedKind = int.tryParse(kindStr);
+        if (rejectedKind != null) {
+          _rejectedKinds[rejectedKind] = true;
+        }
+      } else if (kind != null) {
+        // Fallback: use the kind passed as parameter
+        _rejectedKinds[kind] = true;
+      } else {
+        // Last resort: extract kind from eventJson
+        final extractedKind = _extractKindFromEventJson(eventJson);
+        if (extractedKind != null) {
+          _rejectedKinds[extractedKind] = true;
+        }
+      }
+    }
+    
     return resultMap;
   }
 

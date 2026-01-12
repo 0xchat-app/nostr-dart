@@ -122,6 +122,7 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, result: Intent?): Boolean {
         if (mSignatureRequestCodeList.contains(requestCode)) {
+            val resultCallback = mMethodChannelResultMap[requestCode]
             if (resultCode == Activity.RESULT_OK && result != null) {
                 val dataMap: HashMap<String, String?> = HashMap()
 
@@ -144,9 +145,18 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                     val event = result.getStringExtra("event")
                     dataMap["event"] = event
                 }
-                mMethodChannelResultMap[requestCode]?.success(dataMap)
+                resultCallback?.success(dataMap)
+            } else {
+                // Request was rejected (resultCode != RESULT_OK)
+                // Try to extract kind from the stored request params
+                val rejectedMap: HashMap<String, String?> = HashMap()
+                rejectedMap["rejected"] = "true"
+                // Note: We can't easily get the kind here without storing request params
+                // The Flutter side will extract kind from eventJson if needed
+                resultCallback?.success(rejectedMap)
             }
             mMethodChannelResultMap.remove(requestCode)
+            mSignatureRequestCodeList.remove(requestCode)
             return true
         }
         return false
@@ -235,6 +245,19 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                     return null
                 }
                 if (it.moveToFirst()) {
+                    // Check for rejection first (NIP-55: if user chose to always reject, signer returns "rejected" column)
+                    val rejectedIndex = it.getColumnIndex("rejected")
+                    if (rejectedIndex >= 0) {
+                        // Extract kind from eventJson if available (for sign_event type)
+                        val kind = extractKindFromData(data, signerType)
+                        val rejectedMap: HashMap<String, String?> = HashMap()
+                        rejectedMap["rejected"] = "true"
+                        if (kind != null) {
+                            rejectedMap["rejected_kind"] = kind.toString()
+                        }
+                        return rejectedMap
+                    }
+                    
                     val dataMap: HashMap<String, String?> = HashMap()
                     
                     // Try to get 'result' field first (preferred by Aegis)
@@ -268,6 +291,27 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
 
         return null
     }
+    
+    // Extract kind from eventJson for sign_event type
+    private fun extractKindFromData(data: Array<out String>, signerType: String): Int? {
+        if (signerType != "sign_event" || data.isEmpty()) {
+            return null
+        }
+        try {
+            // For sign_event, the first element is the eventJson
+            val eventJson = data[0]
+            if (eventJson.isNotEmpty()) {
+                // Parse JSON to extract kind
+                val jsonObject = org.json.JSONObject(eventJson)
+                if (jsonObject.has("kind")) {
+                    return jsonObject.getInt("kind")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ChatcorePlugin", "[extractKindFromData] Failed to extract kind: ${e.message}")
+        }
+        return null
+    }
 
     fun nostrsignerContentProvider(paramsMap: HashMap<*, *>, result: Result) {
         try {
@@ -285,14 +329,20 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             val resultMap = getDataFromResolverWithUri(contentProviderUri, dataArray, mContext.contentResolver)
 
             if (resultMap != null) {
-                // Convert signature to result for consistency, but prioritize result field
-                val convertedMap = HashMap<String, String?>()
-                // Prioritize 'result' field, fallback to 'signature'
-                val resultValue = resultMap["result"] ?: resultMap["signature"]
-                resultValue?.let { convertedMap["result"] = it }
-                resultMap["event"]?.let { convertedMap["event"] = it }
-                resultMap["id"]?.let { convertedMap["id"] = it }
-                result.success(convertedMap)
+                // Check if this is a rejection response
+                if (resultMap["rejected"] == "true") {
+                    // Pass through the rejection info including rejected_kind
+                    result.success(resultMap)
+                } else {
+                    // Convert signature to result for consistency, but prioritize result field
+                    val convertedMap = HashMap<String, String?>()
+                    // Prioritize 'result' field, fallback to 'signature'
+                    val resultValue = resultMap["result"] ?: resultMap["signature"]
+                    resultValue?.let { convertedMap["result"] = it }
+                    resultMap["event"]?.let { convertedMap["event"] = it }
+                    resultMap["id"]?.let { convertedMap["id"] = it }
+                    result.success(convertedMap)
+                }
             } else {
                 result.success(null)
             }
@@ -317,10 +367,17 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
                     return null
                 }
                 
-                // Check for rejection
+                // Check for rejection (NIP-55: if user chose to always reject, signer returns "rejected" column)
                 val rejectedIndex = cursor.getColumnIndex("rejected")
                 if (rejectedIndex >= 0) {
-                    return null
+                    // Extract kind from data if available (for sign_event type)
+                    val kind = extractKindFromDataForUri(data, contentProviderUri)
+                    val rejectedMap: HashMap<String, String?> = HashMap()
+                    rejectedMap["rejected"] = "true"
+                    if (kind != null) {
+                        rejectedMap["rejected_kind"] = kind.toString()
+                    }
+                    return rejectedMap
                 }
                 
                 if (cursor.moveToFirst()) {
@@ -355,6 +412,28 @@ class ChatcorePlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Activity
             return null
         }
 
+        return null
+    }
+    
+    // Extract kind from data for Content Provider URI method
+    private fun extractKindFromDataForUri(data: Array<out String>, contentProviderUri: String): Int? {
+        // Check if this is a sign_event request
+        if (!contentProviderUri.contains("SIGN_EVENT", ignoreCase = true) || data.isEmpty()) {
+            return null
+        }
+        try {
+            // For sign_event, the first element is the eventJson
+            val eventJson = data[0]
+            if (eventJson.isNotEmpty()) {
+                // Parse JSON to extract kind
+                val jsonObject = org.json.JSONObject(eventJson)
+                if (jsonObject.has("kind")) {
+                    return jsonObject.getInt("kind")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ChatcorePlugin", "[extractKindFromDataForUri] Failed to extract kind: ${e.message}")
+        }
         return null
     }
 
