@@ -108,9 +108,23 @@ class Nip17 {
     }
   }
 
+  /// Decodes a sealed gossip event (kind 13) to extract the inner rumor.
+  ///
+  /// Per NIP-17, this method:
+  /// 1. Verifies the seal's signature to prevent sender impersonation
+  /// 2. Decrypts the seal content to get the rumor
+  /// 3. Verifies that seal.pubkey == rumor.pubkey (required by NIP-17)
   static Future<Event> _decodeSealedGossip(Event event, String myPubkey, String privkey) async {
     if (event.kind == 13) {
       try {
+        // CRITICAL: Verify seal signature before trusting the pubkey
+        // Without this check, an attacker can forge the seal's pubkey field
+        // to impersonate any user in encrypted DMs
+        bool isValidSeal = await event.isValid();
+        if (!isValidSeal) {
+          throw Exception('Invalid seal signature - possible forgery attempt');
+        }
+
         String content = await Nip44.decryptContent(event.content, event.pubkey, myPubkey, privkey);
         Map<String, dynamic> map = jsonDecode(content);
         map['sig'] = '';
@@ -118,6 +132,7 @@ class Nip17 {
         if (innerEvent.pubkey == event.pubkey) {
           return innerEvent;
         }
+        throw Exception('Seal pubkey does not match rumor pubkey - possible impersonation attempt');
       } catch (e) {
         throw Exception(e);
       }
