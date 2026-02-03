@@ -105,11 +105,22 @@ class Nip4 {
     }
   }
 
-  static List<List<String>> toTags(String p, String q, String qPubkey, int? expiration, {List<String>? members}) {
+  /// Creates tags for NIP-4/NIP-17 messages.
+  ///
+  /// [relayHints] is an optional map of pubkey -> relay URL for p-tag hints.
+  /// Per NIP-17, p-tags should include relay hints: ["p", "<pubkey>", "<relay-url>"]
+  static List<List<String>> toTags(String p, String q, String qPubkey, int? expiration,
+      {List<String>? members, Map<String, String>? relayHints}) {
     List<List<String>> result = [];
-    if (p.isNotEmpty) result.add(["p", p]);
+    if (p.isNotEmpty) {
+      String? hint = relayHints?[p];
+      result.add(hint != null ? ["p", p, hint] : ["p", p]);
+    }
     for (var m in members ?? []) {
-      if (m != p) result.add(["p", m]);
+      if (m != p) {
+        String? hint = relayHints?[m];
+        result.add(hint != null ? ["p", m, hint] : ["p", m]);
+      }
     }
     // Use 'e' tag for replies per NIP-17: ["e", "<kind-14-id>", "<relay-url>"]
     // relay-url can be empty string if not available
