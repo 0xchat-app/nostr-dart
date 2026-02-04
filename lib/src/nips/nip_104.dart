@@ -4,13 +4,13 @@ import 'dart:typed_data';
 
 class Nip104 {
   static Future<Event> encodeKeyPackageEvent(
-      String encoded_key_package, List<List<String>> tags, String myPubkey, String privkey) async {
+      String encoded_key_package, List<List<String>> tags, String myPubkey, String privkey, {int kind = 443}) async {
     return await Event.from(
-        kind: 443, tags: tags, content: encoded_key_package, pubkey: myPubkey, privkey: privkey);
+        kind: kind, tags: tags, content: encoded_key_package, pubkey: myPubkey, privkey: privkey);
   }
 
   static KeyPackageEvent decodeKeyPackageEvent(Event event) {
-    if (event.kind != 443) {
+    if (event.kind != 443 && event.kind != 10443) {
       throw Exception("${event.kind} is not nip104 compatible");
     }
 
