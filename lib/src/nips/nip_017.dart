@@ -36,6 +36,10 @@ class Nip17 {
         privkey: privkey);
   }
 
+  /// Creates the inner event (rumor) for NIP-17 DMs.
+  ///
+  /// [relayHints] is an optional map of pubkey -> relay URL for p-tag hints.
+  /// Per NIP-17, p-tags should include relay hints: ["p", "<pubkey>", "<relay-url>"]
   static Future<Event> encodeInnerEvent(String receiver, String content, String replyId,
       String replyUser, String myPubkey, String privKey,
       {String? subContent,
@@ -43,9 +47,10 @@ class Nip17 {
       List<String>? members,
       String? subject,
       int createAt = 0,
-      EncryptedFile? encryptedFile}) async {
+      EncryptedFile? encryptedFile,
+      Map<String, String>? relayHints}) async {
     List<List<String>> tags =
-        Nip4.toTags(receiver, replyId, replyUser, expiration, members: members);
+        Nip4.toTags(receiver, replyId, replyUser, expiration, members: members, relayHints: relayHints);
     if (subContent != null && subContent.isNotEmpty) {
       tags.add(['subContent', subContent]);
     }
@@ -75,6 +80,10 @@ class Nip17 {
     }
   }
 
+  /// Encodes a sealed gossip DM per NIP-17.
+  ///
+  /// [relayHints] is an optional map of pubkey -> relay URL for p-tag hints.
+  /// Per NIP-17, p-tags should include relay hints: ["p", "<pubkey>", "<relay-url>"]
   static Future<Event> encodeSealedGossipDM(String receiver, String content, String replyId,
       String replyUser, String myPubkey, String privKey,
       {String? sealedPrivkey,
@@ -83,9 +92,10 @@ class Nip17 {
       String? subContent,
       int? expiration,
       Event? innerEvent,
-      List<String>? members}) async {
+      List<String>? members,
+      Map<String, String>? relayHints}) async {
     innerEvent ??= await encodeInnerEvent(receiver, content, replyId, replyUser, myPubkey, privKey,
-        subContent: subContent, expiration: expiration);
+        subContent: subContent, expiration: expiration, relayHints: relayHints);
     Event event = await encode(innerEvent, receiver, myPubkey, privKey,
         sealedPrivkey: sealedPrivkey,
         sealedReceiver: sealedReceiver,
